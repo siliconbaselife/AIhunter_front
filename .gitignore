@@ -1,0 +1,12 @@
+/node_modules/
+/logs/
+/package/
+yarn.lock
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+.idea/
+.settings/
+target/
