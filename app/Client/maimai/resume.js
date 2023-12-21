@@ -6,6 +6,8 @@ const Logger = require('../../Logger');
 
 class Resume extends Base {
     keywordDelay = 40;
+    peopleCache;
+
     queryTasks = async() => {
 
     }
@@ -15,7 +17,14 @@ class Resume extends Base {
         let tasks = await this.queryTasks();
         Logger.info(`脉脉 ${this.userInfo.name} 获取到 ${tasks.length} 个任务, 任务如下: ${tasks}`);
 
+        this.hiEnd = false;
+        this.friendEnd = false;
+        await this.checkEnd();
+
         for (let index in tasks) {
+            if (this.hiEnd && this.friendEnd)
+                break;
+
             let task = tasks[index];
 
             if (task.helloSum <= 0) {
@@ -33,8 +42,42 @@ class Resume extends Base {
     }
 
     dealTask = async(task) => {
+        await this.dealTaskBefore();
         await this.setFilter(task);
         await this.noopTask(task);
+        await this.dealTaskAfter();
+    }
+
+    dealTaskBefore = async() => {
+        const getList = async (response) => {
+            try {
+              const url = response.url();
+              const request = response.request();
+              const method = request.method();
+  
+              if (url.startsWith('https://maimai.cn/api/ent/v3/search/basic?channel=') &&
+                response.status() === 200 && (['GET', 'POST'].includes(method))) {
+                  let res;
+                  try {
+                      res = await response.json();
+                  } catch (e) {
+                      logger.error(`maimai ${this.userInfo.name} 监听获取列表数据异常：`, e);
+                  }
+  
+                  if (res.code == 0 && res.data) {
+                      this.peopleCache = res.data.list;
+                      logger.info(`maimai ${this.userInfo.name} get peopleCache: ${this.peopleCache.length}`);
+                  }
+              }
+           } catch (e) {
+              logger.error(`maimai ${this.userInfo.name} get candidate list error: ${e}`);
+           }
+        }
+        this.page.on('response', getList);
+    }
+
+    dealTaskAfter = async() => {
+        this.page.removeListener('response', getList);
     }
 
     setFilter = async(task) => {
@@ -221,7 +264,217 @@ class Resume extends Base {
     }
 
     noopTask = async(task) => {
+        let page = 1;
+        while(true) {
+            if (this.friendEnd && this.hiEnd)
+                break;
 
+            if (task.helloSum <= 0) {
+                logger.info(`脉脉 ${this.userInfo.name} 今天的指标已经用完`);
+                break;
+            }
+
+            logger.info(`脉脉 ${this.userInfo.name} 当前任务处理到第 ${page} 页`);
+            await this.dealPeople(task);
+            let hasNext = await this.nextPage();
+            if (!hasNext)
+                break;
+
+            page += 1;
+            if (!global.running)
+                return;
+        }
+    }
+
+    checkEnd = async() => {
+        let AccountInfoSpans = await this.page.$x(`//div[contains(@class, "value___VDQPF")]`);
+        let hiSpan = AccountInfoSpans[0];
+        let friendSpan = AccountInfoSpans[1];
+
+        let hiNum = await this.frame.evaluate(node => node.innerText, hiSpan);
+        let friendNum = await this.frame.evaluate(node => node.innerText, friendSpan);
+
+        if (hiNum == 0) {
+            this.hiEnd = true;
+            logger.info(`脉脉 ${this.userInfo.name} 打招呼用光了`);
+        }
+
+        if (friendNum == 0) {
+            this.friendEnd = true;
+            logger.info(`脉脉 ${this.userInfo.name} 加好友用光了`);
+        }
+    }
+
+    dealPeople = async(task) => {
+        let peopleItems = await this.page.$x(`//div[contains(@class, "mainContent___nwb6Q")]`);
+        logger.info(`脉脉 ${this.userInfo.name} 搜索到 ${peopleItems.length} 个people item`);
+        for (let index in this.peopleCache) {
+            if (this.hiEnd && this.friendEnd)
+                break;
+
+            if (task.helloSum <= 0) {
+                logger.info(`脉脉 ${this.userInfo.name} 今天的指标已经用完`);
+                break;
+            }
+
+            let peopleItem = peopleItems[index];
+            let peopleInfo = this.peopleCache[index];
+        
+            await this.page.evaluate((item)=>item.scrollIntoView(), peopleItem);
+            let f = await this.filterPeople(peopleItem, peopleInfo, task);
+            if (f)
+                continue
+
+            try {
+                await this.touchPeople(task, peopleItem, peopleInfo);
+                await this.reportTouch(task, peopleInfo);
+            } catch (e) {
+                logger.error(`脉脉 ${this.userInfo.name} 给一个人打招呼 ${peopleInfo.name} 出现异常: ${e}`);
+            }
+            await this.checkdialog();
+        }
+    }
+
+
+    touchPeople = async(task, peopleItem, peopleInfo) => {
+        await this.page.evaluate((item)=>item.scrollIntoView(), peopleItem);
+        await sleep(200);
+        if (this.friendEnd)
+            await this.addFriend(peopleItem, peopleInfo, task);
+        if (this.hiEnd)
+            await this.sayHi(peopleItem, peopleInfo, task);
+    }
+
+    reportTouch = async(task, peopleInfo) => {
+        const { status, data } = await Request({
+            url: `${BIZ_DOMAIN}/recruit/account/task/report`,
+            data: {
+              accountID: this.userInfo.accountID,
+              jobID: task.jobID,
+              taskStatus: [{
+                taskType: 'batchTouch',
+                details: {
+                  candidateList: [peopleInfo.id]
+                }
+              }]
+            },
+            method: 'POST'
+        });
+
+        task.helloSum -= 1;
+    }
+
+    addFriend = async(peopleItem, peopleInfo, task) => {
+        let moreBtn = await peopleItem.$x(`//div[contains(@class, "more___RBoc4")]`);
+        await moreBtn.click();
+        await sleep(200);
+
+        let dropDiv = this.waitElement(`//div[contains(@class, "mui-popover-placement-bottomRight") and not(contains(@class, "mui-popover-hidden"))]`, this.page);
+        let addFriendBtn = await dropDiv.$x(`//div[text() = "加好友"]`);
+        await addFriendBtn.click();
+        await sleep(300);
+        await this.checkdialog();
+
+    }
+
+    checkdialog = async() => {
+        let [btn] = await this.page.$x(`//span[text() = "我知道了"]`);
+        if (btn) {
+            await btn.click()
+            await sleep(300)
+        }
+    }
+
+    sayHi = async(peopleItem, peopleInfo, task) => {
+       let chatBtn = await peopleItem.$x(`//div[text() = "立即沟通"]`);
+       if (!chatBtn) {
+          logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 没有打招呼的按钮`);
+          return;
+       }
+
+       let sayMsg = task.filter.msg;
+
+       await chatBtn.click();
+       let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]');
+       let text = await this.page.evaluate(node => node.textContent, textarea);
+       if (sayMsg != text) {
+
+       }
+
+       let [sendBtn] = await this.page.$x(`//button[text() = "立即发送"]`);
+       if (!sendBtn) {
+           [sendBtn] = await this.page.$x(`//button[text() = "发送后留在此页"]`);
+       }
+       await sendBtn.click();
+       await sleep(200);
+
+       await this.checkHiEnd();
+    }
+
+    checkHiEnd = async() => {
+        let [runOutTxt] = await this.page.$x(`//span[text() = "立即沟通券已用完，请联系你的管理员"]`);
+        if (runOutTxt) {
+            logger.info(`脉脉 ${this.userInfo.name} 打招呼用完`);
+            this.hiEnd = true;
+        }
+
+        let [msgCloseBtn] = await this.page.$x(`//div[contains(@class, "mui-modal-close-x")]`);
+        await msgCloseBtn.click();
+    }
+
+    filterPeople = async(peopleItem, peopleInfo, task) => {
+        let divNameSpan = await peopleItem.$x(`//span[contains(@class, "name___2TJeJ")]`);
+        let divName = await this.page.evaluate(node => node.textContent, divNameSpan);
+        let peopleName = peopleInfo.name;
+        logger.info(`脉脉 ${this.userInfo.name} divName: ${divName} peopleName: ${peopleName}`);
+        if (peopleName != divName) {
+            logger.info(`脉脉 ${this.userInfo.name} 名字对不上，有问题`);
+            return true;
+        }
+
+        try {
+            const { status, data } = await Request({
+                url: `${BIZ_DOMAIN}/recruit/candidate/filter`,
+                data: {
+                    accountID: this.userInfo.accountID,
+                    jobID: task.jobID,
+                    candidateInfo: peopleItem
+                },
+                headers: {"Connection": "keep-alive"},
+                method: 'POST'
+            });
+  
+            logger.info(data);
+            logger.info(`脉脉 ${this.userInfo.name} 筛选结果 ${status} ${data.touch} ` );
+  
+            if (status === 0 && data.touch) {
+                return false;
+            }
+        } catch (e) {
+            Logger.error(`筛选错误为##`, e);
+        }
+
+        return true;
+    }
+
+    nextPage = async() => {
+        let [pageDiv] = await this.page.$x(`//div[contains(@class, "paginationCon___29K2m")]`);
+        if (!pageDiv) {
+            logger.info(`脉脉 ${this.userInfo.name} 没有分页栏`);
+            return false;
+        }
+
+        let [disable_next_btn] = await this.page.$x(`//div[contains(@class, "nextPage___1s7KJ") and contains(@class, "disabled___kWxdU")]`);
+        if (disable_next_btn) {
+            logger.info(`脉脉 ${this.userInfo.name} 翻页到头了`);
+            return false;
+        }
+
+        let [next_btn] = await this.page.$x(`//div[contains(@class, "nextPage___1s7KJ")]`);
+        await next_btn.click();
+
+        await this.waitPeopleNum();
+        return true;
     }
 
     waitElement = async(xpath, document, num = 10) => {
