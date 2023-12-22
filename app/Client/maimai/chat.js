@@ -20,13 +20,21 @@ class Chat extends Base {
         this.beforeRecallAvactor = "";
 
         while(global.running) {
-            await this.doUnread();
+            try {
+                await this.doUnread();
+            } catch (e) {
+                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: ${e}`);
+            }
 
             let unreadNum = await this.hasUnread();
             if (unreadNum > 0)
                 continue;
 
-            await this.doRecall();
+            try {
+                await this.doRecall();
+            } catch (e) {
+                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: ${e}`);
+            }
         }
     }
 
@@ -40,7 +48,7 @@ class Chat extends Base {
         let unreadNum = await this.hasUnread();
         if (unreadNum == 0)
             return;
-        Logger.info(`脉脉 ${this.userInfo.name} 有 ${unreadNum} 未读消息`);
+        Logger.info(`脉脉 ${this.userInfo.name} 有 ${unreadNum} 个未读消息`);
 
         await this.setUnreadPage();
         await this.dealUnreadMsg();
@@ -83,8 +91,6 @@ class Chat extends Base {
     }
 
     dealUnreadMsg = async() => {
-        await this.scrollChatToTop();
-
         let peopleIndex = 0;
         while(true) {
             await this.scrollChatToPosition(peopleIndex);
@@ -101,7 +107,14 @@ class Chat extends Base {
     }
 
     isUnreadEnd = async() => {
+        let msgItems = await this.frame.$x(`//div[contains(@class, "message-item-normal")]`);
+        for (let msgItem of msgItems) {
+            let [badge] = await msgItem.$x(`//i[contains(@class, "message-badge")]`);
+            if (badge)
+                return false;
+        }
 
+        return true;
     }
 
     dealOneUnread = async() => {
@@ -125,8 +138,9 @@ class Chat extends Base {
 
     dealUnreadPeopleMsgs = async(msgItem) => {
         await msgItem.click();
-        let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
+        await sleep(1000);
 
+        let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
@@ -150,7 +164,7 @@ class Chat extends Base {
 
         let peopleId = await this.fetchPeopleId(msgs);
         let peopleInfo = {id: peopleId, name: name, imgUrl: imgUrl}
-        logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 peopleInfo: ${peopleInfo}`);
+        logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 peopleInfo: ${JSON.stringify(peopleInfo)}`);
 
         await this.chatToPeople(peopleInfo, msgs);
         
@@ -310,11 +324,7 @@ class Chat extends Base {
     uploadPhoneNum = async (peopleInfo, phoneNum) => {
         const form = new FormData();  
 
-        const reqParam = {
-          accountID: this.accountID,
-          candidateID: peopleInfo.id,
-          candidateName: peopleInfo.name
-        }
+        const reqParam = {accountID: this.userInfo.accountID, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
 
         Object.keys(reqParam).map((key) => {
           form.append(key, reqParam[key]);
@@ -323,34 +333,25 @@ class Chat extends Base {
         form.append("phone", phoneNum);
         form.append("jobID", "");
 
-        let end = false;
         form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
             if (err) {
-                logger.error(`上传失败error`, e)
+                logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 上传失败error ${e}`)
             }
     
-            logger.info(`手机号上传成功`)
-            end = true;
+            logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 手机号上传成功`)
         });
-
-        while (!end) {
-            await sleep(500);
-        }
     }
 
     fetchPhone = async (peopleInfo) => {
         logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 准备获取电话号码`);
-        
         try {
             let [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text") and text() = "拨打电话"]`);
-
             if (phoneBtn) {
                 await phoneBtn.click();
-                let phoneTxtdiv = await this.waitElement(`//p[contains(@class, "tool-title")]`);
-                
+                let phoneTxtdiv = await this.waitElement(`//p[contains(@class, "tool-title")]`, this.frame);
                 let phoneTxt = await this.frame.evaluate(node => node.innerText, phoneTxtdiv);
                 let phoneNum =  phoneTxt.split('•')[1];
-                logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 电话号码: ${phoneNum}`);
+                logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 电话号码: ${phoneNum}`);
 
                 await this.uploadPhoneNum(peopleInfo, phoneNum);
 
@@ -358,7 +359,7 @@ class Chat extends Base {
                 await closeSpan.click();
             } 
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 获取手机号异常: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 获取手机号异常: ${e}`);
         }
     }
 
@@ -404,71 +405,6 @@ class Chat extends Base {
         }
     }
 
-    uploadResume = async(peopleInfo) => {
-        logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 上传简历`);
-
-        let filedir = path.join(this.downloadDir, this.maimaiUserInfo.maimaiUserId.toString());
-        let files = fs.readdirSync(filedir);
-  
-        let filename = files[0];
-        const crs = fs.createReadStream(filedir + "/" + filename);
-  
-        const form = new FormData();  
-        form.append('cv', crs);
-  
-        const reqParam = {
-          accountID: this.userInfo.accountID,
-          candidateID: peopleInfo.id,
-          candidateName: peopleInfo.name,
-          filename: filename
-        }
-  
-        Object.keys(reqParam).map((key) => {
-          form.append(key, reqParam[key]);
-        })
-        form.append('jobID', "")
-    
-        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
-          if (err) {
-            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 上传失败error`, e)
-          }
-  
-          logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 上传成功: `)
-        });
-  
-        await sleep(2000);
-        this.setDownloadDir()
-        await sleep(500);
-    }
-
-    setDownloadDir = async() => {
-        let dirPath = path.join(this.downloadDir, this.maimaiUserInfo.maimaiUserId.toString());
-        try {
-          await rmDir(dirPath);
-          fs.mkdir(dirPath,(err)=>{
-            if(err){
-              logger.error('新建目录出错:', err)
-            }
-          })
-        }
-        catch(e) {
-          logger.error(e)
-        }
-    }
-
-    hasResume = async (messages) => {
-        for (let index = messages.length - 1; index >= 0; index--) {
-            let msg = messages[index];
-            if (msg.is_me == 1)
-                return false;
-
-            if (msg.type == 4) 
-                return true;
-        }
-
-        return false;
-    }
-
     fetchPeopleId = async(msgs) => {
         for (let m of msgs) {
             if (m.mmid == "0")
@@ -498,18 +434,21 @@ class Chat extends Base {
         return msgs;
     }
 
-    scrollChatToTop = async() => {
-
-    }
-
     scrollChatToPosition = async(index) => {
-
+        await this.page.evaluate((scrollLength) => {
+            const wrap = $(".virtualized-message-list")[0];
+  
+            wrap.scrollTo(0, scrollLength);
+        }, 76 * index);
     }
 
     doRecall = async() => {
         await this.putUnreadBtn(false);
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
+        await item.click();
+        await sleep(1000);
+
         this.recallIndex += 1;
 
         let [imgElement] = await item.$x(`//img[contains(@class, "message-avatar")]`);
@@ -534,6 +473,38 @@ class Chat extends Base {
 
         await this.sendMessage(friend.recall_msg);
         await this.recallResult(peopleInfo.id);
+
+        await this.dealRecallEnd(item);
+    }
+
+    dealRecallEnd = async (item, msgs) => {
+        let f1 = await this.isOutTime(msgs);
+        let f2 = await this.noMoreMsg();
+
+        if (f1 || f2) {
+            this.recallIndex = 0;
+            this.beforeRecallAvactor = "";
+        }
+    }
+
+    noMoreMsg = async () => {
+        let [noMoreDiv] = await this.page.$x(`//div[contains(@class, "message-nomore") and text() = "没有更多了"]`);
+        return !!noMoreDiv
+    }
+
+    isOutTime = async (messages) => {
+        let lastTime = await this.fetchLastTimeByMessages(messages);
+        if (!lastTime)
+            return false;
+
+        return this.nowTime - lastTime > 7 * 24 * 3600;
+    }
+
+    fetchLastTimeByMessages = async (messages) => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            let message = messages[i];
+            return message.crtimestamp;
+        }
     }
 
     recallResult = async (id) => {
@@ -575,7 +546,7 @@ class Chat extends Base {
                     return recallList[0];
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name}recallList request error: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: ${e}`);
         }
     }
 
@@ -591,11 +562,25 @@ class Chat extends Base {
     }
 
     fetchRecallItem = async() => {
+        let items = await this.frame.$x(`//div[contains(@class, "message-item-normal")]`);
 
-    }
+        let next_item_index = -1;
+        for (let index in items) {
+            let item = items[index];
+            let imgElement = await item.$x(`//img[contains(@class, "message-avatar")]`);
+            let avactor = await this.frame.evaluate(node => node.src, imgElement);
 
-    dealRecallItem = async(item) => {
-        await item.click();
+            if (avactor == this.beforeRecallAvactor) {
+                next_item_index = index + 1;
+                break;
+            }
+        }
+
+        if (this.beforeRecallAvactor.length == 0)
+            next_item_index = 0;
+
+        if (next_item_index >= 0 || next_item_index < items.length)
+            return items[next_item_index];
     }
 
     setBefore = async() => {
