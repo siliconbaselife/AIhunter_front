@@ -492,3 +492,5 @@ class Resume extends Base {
         return element;
     }
 }
+
+module.exports = Resume;
