@@ -9,7 +9,14 @@ class Resume extends Base {
     peopleCache;
 
     queryTasks = async() => {
+        const {status, data, msg} = await Request({
+            url: `${BIZ_DOMAIN}/recruit/account/task/fetch`,
+            data: fetch_data,
+            method: 'POST'
+          });
+        logger.info(`脉脉 ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
 
+        return data;
     }
 
     run = async() => {
