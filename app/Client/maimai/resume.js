@@ -9,6 +9,10 @@ class Resume extends Base {
     keywordDelay = 40;
     peopleCache;
 
+    constructor(options) {
+        super(options)
+    }
+
     queryTasks = async() => {
         const {status, data, msg} = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/fetch`,

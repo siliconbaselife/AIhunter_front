@@ -11,8 +11,8 @@ const Common = require("./Client/common.js");
 const Resume = require("./Client/maimai/resume.js");
 
 const common = new Common();
-common.initBrowser().then(() => {
-    const page = common.newPage();
+common.initBrowser().then(async () => {
+    const page = await common.newPage();
     const resume = new Resume({ page, browser: common.browser, userInfo: { name: "测试名字" } });
 
     resume.run();
