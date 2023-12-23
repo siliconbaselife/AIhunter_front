@@ -12,7 +12,8 @@ class Resume extends Base {
     queryTasks = async() => {
         const {status, data, msg} = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/fetch`,
-            data: fetch_data,
+            // data: fetch_data,
+            data: {},
             method: 'POST'
           });
         logger.info(`脉脉 ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);

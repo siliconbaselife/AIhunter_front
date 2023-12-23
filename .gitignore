@@ -30,3 +30,5 @@ Thumbs.db
 /logs/
 /package/
 yarn.lock
+dist/
+build/

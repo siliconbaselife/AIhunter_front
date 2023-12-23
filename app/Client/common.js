@@ -12,6 +12,8 @@ class Common {
             }
         }
 
+        console.log(this.browser);
+
         const page = await this.browser.newPage();
 
         await this.settingPage(page);
@@ -42,9 +44,8 @@ class Common {
                 `--disable-dev-shm-usage`
             ];
 
-            let chromeInfo = await findChrome();
+            let chromeInfo = await findChrome({});
             let executablePath = chromeInfo.executablePath;
-
             this.browser = await puppeteer.launch({
                 executablePath: executablePath,
                 headless: false,
@@ -62,6 +63,7 @@ class Common {
                 logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
             })
         } catch (e) {
+          console.log(e);
             logger.error(`启动失败##`, e);
         }
     }

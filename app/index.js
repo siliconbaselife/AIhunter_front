@@ -11,10 +11,12 @@ const Common = require("./Client/common.js");
 const Resume = require("./Client/maimai/resume.js");
 
 const common = new Common();
-common.initBrowser();
-const page = common.newPage();
-const resume = new Resume({ page, browser: common.browser, userInfo: { name: "测试名字" } });
+common.initBrowser().then(() => {
+    const page = common.newPage();
+    const resume = new Resume({ page, browser: common.browser, userInfo: { name: "测试名字" } });
 
-resume.run();
+    resume.run();
+});
+
 
 console.log("end");
