@@ -1,5 +1,6 @@
 const Base = require('./Base');
 const { sleep } = require('../../utils');
+const logger = require('../../Logger');
 
 class Login extends Base {
     getUserInfo = async () => {

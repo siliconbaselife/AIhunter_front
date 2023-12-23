@@ -1,7 +1,7 @@
 const Base = require('./Base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
-const Logger = require('../../Logger');
+const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
 
 
@@ -22,9 +22,9 @@ class Resume extends Base {
     }
 
     run = async() => {
-        Logger.info(`脉脉 ${this.userInfo.name} 打招呼，开始执行任务`);
+        logger.info(`脉脉 ${this.userInfo.name} 打招呼，开始执行任务`);
         let tasks = await this.queryTasks();
-        Logger.info(`脉脉 ${this.userInfo.name} 获取到 ${tasks.length} 个任务, 任务如下: ${tasks}`);
+        logger.info(`脉脉 ${this.userInfo.name} 获取到 ${tasks.length} 个任务, 任务如下: ${tasks}`);
 
         this.hiEnd = false;
         this.friendEnd = false;
@@ -37,10 +37,10 @@ class Resume extends Base {
             let task = tasks[index];
 
             if (task.helloSum <= 0) {
-                Logger.info(`脉脉 ${this.userInfo.name} 任务 ${index + 1} 已经完成`);
+                logger.info(`脉脉 ${this.userInfo.name} 任务 ${index + 1} 已经完成`);
             }
     
-            Logger.info(`脉脉 ${this.userInfo.name} 开始第 ${index + 1} 个任务`);
+            logger.info(`脉脉 ${this.userInfo.name} 开始第 ${index + 1} 个任务`);
 
             try {
                 await this.dealTask(task);
@@ -255,7 +255,7 @@ class Resume extends Base {
         }
 
         let txt = await this.page.evaluate(node => node.textContent, peopleNumSpan);
-        Logger.info(`脉脉 ${this.userInfo.name} 搜集人数 ${txt}`);
+        logger.info(`脉脉 ${this.userInfo.name} 搜集人数 ${txt}`);
     }
 
     refresh = async() => {
@@ -460,7 +460,7 @@ class Resume extends Base {
                 return false;
             }
         } catch (e) {
-            Logger.error(`筛选错误为##`, e);
+            logger.error(`筛选错误为##`, e);
         }
 
         return true;

@@ -1,7 +1,7 @@
 const Base = require('./Base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
-const Logger = require('../../Logger');
+const logger = require('../../Logger');
 
 class Chat extends Base {
     downloadDir = process.cwd();
@@ -9,7 +9,7 @@ class Chat extends Base {
     keywordDelay = 40;
 
     run = async() => {
-        Logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
+        logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
         await this.setBefore();
         await this.noop();
         await this.setEnd();
@@ -48,7 +48,7 @@ class Chat extends Base {
         let unreadNum = await this.hasUnread();
         if (unreadNum == 0)
             return;
-        Logger.info(`脉脉 ${this.userInfo.name} 有 ${unreadNum} 个未读消息`);
+        logger.info(`脉脉 ${this.userInfo.name} 有 ${unreadNum} 个未读消息`);
 
         await this.setUnreadPage();
         await this.dealUnreadMsg();
