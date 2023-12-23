@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const logger = require('../Logger');
-const findChrome = require('../../node_modules/carlo/lib/find_chrome');
+const findChrome = require('carlo/lib/find_chrome');
 
 class Common {
     browser;
@@ -42,8 +42,8 @@ class Common {
                 `--disable-dev-shm-usage`
             ];
 
-            let findChromePath = await findChrome({});
-            let executablePath = findChromePath.executablePath;
+            let chromeInfo = await findChrome();
+            let executablePath = chromeInfo.executablePath;
 
             this.browser = await puppeteer.launch({
                 executablePath: executablePath,

@@ -2,6 +2,7 @@ const Base = require('./Base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const Logger = require('../../Logger');
+const { BIZ_DOMAIN } = require("../../Config/index");
 
 
 class Resume extends Base {
