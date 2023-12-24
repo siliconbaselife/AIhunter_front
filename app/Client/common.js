@@ -7,9 +7,7 @@ class Common {
 
     newPage = async (options = {width: 1580, height: 900}) => {
         if (!this.browser) {
-            if (!this.browser) {
-                await this.initBrowser(options);
-            }
+            await this.initBrowser(options);
         }
 
         console.log(this.browser);
@@ -29,7 +27,10 @@ class Common {
         return page;
     }
 
-    initBrowser = async (options) => {
+    initBrowser = async (options = {
+      width: 1580,
+      height: 900,
+    }) => {
         try {
             const { width, height} = options;
             const args = [

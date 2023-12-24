@@ -43,7 +43,7 @@ class Login extends Base {
     }
 
     dologin = async () => {
-        this.getUserInfo();
+        await this.getUserInfo();
   
         try {
             await this.page.goto(this.loginUrl, {waitUntil: 'networkidle2'});

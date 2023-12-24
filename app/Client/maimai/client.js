@@ -1,19 +1,16 @@
 const Resume = require('./Resume');
 const Login = require('./login');
 const Chat = require('./Chat');
-const Common = require('../common');
 const logger = require('../../Logger');
+const common = require('../common');
 
 class Client {
     userInfo;
     options;
+    common = new Common();
 
-    constructor() {
-        global.running = true;
-    }
-
-    login = async () =>  {
-        this.page = await this.newPage({
+    loginPage = async () =>  {
+        this.page = await this.common.newPage({
             width: 1792,
             height: 984,
         });
@@ -38,7 +35,9 @@ class Client {
     }
 
     run = async() => {
-        await this.login();
+        global.running = true;
+
+        await this.loginPage();
         let resume = new Resume(this.options);
         await resume.run();
         logger.info(`脉脉 ${this.userInfo.name} 打招呼任务执行完成`);
@@ -49,4 +48,4 @@ class Client {
     }
 }
 
-module.exports = new Client();
+module.exports = Client;
