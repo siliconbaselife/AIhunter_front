@@ -11,7 +11,7 @@
 const Client = require("./Client/maimai/client.js");
 
 let client = new Client();
-await client.run();
+client.run();
 
 
 console.log("end");

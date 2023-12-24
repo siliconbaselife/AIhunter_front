@@ -2,7 +2,7 @@ const Resume = require('./Resume');
 const Login = require('./login');
 const Chat = require('./Chat');
 const logger = require('../../Logger');
-const common = require('../common');
+const Common = require('../common');
 
 class Client {
     userInfo;
