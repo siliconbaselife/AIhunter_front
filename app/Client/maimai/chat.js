@@ -3,6 +3,7 @@ const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
+const FormData = require('form-data');
 
 class Chat extends Base {
     downloadDir = process.cwd();
@@ -95,6 +96,7 @@ class Chat extends Base {
         let peopleIndex = 0;
         while(true) {
             await this.scrollChatToPosition(peopleIndex);
+            await sleep(3 * 1000);
 
             let hasUnread = await this.dealOneUnread();
             if (!hasUnread) {
@@ -121,16 +123,15 @@ class Chat extends Base {
     dealOneUnread = async() => {
         let msgItems = await this.frame.$x(`//div[contains(@class, "message-item-normal")]`);
         for (let msgItem of msgItems) {
-            await sleep(10 * 1000);
-
             let [badge] = await msgItem.$x(`//i[contains(@class, "message-badge")]`);
             if (!badge)
                 continue;
 
-            let saySomethineFlag = await this.dealUnreadPeopleMsgs(msgItem);
+            let itemInfo = await this.fetchItemInfo(msgItem);
+            let saySomethineFlag = await this.dealUnreadPeopleMsgs(itemInfo);
             while(saySomethineFlag) {
                 await sleep(10 * 1000);
-                saySomethineFlag = await this.dealUnreadPeopleMsgs(msgItem);
+                saySomethineFlag = await this.dealUnreadPeopleMsgs(itemInfo);
             }
 
             return true;
@@ -139,15 +140,26 @@ class Chat extends Base {
         return false;
     }
 
-    dealUnreadPeopleMsgs = async(msgItem) => {
-        await msgItem.click();
-        await sleep(5 * 1000);
-
+    fetchItemInfo = async(msgItem) => {
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
+        await nameElement.click();
+        await sleep(5 * 1000);
+
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
         logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 name: ${name} avator: ${avator}`);
+        let itemInfo = {
+            name: name,
+            avator: avator
+        }
+
+        return itemInfo;
+    }
+
+    dealUnreadPeopleMsgs = async(itemInfo) => {
+        let name = itemInfo.name;
+        let avator = itemInfo.avactor;
 
         let isSystemFlag = await this.isSystemName(name);
         if (isSystemFlag)
@@ -155,7 +167,7 @@ class Chat extends Base {
         
         let msgs = await this.fetchPeopleMsgs(name, avator);
         if (!msgs) {
-            logger.info(`脉脉 ${this.userInfo.name} name: ${name} avator: ${avator} 没有获取到消息，出现异常`);
+            logger.info(`脉脉 ${this.userInfo.name} name: ${name} avator: ${avator} 没有获取到消息`);
             return false;
         }
 
@@ -176,6 +188,7 @@ class Chat extends Base {
 
     chatToPeople = async (peopleInfo, messages) => {
         let gptMessages = await this.transferMessages(messages);
+        logger.info(`脉脉 ${this.userInfo.name} gptMessages: ${JSON.stringify(gptMessages)}`);
         if (gptMessages.length == 0 || gptMessages[gptMessages.length - 1].speaker == "robot") {
             logger.info(`脉脉 ${this.userInfo.name} 这个人 ${peopleInfo.name} ${peopleInfo.id} 没有未读消息`);
             return;
@@ -226,7 +239,7 @@ class Chat extends Base {
         const data = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
             data: {
-              accountID: this.accountID,
+              accountID: this.userInfo.id,
               candidateID: id,
               candidateName: name,
               historyMsg: messages,
@@ -327,7 +340,7 @@ class Chat extends Base {
     uploadPhoneNum = async (peopleInfo, phoneNum) => {
         const form = new FormData();  
 
-        const reqParam = {accountID: this.userInfo.accountID, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
+        const reqParam = {accountID: this.userInfo.id, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
 
         Object.keys(reqParam).map((key) => {
           form.append(key, reqParam[key]);
@@ -338,10 +351,8 @@ class Chat extends Base {
 
         form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
             if (err) {
-                logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 上传失败error ${e}`)
+                logger.error(`脉脉手机号上传失败error ${e}`)
             }
-    
-            logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 手机号上传成功`)
         });
     }
 
@@ -362,7 +373,7 @@ class Chat extends Base {
                 await closeSpan.click();
             } 
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 获取手机号异常: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 获取手机号异常: `, e);
         }
     }
 
@@ -438,6 +449,7 @@ class Chat extends Base {
     }
 
     scrollChatToPosition = async(index) => {
+        console.log(`当前是第 ${index} 个item 高度: ${76 * index}`);
         await this.frame.evaluate((scrollLength) => {
             const wrap = $(".virtualized-message-list")[0];
   
