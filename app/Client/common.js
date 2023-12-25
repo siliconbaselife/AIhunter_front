@@ -34,7 +34,6 @@ class Common {
         try {
             const { width, height} = options;
             const args = [
-                // '--start-fullscreen',
                 '--disable-notifications=true',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -64,8 +63,7 @@ class Common {
                 logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
             })
         } catch (e) {
-          console.log(e);
-            logger.error(`启动失败##`, e);
+          logger.error(`启动失败##`, e);
         }
     }
 

@@ -19,14 +19,14 @@ class Client {
         this.options.page = this.page;
         this.login = new Login(this.options);
 
-        await this.login.doLogin();
+        await this.login.dologin();
 
         this.userInfo = this.login.maimaiUserInfo
         this.options.userInfo = this.userInfo;
     }
 
     bind = async() => {
-        await this.login();
+        await this.loginPage();
         return this.userInfo;
     }
 
@@ -36,10 +36,12 @@ class Client {
 
     run = async() => {
         global.running = true;
+        console.log("脉脉启动");
 
         await this.loginPage();
-        let resume = new Resume(this.options);
-        await resume.run();
+        console.log("脉脉 登陆完成");
+        // let resume = new Resume(this.options);
+        // await resume.run();
         logger.info(`脉脉 ${this.userInfo.name} 打招呼任务执行完成`);
 
         let chat = new Chat(this.options);

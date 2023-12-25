@@ -2,6 +2,7 @@ const Base = require('./Base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const logger = require('../../Logger');
+const { BIZ_DOMAIN } = require("../../Config/index");
 
 class Chat extends Base {
     downloadDir = process.cwd();
@@ -23,7 +24,7 @@ class Chat extends Base {
             try {
                 await this.doUnread();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: ${e}`);
+                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
             }
 
             let unreadNum = await this.hasUnread();
@@ -33,7 +34,7 @@ class Chat extends Base {
             try {
                 await this.doRecall();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: ${e}`);
+                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
             }
         }
     }
@@ -41,7 +42,7 @@ class Chat extends Base {
     isSystemName = async(name) => {
         let systemNames = ["电话直联服务", "待处理请求", "脉脉官方服务", "招聘小助手", "待处理请求"]
 
-        return name in systemNames;
+        return systemNames.includes(name);
     }
 
     doUnread = async() => {
@@ -120,6 +121,8 @@ class Chat extends Base {
     dealOneUnread = async() => {
         let msgItems = await this.frame.$x(`//div[contains(@class, "message-item-normal")]`);
         for (let msgItem of msgItems) {
+            await sleep(10 * 1000);
+
             let [badge] = await msgItem.$x(`//i[contains(@class, "message-badge")]`);
             if (!badge)
                 continue;
@@ -138,7 +141,7 @@ class Chat extends Base {
 
     dealUnreadPeopleMsgs = async(msgItem) => {
         await msgItem.click();
-        await sleep(1000);
+        await sleep(5 * 1000);
 
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
@@ -149,36 +152,36 @@ class Chat extends Base {
         let isSystemFlag = await this.isSystemName(name);
         if (isSystemFlag)
             return false;
-
-        try {
-            await this.dealSystemView();
-        } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} name: ${name} 处理系统信息异常 ${e}`);
-        }
         
         let msgs = await this.fetchPeopleMsgs(name, avator);
         if (!msgs) {
-            logger.info(`脉脉 ${this.userInfo.name} name: ${name} 没有获取到消息，出现异常`);
+            logger.info(`脉脉 ${this.userInfo.name} name: ${name} avator: ${avator} 没有获取到消息，出现异常`);
             return false;
         }
 
         let peopleId = await this.fetchPeopleId(msgs);
-        let peopleInfo = {id: peopleId, name: name, imgUrl: imgUrl}
+        let peopleInfo = {id: peopleId, name: name, imgUrl: avator}
         logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 peopleInfo: ${JSON.stringify(peopleInfo)}`);
+
+        try {
+            await this.dealSystemView(peopleInfo);
+        } catch (e) {
+            logger.error(`脉脉 ${this.userInfo.name} name: ${name} 处理系统信息异常: `, e);
+        }
 
         await this.chatToPeople(peopleInfo, msgs);
         
         return true;
     }
 
-    chatToPeople = async (messages) => {
+    chatToPeople = async (peopleInfo, messages) => {
         let gptMessages = await this.transferMessages(messages);
         if (gptMessages.length == 0 || gptMessages[gptMessages.length - 1].speaker == "robot") {
             logger.info(`脉脉 ${this.userInfo.name} 这个人 ${peopleInfo.name} ${peopleInfo.id} 没有未读消息`);
             return;
         }
 
-        await this.chatWithRobot(r_messages, peopleInfo);
+        await this.chatWithRobot(gptMessages, peopleInfo);
     }
 
     chatWithRobot = async (messages, peopleInfo) => {
@@ -316,8 +319,8 @@ class Chat extends Base {
         return res_messgaes;
     }
 
-    dealSystemView = async (messages, peopleInfo) => {
-        await this.dealAgree(peopleInfo);
+    dealSystemView = async (peopleInfo) => {
+        await this.dealAgree();
         await this.fetchPhone(peopleInfo);
     }
 
@@ -422,20 +425,20 @@ class Chat extends Base {
         let msgs;
 
         if (name in this.NameMsgCache) {
-            msgs = NameMsgCache[name];
+            msgs = this.NameMsgCache[name];
             delete this.NameMsgCache[name];
         }
 
         if (avator in this.AvactarMsgCache) {
-            msgs = AvactarMsgCache[name];
-            delete this.AvactarMsgCache[name];
+            msgs = this.AvactarMsgCache[avator];
+            delete this.AvactarMsgCache[avator];
         }
 
         return msgs;
     }
 
     scrollChatToPosition = async(index) => {
-        await this.page.evaluate((scrollLength) => {
+        await this.frame.evaluate((scrollLength) => {
             const wrap = $(".virtualized-message-list")[0];
   
             wrap.scrollTo(0, scrollLength);
@@ -608,7 +611,7 @@ class Chat extends Base {
                         await this.dealPullMsg(res.messages);
                     }
                 } catch (e) {
-                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天pull_msg异常: ${url} ${e}`);
+                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天pull_msg异常: ${url}:`, e);
                 }
             }
 
@@ -624,7 +627,7 @@ class Chat extends Base {
                         await this.dealGetDlg(res.dialogues);
                     }
                 } catch (e) {
-                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天get_dlg异常: ${url} ${e}`);
+                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天get_dlg异常: ${url}:`, e);
                 }
             }
         }
@@ -637,8 +640,8 @@ class Chat extends Base {
             let avater = userCard.avatar;
             let name = userCard.name;
 
-            looger.info(`脉脉 ${this.userInfo.name} 候选人 ${name} 通过pull_msg获取到消息`);
-            this.peopleMsgCache[avater] = messageInfo.latest_dialogs;
+            logger.info(`脉脉 ${this.userInfo.name} 候选人 ${name} avater: ${avater} 通过pull_msg获取到消息`);
+            this.AvactarMsgCache[avater] = messageInfo.latest_dialogs;
         }
     }
 
@@ -668,7 +671,7 @@ class Chat extends Base {
         const pageFrame = await this.page.$('#imIframe');
         this.frame = await pageFrame.contentFrame();
 
-        let allBtn = this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
+        let allBtn = await this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
         await allBtn.click();
     }
 
