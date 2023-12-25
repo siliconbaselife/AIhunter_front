@@ -43,8 +43,8 @@ class Client {
         console.log("脉脉 登陆完成");
         await sleep(2 * 1000);
 
-        // let resume = new Resume(this.options);
-        // await resume.run();
+        let resume = new Resume(this.options);
+        await resume.run();
         logger.info(`脉脉 ${this.userInfo.name} 打招呼任务执行完成`);
 
         let chat = new Chat(this.options);
