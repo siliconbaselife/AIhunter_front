@@ -19,7 +19,7 @@ class Client {
         this.options.page = this.page;
         this.login = new Login(this.options);
 
-        await this.login.doLogin();
+        await this.login.dologin();
 
         this.userInfo = this.login.maimaiUserInfo
         this.options.userInfo = this.userInfo;
