@@ -6,7 +6,7 @@ class Base extends Common {
 
     constructor(options) {
         super();
-        logger.info(`maimai base options: ${options}`);
+        logger.info(`maimai base options: ${JSON.stringify(options)}`);
 
         this.options = options || {};
         const {page, browser, userInfo} = this.options;
@@ -14,8 +14,9 @@ class Base extends Common {
         this.browser = browser;
         this.page = page;
 
-        logger.info(`maimai userInfo: ${userInfo}`);
-        this.userInfo = userInfo;
+        if (userInfo)
+            logger.info(`maimai userInfo: ${JSON.stringify(userInfo)}`);
+            this.userInfo = userInfo;
     }
 }
 

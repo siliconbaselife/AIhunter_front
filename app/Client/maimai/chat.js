@@ -2,6 +2,8 @@ const Base = require('./Base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const logger = require('../../Logger');
+const { BIZ_DOMAIN } = require("../../Config/index");
+const FormData = require('form-data');
 
 class Chat extends Base {
     downloadDir = process.cwd();
@@ -23,7 +25,7 @@ class Chat extends Base {
             try {
                 await this.doUnread();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: ${e}`);
+                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
             }
 
             let unreadNum = await this.hasUnread();
@@ -33,7 +35,7 @@ class Chat extends Base {
             try {
                 await this.doRecall();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: ${e}`);
+                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
             }
         }
     }
@@ -41,7 +43,7 @@ class Chat extends Base {
     isSystemName = async(name) => {
         let systemNames = ["电话直联服务", "待处理请求", "脉脉官方服务", "招聘小助手", "待处理请求"]
 
-        return name in systemNames;
+        return systemNames.includes(name);
     }
 
     doUnread = async() => {
@@ -94,6 +96,7 @@ class Chat extends Base {
         let peopleIndex = 0;
         while(true) {
             await this.scrollChatToPosition(peopleIndex);
+            await sleep(3 * 1000);
 
             let hasUnread = await this.dealOneUnread();
             if (!hasUnread) {
@@ -124,10 +127,11 @@ class Chat extends Base {
             if (!badge)
                 continue;
 
-            let saySomethineFlag = await this.dealUnreadPeopleMsgs(msgItem);
+            let itemInfo = await this.fetchItemInfo(msgItem);
+            let saySomethineFlag = await this.dealUnreadPeopleMsgs(itemInfo);
             while(saySomethineFlag) {
                 await sleep(10 * 1000);
-                saySomethineFlag = await this.dealUnreadPeopleMsgs(msgItem);
+                saySomethineFlag = await this.dealUnreadPeopleMsgs(itemInfo);
             }
 
             return true;
@@ -136,49 +140,62 @@ class Chat extends Base {
         return false;
     }
 
-    dealUnreadPeopleMsgs = async(msgItem) => {
-        await msgItem.click();
-        await sleep(1000);
-
+    fetchItemInfo = async(msgItem) => {
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
+        await nameElement.click();
+        await sleep(5 * 1000);
+
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
-        logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 name: ${name} avator: ${avator}`);
+        logger.info(`脉脉 ${this.userInfo.name} 处理消息 name: ${name} avator: ${avator}`);
+        let itemInfo = {
+            name: name,
+            avator: avator
+        }
+
+        return itemInfo;
+    }
+
+    dealUnreadPeopleMsgs = async(itemInfo) => {
+        let name = itemInfo.name;
+        let avator = itemInfo.avator;
 
         let isSystemFlag = await this.isSystemName(name);
         if (isSystemFlag)
             return false;
-
-        try {
-            await this.dealSystemView();
-        } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} name: ${name} 处理系统信息异常 ${e}`);
-        }
         
         let msgs = await this.fetchPeopleMsgs(name, avator);
         if (!msgs) {
-            logger.info(`脉脉 ${this.userInfo.name} name: ${name} 没有获取到消息，出现异常`);
+            logger.info(`脉脉 ${this.userInfo.name} name: ${name} avator: ${avator} 没有获取到消息`);
             return false;
         }
 
         let peopleId = await this.fetchPeopleId(msgs);
-        let peopleInfo = {id: peopleId, name: name, imgUrl: imgUrl}
+        let peopleInfo = {id: peopleId, name: name, imgUrl: avator}
         logger.info(`脉脉 ${this.userInfo.name} 处理未读消息 peopleInfo: ${JSON.stringify(peopleInfo)}`);
 
+        try {
+            await this.dealSystemView(peopleInfo);
+        } catch (e) {
+            logger.error(`脉脉 ${this.userInfo.name} name: ${name} 处理系统信息异常: `, e);
+        }
+
         await this.chatToPeople(peopleInfo, msgs);
-        
+        await this.fetchPeopleMsgs(name, avator);
+
         return true;
     }
 
-    chatToPeople = async (messages) => {
+    chatToPeople = async (peopleInfo, messages) => {
         let gptMessages = await this.transferMessages(messages);
+        logger.info(`脉脉 ${this.userInfo.name} gptMessages: ${JSON.stringify(gptMessages)}`);
         if (gptMessages.length == 0 || gptMessages[gptMessages.length - 1].speaker == "robot") {
             logger.info(`脉脉 ${this.userInfo.name} 这个人 ${peopleInfo.name} ${peopleInfo.id} 没有未读消息`);
             return;
         }
 
-        await this.chatWithRobot(r_messages, peopleInfo);
+        await this.chatWithRobot(gptMessages, peopleInfo);
     }
 
     chatWithRobot = async (messages, peopleInfo) => {
@@ -223,7 +240,7 @@ class Chat extends Base {
         const data = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
             data: {
-              accountID: this.accountID,
+              accountID: this.userInfo.id,
               candidateID: id,
               candidateName: name,
               historyMsg: messages,
@@ -316,15 +333,15 @@ class Chat extends Base {
         return res_messgaes;
     }
 
-    dealSystemView = async (messages, peopleInfo) => {
-        await this.dealAgree(peopleInfo);
+    dealSystemView = async (peopleInfo) => {
+        await this.dealAgree();
         await this.fetchPhone(peopleInfo);
     }
 
     uploadPhoneNum = async (peopleInfo, phoneNum) => {
         const form = new FormData();  
 
-        const reqParam = {accountID: this.userInfo.accountID, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
+        const reqParam = {accountID: this.userInfo.id, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
 
         Object.keys(reqParam).map((key) => {
           form.append(key, reqParam[key]);
@@ -335,10 +352,8 @@ class Chat extends Base {
 
         form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
             if (err) {
-                logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 上传失败error ${e}`)
+                logger.error(`脉脉手机号上传失败error ${e}`)
             }
-    
-            logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 手机号上传成功`)
         });
     }
 
@@ -359,7 +374,7 @@ class Chat extends Base {
                 await closeSpan.click();
             } 
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 获取手机号异常: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 获取手机号异常: `, e);
         }
     }
 
@@ -422,20 +437,20 @@ class Chat extends Base {
         let msgs;
 
         if (name in this.NameMsgCache) {
-            msgs = NameMsgCache[name];
+            msgs = this.NameMsgCache[name];
             delete this.NameMsgCache[name];
         }
 
         if (avator in this.AvactarMsgCache) {
-            msgs = AvactarMsgCache[name];
-            delete this.AvactarMsgCache[name];
+            msgs = this.AvactarMsgCache[avator];
+            delete this.AvactarMsgCache[avator];
         }
 
         return msgs;
     }
 
     scrollChatToPosition = async(index) => {
-        await this.page.evaluate((scrollLength) => {
+        await this.frame.evaluate((scrollLength) => {
             const wrap = $(".virtualized-message-list")[0];
   
             wrap.scrollTo(0, scrollLength);
@@ -446,38 +461,47 @@ class Chat extends Base {
         await this.putUnreadBtn(false);
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
-        await item.click();
-        await sleep(1000);
+        let itemInfo = await this.fetchItemInfo(item);
+        
+        let msgs = await this.doRecallMsg(item, itemInfo);
+        await this.dealRecallEnd(msgs);
 
         this.recallIndex += 1;
+        this.beforeRecallAvactor = itemInfo.avator;
+    }
 
-        let [imgElement] = await item.$x(`//img[contains(@class, "message-avatar")]`);
+    doRecallMsg = async(item, itemInfo) => {
+        let name = itemInfo.name;
+        let avator = itemInfo.avator;
 
-        let [nameElement] = await item.$x(`//h6[contains(@class, "message-user-name")]`);
-        let name = await this.frame.evaluate(node => node.innerText, nameElement);
-        let avator = await this.frame.evaluate(node => node.src, imgElement);
+        let isSystemFlag = await this.isSystemName(name);
+        if (isSystemFlag)
+            return;
 
-        let msgs = await this.fetchPeopleMsgs(name, avator);
-        if (!msgs) {
-            logger.info(`脉脉 ${this.userInfo.name} name: ${name} 没有获取到消息，出现异常`);
-            return false;
+        await item.click();
+        await sleep(3 * 1000);
+
+        let messages = await this.fetchPeopleMsgs(name, avator);
+        if (!messages) {
+            logger.info(`脉脉 ${this.userInfo.name} name: ${name} 没有获取到消息,出现异常`);
+            return;
         }
 
-        let peopleId = await this.fetchPeopleId(msgs);
-        let peopleInfo = {id: peopleId, name: name, imgUrl: imgUrl};
+        let peopleId = await this.fetchPeopleId(messages);
+        let peopleInfo = {id: peopleId, name: name, imgUrl: avator};
         logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 召回`);
 
         let recallInfo = await this.needRecall(peopleInfo, messages);  
         if (!recallInfo)
-            return;
+            return messages;
 
         await this.sendMessage(friend.recall_msg);
         await this.recallResult(peopleInfo.id);
 
-        await this.dealRecallEnd(item);
+        return messages;
     }
 
-    dealRecallEnd = async (item, msgs) => {
+    dealRecallEnd = async (msgs) => {
         let f1 = await this.isOutTime(msgs);
         let f2 = await this.noMoreMsg();
 
@@ -493,6 +517,9 @@ class Chat extends Base {
     }
 
     isOutTime = async (messages) => {
+        if (!messages)
+            return false;
+
         let lastTime = await this.fetchLastTimeByMessages(messages);
         if (!lastTime)
             return false;
@@ -531,7 +558,7 @@ class Chat extends Base {
             const { status, data } = await Request({
               url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
               data: {
-                accountID: this.userInfo.accountID,
+                accountID: this.userInfo.id,
                 candidateIDs: [peopleInfo.id],
                 candidateIDs_read: readIDs
               },
@@ -564,14 +591,14 @@ class Chat extends Base {
     fetchRecallItem = async() => {
         let items = await this.frame.$x(`//div[contains(@class, "message-item-normal")]`);
 
-        let next_item_index = -1;
+        let next_item_index = 0;
         for (let index in items) {
             let item = items[index];
-            let imgElement = await item.$x(`//img[contains(@class, "message-avatar")]`);
+            let [imgElement] = await item.$x(`//img[contains(@class, "message-avatar")]`);
             let avactor = await this.frame.evaluate(node => node.src, imgElement);
 
             if (avactor == this.beforeRecallAvactor) {
-                next_item_index = index + 1;
+                next_item_index = parseInt(index) + 1;
                 break;
             }
         }
@@ -608,7 +635,7 @@ class Chat extends Base {
                         await this.dealPullMsg(res.messages);
                     }
                 } catch (e) {
-                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天pull_msg异常: ${url} ${e}`);
+                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天pull_msg异常: ${url}:`, e);
                 }
             }
 
@@ -624,7 +651,7 @@ class Chat extends Base {
                         await this.dealGetDlg(res.dialogues);
                     }
                 } catch (e) {
-                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天get_dlg异常: ${url} ${e}`);
+                    logger.error(`脉脉 ${this.userInfo.name} 获取聊天get_dlg异常: ${url}:`, e);
                 }
             }
         }
@@ -637,8 +664,8 @@ class Chat extends Base {
             let avater = userCard.avatar;
             let name = userCard.name;
 
-            looger.info(`脉脉 ${this.userInfo.name} 候选人 ${name} 通过pull_msg获取到消息`);
-            this.peopleMsgCache[avater] = messageInfo.latest_dialogs;
+            logger.info(`脉脉 ${this.userInfo.name} 候选人 ${name} avater: ${avater} 通过pull_msg获取到消息`);
+            this.AvactarMsgCache[avater] = messageInfo.latest_dialogs;
         }
     }
 
@@ -648,12 +675,18 @@ class Chat extends Base {
             if (message.is_me != 0)
                 continue;
 
+            if (message.business_type != 1114)
+                continue
+
             if (!message.common_card)
                 continue;
 
-                name = message.common_card.center.title
+            name = message.common_card.center.title
         }
+        if (!name)
+            return;
 
+        logger.info(`脉脉 ${this.userInfo.name} 候选人 ${name} 通过get_dlg获取到消息`);
         this.NameMsgCache[name] = dialogues;
     }
 
@@ -668,7 +701,7 @@ class Chat extends Base {
         const pageFrame = await this.page.$('#imIframe');
         this.frame = await pageFrame.contentFrame();
 
-        let allBtn = this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
+        let allBtn = await this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
         await allBtn.click();
     }
 
