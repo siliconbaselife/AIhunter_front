@@ -58,6 +58,12 @@ const HEALTH_CHECK_STATUS = {
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
   ERROR_NOTICE: 'ERROR_NOTICE'
 }
+
+const LOCAL_STORAGE_CONSTANTS = {
+  STORE_PATH: "./local-storage",
+  COOKIE_USER_KEY: "user",
+} 
+
 module.exports = {
   PLATFORM_ENUN,
   JOB_PRIORITY_ENUM,
@@ -69,6 +75,7 @@ module.exports = {
   addressName,
   processId: process.pid,
   HEALTH_CHECK_STATUS,
+  LOCAL_STORAGE_CONSTANTS,
   BIZ_DOMAIN: 'http://aistormy.com'
   // BIZ_DOMAIN: 'http://114.248.220.242:32040'
 }

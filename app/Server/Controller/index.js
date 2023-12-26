@@ -10,4 +10,4 @@ const useRoutes = (app) => {
     })
 }
 
-module.exports = useRoutes
+module.exports = useRoutes;
