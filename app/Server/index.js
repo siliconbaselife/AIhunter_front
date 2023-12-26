@@ -14,7 +14,6 @@ class AppServer {
     setApp() {
         useMiddleware(this.app); // 加载前置中间件
         useRoute(this.app); // 加载路由
-        
     }
 
     onAppListened() {

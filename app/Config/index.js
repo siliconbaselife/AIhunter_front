@@ -61,7 +61,7 @@ const HEALTH_CHECK_STATUS = {
 
 const LOCAL_STORAGE_CONSTANTS = {
   STORE_PATH: "./local-storage",
-  COOKIE_USER_KEY: "user",
+  USER_NAME_KEY: "user_name",
 } 
 
 module.exports = {

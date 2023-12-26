@@ -12,12 +12,17 @@
 
 const { BACK_ADMIN_DOMAIN } = require("../../Config/index");
 
+/**
+ * 跨域
+ * @param {import("koa").ParameterizedContext<import("koa").DefaultState, import("koa").DefaultContext, any>} ctx 
+ * @param {import("koa").Next} next 
+ */
 module.exports = async (ctx, next) => {
     ctx.set("Access-Control-Allow-Origin", BACK_ADMIN_DOMAIN); // 只允许指定域名
 
     ctx.set('Access-Control-Allow-Methods', 'OPTIONS, GET, PUT, POST, DELETE'); // 设置所允许的HTTP请求方法
 
-    ctx.set('Access-Control-Allow-Headers', 'x-requested-with, accept, origin, content-type'); // 字段是必需的。它也是一个逗号分隔的字符串，表明服务器支持的所有头信息字段.
+    ctx.set('Access-Control-Allow-Headers', '*'); // 字段是必需的。它也是一个逗号分隔的字符串，表明服务器支持的所有头信息字段. 如果设置为*，则表示允许所有
     // 服务器收到请求以后，检查了Origin、Access-Control-Request-Method和Access-Control-Request-Headers字段以后，确认允许跨源请求，就可以做出回应。
 
     ctx.set('Content-Type', 'application/json;charset=utf-8'); // Content-Type表示具体请求中的媒体类型信息

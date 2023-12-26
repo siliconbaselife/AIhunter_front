@@ -19,13 +19,12 @@ class LocalStorageHelper {
      * 保存
      * @param {string} k key 
      * @param {any} v 值
-     * @param {number} t 分钟
+     * @param {number} t 分钟(如果不传，则不会过期)
      * @returns {void}
      */
     set(k, v, t) {
-        let time = t || 60 //单位:分钟 //默认60分钟
         let timestamp = new Date().valueOf()
-        timestamp = timestamp / 1000 + time * 60
+        timestamp = t ? (timestamp / 1000 + t * 60) : 0;
         let setValue = {
             deadtime: timestamp,
             value: v
@@ -41,11 +40,7 @@ class LocalStorageHelper {
         let getValueJson = this.storage.getItem(`${k}`) || ""
         if (getValueJson) {
             let getValue = JSON.parse(getValueJson)
-            if (
-                parseInt(getValue.deadtime) < new Date().valueOf() / 1000 ||
-                !getValue.deadtime
-            )
-                return ""
+            if (getValue.deadtime && parseInt(getValue.deadtime) < new Date().valueOf() / 1000) return ""
             let value = getValue.value
             return value
         }

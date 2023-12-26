@@ -2,6 +2,9 @@ class Result {
     static SUCCESS = 0;
     static FAIL = -1;
 
+    static TOKEN_MISSED = 1000;
+    static TOKEN_INVALID = 1001;
+
     code;
     msg;
     data;
