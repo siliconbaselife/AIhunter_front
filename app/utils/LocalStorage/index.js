@@ -12,7 +12,7 @@ class LocalStorageHelper {
     }
 
     constructor() {
-        this.storage = new NodeLocalStorage.LocalStorage(LOCAL_STORAGE_CONSTANTS);
+        this.storage = new NodeLocalStorage.LocalStorage(LOCAL_STORAGE_CONSTANTS.STORE_PATH);
     }
 
     /**
