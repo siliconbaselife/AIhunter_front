@@ -76,6 +76,7 @@ module.exports = {
   processId: process.pid,
   HEALTH_CHECK_STATUS,
   LOCAL_STORAGE_CONSTANTS,
-  BIZ_DOMAIN: 'http://aistormy.com'
-  // BIZ_DOMAIN: 'http://114.248.220.242:32040'
+  BIZ_DOMAIN: 'http://aistormy.com',
+  // BIZ_DOMAIN: 'http://114.248.220.242:32040',
+  BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台域名
 }
