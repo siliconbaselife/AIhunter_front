@@ -20,7 +20,18 @@ class Base extends Common {
     }
 
     closeAllMsgDivs = async() => {
+        let msgDivs = await this.page.$x(`//div[contains(@role, "dialog")]`);
+        logger.info(`linkedin ${this.userInfo.name} 有 ${msgDivs.length} 个消息框需要关闭`);
 
+        while(msgDivs.length > 0) {
+            for (let msgDiv of msgDivs) {
+                let closeBtn = msgDiv.$x(`//button[contains(@class, "msg-overlay-bubble-header__control") and not(contains(@class, "msg-overlay-conversation-bubble__expand-btn"))]`);
+                await closeBtn.click();
+                await sleep(200);
+            }
+
+            msgDivs = await this.page.$x(`//div[contains(@role, "dialog")]`);
+        }
     }
 }
 
