@@ -8,6 +8,7 @@ const { BIZ_DOMAIN } = require("../../Config/index");
 class Resume extends Base {
     keywordDelay = 40;
     peopleCache;
+    getList;
 
     constructor(options) {
         super(options)
@@ -63,7 +64,7 @@ class Resume extends Base {
     }
 
     dealTaskBefore = async() => {
-        const getList = async (response) => {
+        this.getList = async (response) => {
             try {
               const url = response.url();
               const request = response.request();
@@ -91,7 +92,7 @@ class Resume extends Base {
     }
 
     dealTaskAfter = async() => {
-        this.page.removeListener('response', getList);
+        this.page.removeListener('response', this.getList);
     }
 
     setFilter = async(task) => {
@@ -557,36 +558,6 @@ class Resume extends Base {
 
         await this.waitPeopleNum();
         return true;
-    }
-
-    waitElement = async(xpath, document, num = 10) => {
-        let [element] = await document.$x(xpath);
-        let time = 0;
-        while(!element) {
-            await sleep(500);
-            [element] = await document.$x(xpath);
-            time += 1;
-
-            if (time > num)
-                return
-        }
-
-        return element;
-    }
-
-    waitElements = async(xpath, document, num = 10) => {
-        let elements = await document.$x(xpath);
-        let time = 0;
-        while(elements.length == 0) {
-            await sleep(500);
-            elements = await document.$x(xpath);
-            time += 1;
-
-            if (time > num)
-                return []
-        }
-
-        return elements;
     }
 }
 

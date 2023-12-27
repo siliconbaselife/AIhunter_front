@@ -245,6 +245,36 @@ class Common {
       this.browser = null;
     }
   }
+
+  waitElement = async(xpath, document, num = 10) => {
+    let [element] = await document.$x(xpath);
+    let time = 0;
+    while(!element) {
+        await sleep(500);
+        [element] = await document.$x(xpath);
+        time += 1;
+
+        if (time > num)
+            return
+    }
+
+    return element;
+}
+
+waitElements = async(xpath, document, num = 10) => {
+    let elements = await document.$x(xpath);
+    let time = 0;
+    while(elements.length == 0) {
+        await sleep(500);
+        elements = await document.$x(xpath);
+        time += 1;
+
+        if (time > num)
+            return []
+    }
+
+    return elements;
+}
 }
 
 module.exports = Common;

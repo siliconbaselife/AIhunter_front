@@ -708,21 +708,6 @@ class Chat extends Base {
     setEnd = async() => {
         await this.page.removeListener('response', getPullMsgs);
     }
-
-    waitElement = async(xpath, document, num = 10) => {
-        let [element] = await document.$x(xpath);
-        let time = 0;
-        while(!element) {
-            await sleep(500);
-            [element] = await document.$x(xpath);
-            time += 1;
-
-            if (time > 10)
-                return
-        }
-
-        return element;
-    }
 }
 
 module.exports = Chat;
