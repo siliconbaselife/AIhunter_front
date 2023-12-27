@@ -4,7 +4,6 @@ const fs = require('fs');
 // 按文件名字顺序加载
 const useRoutes = (app) => {
     fs.readdirSync(__dirname).sort().forEach(file => {
-        console.log("file", file);
         if (file === 'index.js') return // index.js文件不需要
         const middleware = require(`./${file}`)
         app.use(middleware);

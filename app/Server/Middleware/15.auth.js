@@ -1,9 +1,9 @@
 const { pathToRegexp } = require("path-to-regexp");
-const LocalStoageHelper = require("../../utils/LocalStorage/index");
+const UserManager = require("../../User/index");
 const Result  = require("../Domain/Result");
 
 // 包含路由(所有)
-const includePaths = pathToRegexp("*");
+const includePaths = pathToRegexp("/");
 
 // 排除路由(不需要鉴权)
 const excludePaths = pathToRegexp([
@@ -24,7 +24,12 @@ module.exports = (ctx, next) => {
             ctx.body = Result.fail(null, Result.TOKEN_MISSED, "未登录");
             return;
         }
-        
+        const userInfo = UserManager.getUserInfo(user_name);
+        if (!userInfo) {
+            ctx.body = Result.fail(null, Result.TOKEN_INVALID, "登录凭证无效");
+            return;
+        }
+        ctx.userInfo = userInfo; // 给ctx赋值userInfo
     }
     next();
 }

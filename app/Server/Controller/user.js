@@ -1,12 +1,18 @@
 const Router = require("koa-router");
 const Result = require("../Domain/Result");
 
+const UserManager = require("../../User/index");
+
 const userRouter = new Router({ prefix: "/user" });
 
 userRouter.post("/login", async (ctx, next) => {
-    // const {} = ctx.body;
-    console.log(ctx.request.body);
-    ctx.body = Result.ok(ctx.request.body);
+    const { user_name, email } = ctx.request.body || {};
+    if (!user_name) ctx.body = Result.fail("用户名不存在");
+    else if (!email) ctx.body = Result.fail("邮箱不存在");
+    else {
+        UserManager.setUserInfo({ user_name, email });
+        ctx.body = Result.ok();
+    }
 })
 
 

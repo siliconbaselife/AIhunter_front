@@ -13,7 +13,7 @@ class UserManager {
 
     /**
      * 获取用户信息
-     * @param {?string} user_name 用户token(如果不传, 则是获取当前用户信息)
+     * @param {string} user_name 用户token
      * @returns {{user_name: string, email: string} | null}
      */
     getUserInfo(user_name) {
@@ -21,7 +21,7 @@ class UserManager {
             const storedUserInfo = LocalStorage.get(LOCAL_STORAGE_CONSTANTS.USER_INFO_KEY) || {};
             return storedUserInfo[user_name] || null;
         }
-        return this.userInfo || null;
+        return null;
     }
 
     /**
@@ -35,8 +35,6 @@ class UserManager {
         const storedUserInfo = LocalStorage.get(LOCAL_STORAGE_CONSTANTS.USER_INFO_KEY) || {};
         storedUserInfo[user_name] = userInfo;
         LocalStorage.set(LOCAL_STORAGE_CONSTANTS.USER_INFO_KEY, storedUserInfo);
-        // 保存为当前用户信息
-        this.userInfo = userInfo;
     }
 
 
