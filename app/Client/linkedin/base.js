@@ -33,6 +33,11 @@ class Base extends Common {
             msgDivs = await this.page.$x(`//div[contains(@role, "dialog")]`);
         }
     }
+
+    refresh = async() => {
+        let homeBtn = await this.waitElement(`//span[contains(@title, "Home") and text() = "Home"]`, this.page);
+        await homeBtn.click();
+    }
 }
 
 module.exports = Base;

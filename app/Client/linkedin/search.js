@@ -229,11 +229,6 @@ class Search extends Base {
         await this.refresh();
     }
 
-    refresh = async() => {
-        let homeBtn = await this.waitElement(`//span[contains(@title, "Home") and text() = "Home"]`, this.page);
-        await homeBtn.click();
-    }
-
     nextPage = async() => {
 
     }
