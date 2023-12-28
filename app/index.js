@@ -8,13 +8,17 @@
 
 // const Common = require("./Client/common.js");
 
-const Client = require("./Client/maimai/client.js");
-const Logger = require('./Logger');
+// const Client = require("./Client/maimai/client.js");
+// const Logger = require('./Logger');
 
-global.Logger = Logger;
+// global.Logger = Logger;
 
-let client = new Client();
-client.run();
+// let client = new Client();
+// client.run();
 
 
-console.log("end");
+// console.log("end");
+
+const Server = require("./Server/index");
+
+new Server();
