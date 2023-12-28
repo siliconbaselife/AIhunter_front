@@ -1,6 +1,3 @@
-const ip = require('ip');
-const os = require('os');
-
 const PLATFORM_ENUN = {
   Boss: 'Boss',
   Zhilian: 'zhilian',
@@ -14,37 +11,8 @@ const JOB_PRIORITY_ENUM = {
   RECALL: 3
 }
 
-const ENV_ENUM = {
-  PROD: 'PROD',
-  BETA: 'BETA',
-  DEV: 'DEV',
-  LOCAL: 'LOCAL'
-}
-let ENV;
-
-switch (process.env.NODE_ENV) {
-  case 'production':
-    ENV = ENV_ENUM.PROD;
-    break;
-  case 'beta':
-    ENV = ENV_ENUM.BETA;
-    break;
-  case 'dev':
-    ENV = ENV_ENUM.DEV;
-    break;
-  case 'local':
-    ENV = ENV_ENUM.LOCAL;
-    break;
-  default:
-    ENV = ENV_ENUM.PROD;
-    break;
-}
-
 const BROADCAST_MESSAGE_TOPIC = `broadcast.topic`;
 const SEND_MESSAGE_TOPIC = `send.topic`;
-
-const myIP = ip.address();
-const addressName = os.hostname();
 
 const HEALTH_CHECK_STATUS = {
   START: 'START',
@@ -67,16 +35,12 @@ const LOCAL_STORAGE_CONSTANTS = {
 module.exports = {
   PLATFORM_ENUN,
   JOB_PRIORITY_ENUM,
-  ENV_ENUM,
-  ENV,
   BROADCAST_MESSAGE_TOPIC,
   SEND_MESSAGE_TOPIC,
-  myIP,
-  addressName,
-  processId: process.pid,
   HEALTH_CHECK_STATUS,
   LOCAL_STORAGE_CONSTANTS,
   BIZ_DOMAIN: 'http://aistormy.com',
   // BIZ_DOMAIN: 'http://114.248.220.242:32040',
   BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台域名
+  MAIN_PROCESS_PORT: 4000, // 主进程端口(子进程会在此端口上逐步递增+1);
 }

@@ -17,7 +17,7 @@ class UserManager {
      * @returns {{user_name: string, email: string} | null}
      */
     getUserInfo(user_name) {
-        if (user_name) {
+        if (user_name) { 
             const storedUserInfo = LocalStorage.get(LOCAL_STORAGE_CONSTANTS.USER_INFO_KEY) || {};
             return storedUserInfo[user_name] || null;
         }

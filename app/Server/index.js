@@ -21,6 +21,6 @@ class AppServer {
     }
 }
 
-new AppServer()
+new AppServer();
 
 module.exports = AppServer;
