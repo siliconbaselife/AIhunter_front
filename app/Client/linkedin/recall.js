@@ -31,15 +31,15 @@ class Recall extends Search {
 
     dealTask = async(task) => {
         await this.setFilter(task);
-        await this.noopTask(task);
+        await this.noopTask();
         await this.refresh();
     }
 
-    noopTask = async(task) => {
+    noopTask = async() => {
         let page = 1;
         while(true) {
             logger.info(`linkedin ${this.userInfo.name} 当前二次召回任务处理到第 ${page} 页`);
-            await this.dealPeople(task);
+            await this.dealPeople();
     
             await this.closeAllMsgDivs();
 
@@ -53,7 +53,7 @@ class Recall extends Search {
         }
     }
 
-    dealPeople = async(task) => {
+    dealPeople = async() => {
         let peopleItems = await this.page.$x(`//li[contains(@class, "reusable-search__result-container")]`);
         logger.info(`linkedin ${this.userInfo.name} 二次召回搜索到 ${peopleItems.length} 个people item`);
 
@@ -66,8 +66,15 @@ class Recall extends Search {
                 continue;
             }
 
+            let id = await this.fetchPeopleId(peopleItem);
+            let recallInfo = await this.filterItem(id);
+            if (!recallInfo) {
+                logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要召回`);
+                continue;
+            }
+
             try {
-                await this.dealOnePeople(peopleItem, task);
+                await this.dealOnePeople(peopleItem, recallInfo);
             } catch(e) {
                 logger.error(`linkedin ${this.userInfo.name} ${name} 发二次召回消息异常:`, e);
             }
@@ -76,13 +83,37 @@ class Recall extends Search {
         }
     }
 
-    dealOnePeople = async(peopleItem, task) => {
+    filterItem = async (id) => {
+        try {
+            const { status, data } = await Request({
+              url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
+              data: {
+                accountID: this.userInfo.id,
+                candidateIDs: [id],
+                candidateIDs_read: []
+              },
+              headers: {"Connection": "keep-alive"},
+              method: 'POST'
+            });
+            logger.info(`linkedin ${this.userInfo.name} recallList request status: ${status} data: ${data}`);
+
+            if (status == 0) {
+                let recallList = data;
+                if (recallList.length > 0)
+                    return recallList[0];
+            }
+        } catch (e) {
+            logger.error(`linkedin ${this.userInfo.name} recallList request error: `, e);
+        }
+    }
+
+    dealOnePeople = async(peopleItem, recallInfo) => {
         let msgBtn = await peopleItem.$x(`//span[text() = "Message"]`);
         await msgBtn.click();
 
         let msgDiv = await this.waitElement(`//div[contains(@class, "msg-form__contenteditable") and contains(@aria-label, "Write a message…")]`);
         await msgDiv.click();
-        await this.page.keyboard.type(task.touch_msg);
+        await this.page.keyboard.type(recallInfo.recall_msg);
         await sleep(200);
         let [sendBtn] = await this.page.$x(`//button[contains(@class, "msg-form__send-button") and text() = "Send"]`);
         await sendBtn.click();
