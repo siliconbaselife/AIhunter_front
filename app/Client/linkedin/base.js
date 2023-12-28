@@ -2,7 +2,7 @@ const Common = require('../common');
 const logger = require('../../Logger');
 
 class Base extends Common {
-    loginUrl = "https://www.linkedin.com/litms/api/metadata/user";
+    loginUrl = "https://www.linkedin.com/"
 
     constructor(options) {
         super();

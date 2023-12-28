@@ -22,7 +22,6 @@ class Chat extends Base {
             }
 
             await this.chatList();
-            await this.refresh();
         }
     }
 
@@ -61,6 +60,8 @@ class Chat extends Base {
 
             await this.closeAllMsgDivs();
         }
+
+        await this.refresh();
     }
 
     nextPage = async() => {

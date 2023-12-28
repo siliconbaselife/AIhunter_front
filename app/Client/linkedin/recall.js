@@ -120,3 +120,5 @@ class Recall extends Search {
         await sleep(300);
     }
 }
+
+module.exports = Recall;

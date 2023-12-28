@@ -95,7 +95,7 @@ class Resume extends Search {
             logger.info(`linkedin ${this.userInfo.name} 当前处理people: ${id}`);
 
             try {
-                await this.dealOnePeople(id, task, item);
+                await this.dealOnePeople(id, task, peopleItem);
             } catch (e) {
                 Logger.error(`linkedin ${this.userInfo.name} id: ${id} dealOnePeople error: `, e);
             } 
@@ -103,7 +103,7 @@ class Resume extends Search {
     }
 
     dealOnePeople = async(id, task, item) => {
-        let needDeal = await this.needDealPeople(id);
+        let needDeal = await this.needDealPeople(item, id, task);
         if(needDeal)
             return;
 
@@ -268,12 +268,48 @@ class Resume extends Search {
         await this.waitElement(`//div[contains(@class, "search-results-container")]`, this.page);
     }
 
-    needDealPeople = async(id) => {
+    needDealPeople = async(item, id, task) => {
         let nameSpan = await item.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
         let name = await this.page.evaluate(node => node.innerText, nameSpan);
 
         if (name == "LinkedIn Member")
-            return;
+            return false;
+
+        let distanceDegreeSpan = await item.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@class, "entity-result__badge-text")]/span[contains(@class, "visually-hidden")]`);
+        let distanceDegree = await this.page.evaluate(node => node.innerText, distanceDegreeSpan);
+        if (distanceDegree.includes("1st"))
+            return false;
+
+        let cloudFlag = await this.needDealPeopleByCloud(id, task);
+        if (!cloudFlag)
+            return false;
+
+        return true;
+    }
+
+    needDealPeopleByCloud = async(id, task) => {
+        try {
+            const { status, data } = await Request({
+                url: `${BIZ_DOMAIN}/recruit/candidate/preFilter/v2`,
+                data: {
+                    accountID: this.userInfo.id,
+                    jobID: task.jobID,
+                    candidate_id: id
+                },
+                headers: {"Connection": "keep-alive"},
+                method: 'POST'
+            });
+  
+            logger.info(`linkedin ${this.userInfo.name} 数据库check ${id} ${status} ${data.touch} ` );
+  
+            if (status === 0 && data.touch) {
+                return true;
+            }
+        } catch (e) {
+            Logger.error(`linkedin ${this.userInfo.name}  数据库check 错误: `, e);
+        }
+
+        return false;
     }
 }
 
