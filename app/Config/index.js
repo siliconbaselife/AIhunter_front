@@ -27,10 +27,16 @@ const HEALTH_CHECK_STATUS = {
   ERROR_NOTICE: 'ERROR_NOTICE'
 }
 
+// 本地储存配置
 const LOCAL_STORAGE_CONSTANTS = {
   STORE_PATH: "./local-storage",
   USER_INFO_KEY: "user_info",
-} 
+}
+
+// 进程配置
+const PROCESS_CONSTANTS = {
+  MAIN_KOA_LISTEN_PORT: 4000, // 主进程Koa监听端口(子进程会在此端口上逐步递增+1);
+}
 
 module.exports = {
   PLATFORM_ENUN,
@@ -39,8 +45,8 @@ module.exports = {
   SEND_MESSAGE_TOPIC,
   HEALTH_CHECK_STATUS,
   LOCAL_STORAGE_CONSTANTS,
+  PROCESS_CONSTANTS, 
   BIZ_DOMAIN: 'http://aistormy.com',
   // BIZ_DOMAIN: 'http://114.248.220.242:32040',
   BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台域名
-  MAIN_PROCESS_PORT: 4000, // 主进程端口(子进程会在此端口上逐步递增+1);
 }

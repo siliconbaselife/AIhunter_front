@@ -1,7 +1,7 @@
 const Router = require("koa-router");
 const Result = require("../Domain/Result");
 
-const ProcessControl = require("../../ProcessControl/index");
+const ProcessControl = require("../../ProcessControl/index.js");
 const UserManager = require("../../User/index");
 
 const userRouter = new Router({ prefix: "/user" });

@@ -1,6 +1,6 @@
 const path = require("path");
 const cluster = require("cluster");
-const { MAIN_PROCESS_PORT } = require("../Config/index");
+const { PROCESS_CONSTANTS } = require("../Config/index");
 // import cluster from "cluster";
 
 /**
@@ -19,12 +19,12 @@ class MainProcessManager {
 
     isPrimary = true; // 当前进程是否主进程
 
-    koaListenOnPort = MAIN_PROCESS_PORT; // koa服务监听的端口
-    
+    koaListenOnPort = PROCESS_CONSTANTS.MAIN_KOA_LISTEN_PORT; // koa服务监听的端口
+
     get workers() { return cluster.workers }; // 子进程hash表，{id: 子进程worker}
 
     constructor() {
-        this.on();
+        this.addListenerOnCluster();
     }
 
     /**
@@ -48,26 +48,26 @@ class MainProcessManager {
 
     /**
      * 创建并返回一个工作进程实例(统一由主进程调用)
-     * @returns {import("cluster").Worker | null} 
+     * @returns {import("cluster").Worker} 
      */
     createChildProcess() {
-        if (this.isMaster) {
-            this.setupPrimary();
-            const childProcess = cluster.fork();
-            return childProcess;
-        }
-        return null;
+        this.setupPrimary();
+        const childProcess = cluster.fork();
+        return childProcess;
     }
 
-    on() {
+    /**
+     * 监听主cluster事件
+     */
+    addListenerOnCluster() {
         cluster.on("fork", (worker) => {
             console.log(`已创建子进程, pid = ${worker.process.pid}`);
         })
-        cluster.on("listening", (worker, address) => {
-            console.log(`已建立监听, pid = ${worker.process.pid}`);
-        })
         cluster.on("exit", (worker, code, signal) => {
-            console.log(`子进程已关闭", pid = ${worker.process.pid}`);
+            console.log(`子进程已关闭, pid = ${worker.process.pid}`);
+        })
+        cluster.on("message", (worker, message) => {
+            console.log(`cluster监听到message, 子进程pid = ${worker.process.pid}, message = ${message}`);            
         })
     }
 }

@@ -2,9 +2,11 @@ const Koa = require("koa");
 const useMiddleware = require("./Middleware/index");
 const useRoute = require("./Controller/index");
 
+const ProcessControl = require("../ProcessControl/index"); 
+
 class AppServer {
     app = new Koa();
-    port = 4000;
+    port = ProcessControl.koaListenOnPort;
 
     constructor() {
         this.setApp();
