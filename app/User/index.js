@@ -36,8 +36,6 @@ class UserManager {
         storedUserInfo[user_name] = userInfo;
         LocalStorage.set(LOCAL_STORAGE_CONSTANTS.USER_INFO_KEY, storedUserInfo);
     }
-
-
 }
 
 module.exports = UserManager.getInstance();

@@ -2,15 +2,15 @@ const Koa = require("koa");
 const useMiddleware = require("./Middleware/index");
 const useRoute = require("./Controller/index");
 
-const ProcessControl = require("../ProcessControl/index"); 
+const { PROCESS_CONSTANTS } = require("../Config/index");
 
 class AppServer {
     app = new Koa();
-    port = ProcessControl.koaListenOnPort;
+    port = PROCESS_CONSTANTS.MAIN_KOA_LISTEN_PORT;
 
     constructor() {
         this.setApp();
-        this.app.listen(this.port, "0.0.0.0", this.onAppListened);
+        this.app.listen(this.port, "0.0.0.0", this.onAppListened.bind(this));
     }
 
     setApp() {
@@ -19,7 +19,7 @@ class AppServer {
     }
 
     onAppListened() {
-        console.log(`服务已启动，进程ID为 ${process.pid}`);
+        console.log(`服务已启动，进程ID为 ${process.pid}，端口号为 ${this.port}`);
     }
 }
 

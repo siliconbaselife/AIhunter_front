@@ -35,7 +35,10 @@ const LOCAL_STORAGE_CONSTANTS = {
 
 // 进程配置
 const PROCESS_CONSTANTS = {
-  MAIN_KOA_LISTEN_PORT: 4000, // 主进程Koa监听端口(子进程会在此端口上逐步递增+1);
+  MAIN_KOA_LISTEN_PORT: 4000, // 主进程Koa监听端口;
+  ACCOUNT_REGISTER_EVENT_TYPE: "ACCOUNT_REGISTER", // 绑定账号事件类型
+  ACCOUNT_EXECUTE_EVENT_TYPE: "ACCOUNT_EXECUTE", // 执行账号任务事件类型
+  PROCESS_NORMAL_CLOASE_SINGAL: "SIGTERM", // 表明子进程是正常关闭的信号
 }
 
 module.exports = {
