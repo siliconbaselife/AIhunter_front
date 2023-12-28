@@ -271,7 +271,7 @@ class Chat extends Base {
         let msgBtn = await this.waitElement(`//span[contains(@title, "Messaging")]/parent::*/parent::*`);
         await msgBtn.click();
 
-        await this.waitElement(`//main[contains(@class, "scaffold-layout__main scaffold-layout__list-detail")]`, this.page, 20);
+        await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page, 20);
     }   
 }
 
