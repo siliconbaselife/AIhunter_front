@@ -22,7 +22,7 @@ jobRouter.post("/execute", async (ctx, next) => {
     else if (!account_id) ctx.body = Result.fail("没有账号id: account");
     else {
         const worker = ProcessControl.createChildProcess(ctx.userInfo, { account_id, account_name, platformType });
-        ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_EXECUTE_EVENT_TYPE,)
+        ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_EXECUTE_EVENT_TYPE)
     }
 })
 
