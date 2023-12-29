@@ -1,3 +1,5 @@
+const logger = require('../Logger');
+
 class Manage {
     static instance;
 
@@ -6,13 +8,31 @@ class Manage {
         return Manage.instance;
     }
 
+    fetchClient = async(platformType) => {
+        if (platformType == "maimai") {
+            let client = require(`./${platformType}/client`);
+            return client;
+        }
+    }
 
-    register = async(platformType, account_name, callback) => {
-
+    register = async(platformType, account_name, rs, rj) => {
+        try {
+            let client = await this.fetchClient(platformType);
+            let userInfo = await client.bind();
+            rs(userInfo);
+        } catch (e) {
+            logger.error(`账号绑定异常 platformType: ${platformType} account_name: ${account_name} error: `, e);
+            rj();
+        }
     }
 
     execute = async(platformType, account_name, account_id) => {
-
+        try {
+            let client = await this.fetchClient(platformType);
+            await client.run();
+        } catch (e) {
+            logger.error();
+        }
     }
 }
 
