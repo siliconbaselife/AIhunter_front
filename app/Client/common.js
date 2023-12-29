@@ -241,7 +241,7 @@ class Common {
    */
   async setCookies(page, account_id) {
     const result = await AccountManager.setCookies(page, account_id);
-    console.log("setCookies", account_id, result,)
+    console.log("setCookies", account_id, result)
     if (result) {
       await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
     }

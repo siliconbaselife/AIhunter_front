@@ -72,6 +72,8 @@ class Login extends Base {
             await sleep(2000);
             logger.info("脉脉等待登陆");
         }
+        await AccountManager.setAccountInfo(account_id, this.maimaiUserInfo, this.page);
+
         let accountID = await this.queryAccountId("maimai", this.userInfo.id);
         this.userInfo.accountID = accountID;
   
