@@ -17,7 +17,6 @@ class Client {
      * @returns {{id: string, name: string}} 账号信息accountInfo 
      */
     loginPage = async (account_id) => {
-        let split_account_id = account_id.split("_").pop();
         this.page = await this.common.newPage({
             width: 1792,
             height: 984,
@@ -25,7 +24,7 @@ class Client {
         this.options = this.options || {};
         this.options.page = this.page;
         this.login = new Login(this.options);
-        await this.login.dologin(split_account_id);
+        await this.login.dologin(account_id);
         this.userInfo = this.login.maimaiUserInfo
         this.options.userInfo = this.userInfo;
         return this.userInfo;
