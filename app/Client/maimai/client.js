@@ -17,24 +17,17 @@ class Client {
      * @returns {{id: string, name: string}} 账号信息accountInfo 
      */
     loginPage = async (account_id) => {
-        if (account_id) this.userInfo = AccountManager.getAccountInfo(account_id);
-        if (!(this.userInfo && this.userInfo.id)) {
-            this.page = await this.common.newPage({
-                width: 1792,
-                height: 984,
-            });
-
-            this.options = this.options || {};
-            this.options.page = this.page;
-            this.login = new Login(this.options);
-            await this.login.dologin();
-            this.userInfo = this.login.maimaiUserInfo;
-        }
+        let split_account_id = account_id.split("_").pop();
+        this.page = await this.common.newPage({
+            width: 1792,
+            height: 984,
+        });
+        this.options = this.options || {};
+        this.options.page = this.page;
+        this.login = new Login(this.options);
+        await this.login.dologin(split_account_id);
+        this.userInfo = this.login.maimaiUserInfo
         this.options.userInfo = this.userInfo;
-        // 储存账号信息到本地
-        const { id, name, accounID } = this.userInfo;
-        AccountManager.setAccountInfo(id, { id, name, accounID});
-
         return this.userInfo;
     }
 

@@ -179,7 +179,7 @@ class Common {
  * @param {number} timeout 超时时间
  * @returns {Promise<puppeteer.Page>}
  */
-  getCurrentPage = async(timeout = 2000) => {
+  getCurrentPage = async (timeout = 2000) => {
     if (!this.browser) throw ("没有找到浏览器实例");
     let start = new Date().getTime();
     while (new Date().getTime() - start < timeout) {
@@ -203,37 +203,52 @@ class Common {
     }
   }
 
-  waitElement = async(xpath, document, num = 10) => {
+  waitElement = async (xpath, document, num = 10) => {
     let [element] = await document.$x(xpath);
     let time = 0;
-    while(!element) {
-        await sleep(500);
-        [element] = await document.$x(xpath);
-        time += 1;
+    while (!element) {
+      await sleep(500);
+      [element] = await document.$x(xpath);
+      time += 1;
 
-        if (time > num)
-            return
+      if (time > num)
+        return
     }
 
     return element;
   }
 
-  waitElements = async(xpath, document, num = 10) => {
+  waitElements = async (xpath, document, num = 10) => {
     let elements = await document.$x(xpath);
     let time = 0;
-    while(elements.length == 0) {
-        await sleep(500);
-        elements = await document.$x(xpath);
-        time += 1;
+    while (elements.length == 0) {
+      await sleep(500);
+      elements = await document.$x(xpath);
+      time += 1;
 
-        if (time > num)
-            return []
+      if (time > num)
+        return []
     }
 
     return elements;
   }
 
-  queryAccountId = async(platformType, id) => {
+  /**
+   * 给页面设置cookies
+   * @param {puppeteer.Page} page 
+   * @param {string} account_id 
+   * @returns {Promise<boolean>} 是否成功setcookie
+   */
+  async setCookies(page, account_id) {
+    const result = await AccountManager.setCookies(page, account_id);
+    console.log("setCookies", account_id, result,)
+    if (result) {
+      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+    }
+    return result;
+  }
+  
+  queryAccountId = async (platformType, id) => {
     const { status, data, msg } = await Request({
       url: `${BIZ_DOMAIN}/recruit/account/query`,
       data: {
