@@ -242,6 +242,24 @@ class Common {
 
     return elements;
   }
+
+  queryAccountId = async(platformType, id) => {
+    const { status, data, msg } = await Request({
+      url: `${BIZ_DOMAIN}/recruit/account/query`,
+      data: {
+        platformType: this.platformType,
+        platformID: this.userInfo.userId
+      },
+      method: 'POST'
+    });
+
+    if (status === 0 && data) {
+      logger.info(`${platformType} ${id} 获取accountID: ${data.accountID}`);
+      return data.accountID;
+    } else {
+      logger.error(`${platformType} ${id} 查询账户获取accountID失败`, status, msg);
+    }
+  }
 }
 
 module.exports = Common;

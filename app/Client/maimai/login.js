@@ -15,7 +15,7 @@ class Login extends Base {
               let name = data.data.ucard.name;
               let uid = data.data.ucard.id;
 
-              this.maimaiUserInfo = {id: uid, name: name};
+              this.userInfo = {id: uid, name: name};
             }
         }
         this.page.on('response', getUser);
@@ -27,7 +27,7 @@ class Login extends Base {
                   return reject();
                 }
         
-                if (this.maimaiUserInfo) {
+                if (this.userInfo) {
                   this.page.removeListener('response', getUser);
                   return resolve();
                 }
@@ -55,8 +55,10 @@ class Login extends Base {
             await sleep(2000);
             logger.info("脉脉等待登陆");
         }
+        let accountID = await this.queryAccountId("maimai", this.userInfo.id);
+        this.userInfo.accountID = accountID;
   
-        logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
+        logger.info("脉脉登陆成功 userInfo: ", this.userInfo);
     }
 }
 

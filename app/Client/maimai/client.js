@@ -28,12 +28,12 @@ class Client {
             this.options.page = this.page;
             this.login = new Login(this.options);
             await this.login.dologin();
-            this.userInfo = this.login.maimaiUserInfo
+            this.userInfo = this.login.maimaiUserInfo;
         }
         this.options.userInfo = this.userInfo;
         // 储存账号信息到本地
-        const { id, name } = this.userInfo;
-        AccountManager.setAccountInfo(id, { id, name });
+        const { id, name, accounID } = this.userInfo;
+        AccountManager.setAccountInfo(id, { id, name, accounID});
 
         return this.userInfo;
     }
