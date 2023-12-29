@@ -240,7 +240,7 @@ class Chat extends Base {
         const data = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
             data: {
-              accountID: this.userInfo.id,
+              accountID: this.userInfo.accountID,
               candidateID: id,
               candidateName: name,
               historyMsg: messages,
@@ -341,7 +341,7 @@ class Chat extends Base {
     uploadPhoneNum = async (peopleInfo, phoneNum) => {
         const form = new FormData();  
 
-        const reqParam = {accountID: this.userInfo.id, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
+        const reqParam = {accountID: this.userInfo.accountID, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
 
         Object.keys(reqParam).map((key) => {
           form.append(key, reqParam[key]);
@@ -558,7 +558,7 @@ class Chat extends Base {
             const { status, data } = await Request({
               url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
               data: {
-                accountID: this.userInfo.id,
+                accountID: this.userInfo.accountID,
                 candidateIDs: [peopleInfo.id],
                 candidateIDs_read: readIDs
               },

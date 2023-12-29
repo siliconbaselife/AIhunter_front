@@ -233,19 +233,22 @@ class Common {
     return elements;
   }
 
-  /**
-   * 给页面设置cookies
-   * @param {puppeteer.Page} page 
-   * @param {string} account_id 
-   * @returns {Promise<boolean>} 是否成功setcookie
-   */
-  async setCookies(page, account_id) {
-    const result = await AccountManager.setCookies(page, account_id);
-    console.log("setCookies", account_id, result, )
-    if (result) {
-      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+  queryAccountId = async(platformType, id) => {
+    const { status, data, msg } = await Request({
+      url: `${BIZ_DOMAIN}/recruit/account/query`,
+      data: {
+        platformType: this.platformType,
+        platformID: this.userInfo.userId
+      },
+      method: 'POST'
+    });
+
+    if (status === 0 && data) {
+      logger.info(`${platformType} ${id} 获取accountID: ${data.accountID}`);
+      return data.accountID;
+    } else {
+      logger.error(`${platformType} ${id} 查询账户获取accountID失败`, status, msg);
     }
-    return result;
   }
 }
 

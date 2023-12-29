@@ -18,7 +18,7 @@ class Resume extends Base {
         const {status, data, msg} = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/fetch/v2`,
             data: {
-                accountID: this.userInfo.id,
+                accountID: this.userInfo.accountID,
             },
             method: 'POST'
           });
@@ -417,7 +417,7 @@ class Resume extends Base {
         const { status, data } = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/report/v2`,
             data: {
-              accountID: this.userInfo.id,
+              accountID: this.userInfo.accountID,
               jobID: task.jobID,
               taskStatus: [{
                 taskType: 'batchTouch',

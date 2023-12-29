@@ -16,7 +16,7 @@ class Login extends Base {
                 let name = data.data.ucard.name;
                 let uid = data.data.ucard.id;
 
-                this.maimaiUserInfo = { id: uid, name: name };
+              this.userInfo = {id: uid, name: name};
             }
         }
         this.page.on('response', getUser);
@@ -27,10 +27,10 @@ class Login extends Base {
                 if (this.pageClose) {
                     return reject();
                 }
-
-                if (this.maimaiUserInfo) {
-                    this.page.removeListener('response', getUser);
-                    return resolve();
+        
+                if (this.userInfo) {
+                  this.page.removeListener('response', getUser);
+                  return resolve();
                 }
                 check();
             };
@@ -72,12 +72,10 @@ class Login extends Base {
             await sleep(2000);
             logger.info("脉脉等待登陆");
         }
-
-        // 储存账号信息到本地
-        const { id, name } = this.maimaiUserInfo;
-        AccountManager.setAccountInfo(id, { id, name }, this.page);
-
-        logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
+        let accountID = await this.queryAccountId("maimai", this.userInfo.id);
+        this.userInfo.accountID = accountID;
+  
+        logger.info("脉脉登陆成功 userInfo: ", this.userInfo);
     }
 }
 
