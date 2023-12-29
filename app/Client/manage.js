@@ -7,11 +7,11 @@ class Manage {
     }
 
 
-    register = () => {
+    register = (platformType, account_name, callback) => {
 
     }
 
-    execute = () => {
+    execute = (platformType, account_name, account_id) => {
 
     }
 }
