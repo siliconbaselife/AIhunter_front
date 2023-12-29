@@ -26,7 +26,6 @@ module.exports = async (ctx, next) => {
             ctx.body = Result.fail(null, Result.TOKEN_INVALID, "登录凭证无效");
             return;
         }
-        console.log("123")
         ctx.userInfo = userInfo; // 给ctx赋值userInfo
     }
     await next();

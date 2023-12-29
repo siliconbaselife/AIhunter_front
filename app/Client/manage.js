@@ -8,7 +8,7 @@ class Manage {
         return Manage.instance;
     }
 
-    fetchClient = async(platformType) => {
+    fetchClient = async (platformType) => {
         if (platformType == "maimai") {
             let Client = require(`./${platformType}/client`);
             let client = new Client();
@@ -16,21 +16,18 @@ class Manage {
         }
     }
 
-    register = async(platformType, account_name, rs, rj) => {
+    register = async (platformType, account_name, rs, rj) => {
         try {
             let client = await this.fetchClient(platformType);
-            const c = new client();
-            console.log("client", c);
-            let userInfo = await c.bind();
-            console.log("已结束", userInfo);
+            let userInfo = await client.bind()
             rs(userInfo);
         } catch (e) {
             logger.error(`账号绑定异常 platformType: ${platformType} account_name: ${account_name} error: `, e);
-            rj();
+            rj(e);
         }
     }
 
-    execute = async(platformType, account_name, account_id) => {
+    execute = async (platformType, account_name, account_id) => {
         try {
             let client = await this.fetchClient(platformType);
             await client.run();
