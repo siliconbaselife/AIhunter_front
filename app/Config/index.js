@@ -31,6 +31,7 @@ const HEALTH_CHECK_STATUS = {
 const LOCAL_STORAGE_CONSTANTS = {
   STORE_PATH: "./local-storage",
   USER_INFO_KEY: "user_info",
+  ACCOUNT_INFO_KEY: "account_info",
 }
 
 // 进程配置
