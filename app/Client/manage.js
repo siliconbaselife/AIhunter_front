@@ -32,7 +32,7 @@ class Manage {
             let client = await this.fetchClient(platformType);
             await client.run();
         } catch (e) {
-            logger.error();
+            logger.error(`执行账号异常 platformType: ${platformType} account_name: ${account_name} account_id: ${account_id}`);
         }
     }
 }
