@@ -12,7 +12,7 @@ class Manage {
     }
 
     execute = () => {
-        
+
     }
 }
 
