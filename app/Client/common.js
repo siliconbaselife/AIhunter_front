@@ -10,8 +10,6 @@ class Common {
       await this.initBrowser(options);
     }
 
-    console.log(this.browser);
-
     const page = await this.browser.newPage();
 
     await this.settingPage(page);
@@ -122,37 +120,6 @@ class Common {
     });
   }
 
-  initBrowser = async (options = {
-    width: 1580,
-    height: 900,
-  }) => {
-    try {
-      const { width, height } = options;
-      const args = [
-        '--disable-notifications=true',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
-        `--window-size=${width},${height}`,
-        `--disable-gpu`,
-        `--disable-dev-shm-usage`
-      ];
-
-
-      this.browser.on('disconnected', () => {
-        logger.info('puppeteer disconnected 浏览器异常退出')
-      });
-
-      this.browser.on('targetdestroyed', () => {
-        logger.info('puppeteer targetdestroyed 正常退出');
-        logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
-      })
-    } catch (e) {
-      logger.error(`启动失败##`, e);
-    }
-  }
-
   settingPage = async (page) => {
     await page.evaluateOnNewDocument(() => {
       const newProto = navigator.__proto__;
@@ -211,7 +178,7 @@ class Common {
  * @param {number} timeout 超时时间
  * @returns {Promise<puppeteer.Page>}
  */
-  async getCurrentPage(timeout = 2000) {
+  getCurrentPage = async(timeout = 2000) => {
     if (!this.browser) throw ("没有找到浏览器实例");
     let start = new Date().getTime();
     while (new Date().getTime() - start < timeout) {
@@ -233,7 +200,7 @@ class Common {
    * @param  {...string} urls 指定url,如果没有,则获取当前页面的cookies
    * @returns {Promise<puppeteer.Protocol.Network.Cookie[]>}
    */
-  async getCookies(...urls) {
+  getCookies = async(...urls) => {
     let page = await this.getCurrentPage();
     return page.cookies.apply(this, urls);
   }
@@ -259,9 +226,9 @@ class Common {
     }
 
     return element;
-}
+  }
 
-waitElements = async(xpath, document, num = 10) => {
+  waitElements = async(xpath, document, num = 10) => {
     let elements = await document.$x(xpath);
     let time = 0;
     while(elements.length == 0) {
@@ -274,7 +241,7 @@ waitElements = async(xpath, document, num = 10) => {
     }
 
     return elements;
-}
+  }
 }
 
 module.exports = Common;
