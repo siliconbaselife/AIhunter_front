@@ -23,7 +23,6 @@
   "dependencies": {
     "carlo": "^0.9.46",
     "form-data": "^4.0.0",
-    "ip": "^1.1.8",
     "koa": "^2.14.2",
     "koa-bodyparser": "^4.4.1",
     "koa-log4": "^2.3.2",
@@ -31,7 +30,6 @@
     "lodash": "^4.17.21",
     "node-localstorage": "^3.0.5",
     "path-to-regexp": "^6.2.1",
-    "pm2": "^5.2.0",
     "puppeteer": "^21.6.1",
     "query-string": "^7.1.1",
     "request": "^2.88.2",

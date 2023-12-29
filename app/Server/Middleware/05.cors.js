@@ -10,7 +10,7 @@
  * 5、通过 Access-Control-Allow-Methods 设置需要支持的跨域请求方法
  */
 
-const { BACK_ADMIN_DOMAIN } = require("../../Config/index");
+const { BACK_ADMIN_DOMAIN, BACK_ADMIN_EN_DOMAIN } = require("../../Config/index");
 
 /**
  * 跨域
@@ -18,7 +18,7 @@ const { BACK_ADMIN_DOMAIN } = require("../../Config/index");
  * @param {import("koa").Next} next 
  */
 module.exports = async (ctx, next) => {
-    ctx.set("Access-Control-Allow-Origin", BACK_ADMIN_DOMAIN); // 只允许指定域名
+    ctx.set("Access-Control-Allow-Origin", [BACK_ADMIN_DOMAIN]); // 只允许指定域名
 
     ctx.set('Access-Control-Allow-Methods', 'OPTIONS, GET, PUT, POST, DELETE'); // 设置所允许的HTTP请求方法
 
@@ -35,6 +35,7 @@ module.exports = async (ctx, next) => {
     // 下面的的设置只本次验证的有效时间，即在该时间段内服务端可以不用进行验证
 
     ctx.set('Access-Control-Expose-Headers', 'myData'); // 需要获取其他字段时，使用Access-Control-Expose-Headers，
+    ctx.set('Access-Control-Allow-Private-Network', true);
     // getResponseHeader('myData')可以返回我们所需的值
     /*
     CORS请求时，XMLHttpRequest对象的getResponseHeader()方法只能拿到6个基本字段：

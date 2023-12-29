@@ -48,8 +48,10 @@ module.exports = {
   SEND_MESSAGE_TOPIC,
   HEALTH_CHECK_STATUS,
   LOCAL_STORAGE_CONSTANTS,
-  PROCESS_CONSTANTS, 
+  PROCESS_CONSTANTS,
   BIZ_DOMAIN: 'http://aistormy.com',
   // BIZ_DOMAIN: 'http://114.248.220.242:32040',
-  BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台域名
+  BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台zh域名
+  // BACK_ADMIN_DOMAIN: "http://www.shadowhiring.cn", // 后台zh域名
+  BACK_ADMIN_EN_DOMAIN: "http://www.shadowhiring.com", // 后台en域名
 }
