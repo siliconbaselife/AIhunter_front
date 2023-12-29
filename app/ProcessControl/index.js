@@ -68,7 +68,7 @@ class MainProcessManager {
         this.setupPrimary(accountInfo);
         const worker = cluster.fork();
         this.workers[accountInfo.account_id] = { userInfo, accountInfo, worker };
-        return childProcess;
+        return worker;
     }
 
     /**

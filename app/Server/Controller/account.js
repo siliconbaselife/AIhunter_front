@@ -27,6 +27,7 @@ jobRouter.post("/execute", async (ctx, next) => {
     else {
         const worker = ProcessControl.createChildProcess(ctx.userInfo, { account_id, account_name, platformType });
         ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_EXECUTE_EVENT_TYPE)
+        ctx.body = Result.ok();
     }
 })
 
