@@ -45,26 +45,21 @@ class Login extends Base {
 
     /**
      * 去登录
-     * @param {?string} account_id
+     * @param {?string} accountID
      */
-    dologin = async (account_id) => {
+    dologin = async (accountID) => {
         //这个函数不要await
         this.getUserInfo();
-        try {
-            await this.page.goto(this.loginUrl, { waitUntil: 'networkidle2' });
-        } catch (e) {
-            logger.error(`脉脉跳转登录页超时，错误为:`, e);
-        }
+        await this.toPage();
 
-        if (account_id) {
-            console.log("account_id123", account_id);
-            const accountInfo = AccountManager.getAccountInfo(account_id);
+        if (accountID) {
+            console.log("account_id123", accountID);
+            const accountInfo = AccountManager.getAccountInfo(accountID);
             if (accountInfo) {
-                const result = await this.setCookies(this.page, account_id).catch(err => { console.log("1234544", err) });
+                const result = await this.setCookies(this.page, accountID).catch(err => { console.log("1234544", err) });
                 this.maimaiUserInfo = accountInfo;
-                console.log("result", result);
-                console.log("account_id", account_id)
-                return;
+                await this.toPage();
+                await sleep(1000);
             }
         }
 
@@ -73,14 +68,22 @@ class Login extends Base {
             logger.info("脉脉等待登陆");
         }
 
-        if (!account_id) {
-            let accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
-            this.maimaiUserInfo.accountID = accountID;
+        if (!accountID) {
+            accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
         }
+        this.maimaiUserInfo.accountID = accountID;
 
-        await AccountManager.setAccountInfo( this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
+        await AccountManager.setAccountInfo(this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
   
         logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
+    }
+
+    toPage = async () => {
+        try {
+            await this.page.goto(this.loginUrl, { waitUntil: 'networkidle2' });
+        } catch (e) {
+            logger.error(`脉脉跳转页面异常,错误为:`, e);
+        }
     }
 }
 
