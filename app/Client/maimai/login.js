@@ -16,7 +16,7 @@ class Login extends Base {
                 let name = data.data.ucard.name;
                 let uid = data.data.ucard.id;
 
-              this.userInfo = {id: uid, name: name};
+              this.maimaiUserInfo = {id: uid, name: name};
             }
         }
         this.page.on('response', getUser);
@@ -28,7 +28,7 @@ class Login extends Base {
                     return reject();
                 }
         
-                if (this.userInfo) {
+                if (this.maimaiUserInfo) {
                   this.page.removeListener('response', getUser);
                   return resolve();
                 }
@@ -74,13 +74,13 @@ class Login extends Base {
         }
 
         if (!account_id) {
-            let accountID = await this.queryAccountId("maimai", this.userInfo.id);
-            this.userInfo.accountID = accountID;
+            let accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
+            this.maimaiUserInfo.accountID = accountID;
         }
 
-        await AccountManager.setAccountInfo( this.userInfo.accountID, this.maimaiUserInfo, this.page);
+        await AccountManager.setAccountInfo( this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
   
-        logger.info("脉脉登陆成功 userInfo: ", this.userInfo);
+        logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
     }
 }
 
