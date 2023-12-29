@@ -18,7 +18,10 @@ class Manage {
     register = async(platformType, account_name, rs, rj) => {
         try {
             let client = await this.fetchClient(platformType);
-            let userInfo = await client.bind();
+            const c = new client();
+            console.log("client", c);
+            let userInfo = await c.bind();
+            console.log("已结束", userInfo);
             rs(userInfo);
         } catch (e) {
             logger.error(`账号绑定异常 platformType: ${platformType} account_name: ${account_name} error: `, e);

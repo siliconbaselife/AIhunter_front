@@ -46,7 +46,6 @@ class Login extends Base {
     dologin = async () => {
         //这个函数不要await
         this.getUserInfo();
-  
         try {
             await this.page.goto(this.loginUrl, {waitUntil: 'networkidle2'});
         } catch (e) {

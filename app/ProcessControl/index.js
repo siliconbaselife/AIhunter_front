@@ -116,6 +116,9 @@ class MainProcessManager {
                 EventBus.unListen(`${eventName}${worker.process.pid}`, listenerID);
                 rs(data);
             });
+            worker.on("exit", (code, signal) => {
+                rj(`进程异常关闭: code = ${code}, signal =${signal}`);
+            })
             worker.send({ eventName, data });
         })
     }
@@ -151,7 +154,7 @@ class MainProcessManager {
                 return cProcess.worker.process.pid === pid;
             })
             if (key) { delete this.workers[key] };
-            console.log(`子进程已关闭, pid = ${pid}`);
+            console.log(`子进程已关闭, pid = ${pid}, ${code}, ${signal}`);
         })
         cluster.on("message", (worker, message) => {
             const pid = worker.process.pid;

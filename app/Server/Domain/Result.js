@@ -5,7 +5,7 @@ class Result {
     static TOKEN_MISSED = 1000;
     static TOKEN_INVALID = 1001;
 
-    code;
+    ret;
     msg;
     data;
 
@@ -22,24 +22,24 @@ class Result {
     /**
      * 失败返回
      * @param {any} data 
-     * @param {number} code 
+     * @param {number} ret 
      * @param {string} msg 
      * @returns {Result}
      */
-    static fail(data, code, msg) {
-        return Result.restResult(data || null, code || Result.FAIL, msg || "操作失败");
+    static fail(data, ret, msg) {
+        return Result.restResult(data || null, ret || Result.FAIL, msg || "操作失败");
     }
 
     /**
      * 返回
      * @param {any} data 
-     * @param {number} code 
+     * @param {number} ret 
      * @param {string} msg 
      * @returns {Result}
      */
-    static restResult(data, code, msg) {
+    static restResult(data, ret, msg) {
         const r = new Result();
-        r.code = code;
+        r.ret = ret;
         r.data = data;
         r.msg = msg;
         return r;
