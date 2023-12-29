@@ -63,8 +63,8 @@ class Common {
         logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
       })
     } catch (e) {
-      console.log(e);
-      logger.error(`启动失败##`, e);
+      console.log(`browser 启动失败##`, e);
+      logger.error(`browser 启动失败##`, e);
     }
   }
 
@@ -241,7 +241,6 @@ class Common {
    */
   async setCookies(page, account_id) {
     const result = await AccountManager.setCookies(page, account_id);
-    console.log("setCookies", account_id, result)
     if (result) {
       await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
     }
@@ -263,6 +262,14 @@ class Common {
       return data.accountID;
     } else {
       logger.error(`${platformType} ${id} 查询账户获取accountID失败`, status, msg);
+    }
+  }
+
+  toPage = async (url) => {
+    try {
+        await this.page.goto(url, { waitUntil: 'networkidle2' });
+    } catch (e) {
+        logger.error(`脉脉跳转页面异常,错误为:`, e);
     }
   }
 }

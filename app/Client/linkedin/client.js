@@ -38,10 +38,10 @@ class Client {
 
     run = async() => {
         global.running = true;
-        console.log("linkedin启动");
+        logger.info("linkedin启动");
 
         await this.loginPage();
-        console.log("linkedin 登陆完成");
+        logger.info("linkedin 登陆完成");
         await sleep(2 * 1000);
 
         let chat = new Chat(this.options);

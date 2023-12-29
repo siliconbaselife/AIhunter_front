@@ -29,7 +29,7 @@ class Manage {
 
     execute = async (platformType, account_name, account_id) => {
         try {
-            console.log(platformType, account_name, account_id);
+            console.log(`执行 ${platformType} ${account_name} ${account_id}`);
             let client = await this.fetchClient(platformType);
             await client.run(account_id);
         } catch (e) {

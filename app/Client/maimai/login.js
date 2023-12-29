@@ -16,7 +16,7 @@ class Login extends Base {
                 let name = data.data.ucard.name;
                 let uid = data.data.ucard.id;
 
-              this.maimaiUserInfo = {id: uid, name: name};
+                this.maimaiUserInfo = {id: uid, name: name};
             }
         }
         this.page.on('response', getUser);
@@ -50,15 +50,14 @@ class Login extends Base {
     dologin = async (accountID) => {
         //这个函数不要await
         this.getUserInfo();
-        await this.toPage();
+        await this.toPage(this.loginUrl);
 
         if (accountID) {
-            console.log("account_id123", accountID);
             const accountInfo = AccountManager.getAccountInfo(accountID);
             if (accountInfo) {
-                const result = await this.setCookies(this.page, accountID).catch(err => { console.log("1234544", err) });
+                const result = await this.setCookies(this.page, accountID).catch(err => { console.log(err) });
                 this.maimaiUserInfo = accountInfo;
-                await this.toPage();
+                await this.toPage(this.loginUrl);
                 await sleep(1000);
             }
         }
@@ -74,16 +73,7 @@ class Login extends Base {
         this.maimaiUserInfo.accountID = accountID;
 
         await AccountManager.setAccountInfo(this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
-  
         logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
-    }
-
-    toPage = async () => {
-        try {
-            await this.page.goto(this.loginUrl, { waitUntil: 'networkidle2' });
-        } catch (e) {
-            logger.error(`脉脉跳转页面异常,错误为:`, e);
-        }
     }
 }
 

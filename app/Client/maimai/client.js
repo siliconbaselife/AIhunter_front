@@ -45,10 +45,8 @@ class Client {
      */
     run = async (account_id) => {
         global.running = true;
-        console.log("脉脉启动");
 
         await this.loginPage(account_id);
-        console.log("脉脉 登陆完成");
         await sleep(2 * 1000);
 
         let resume = new Resume(this.options);

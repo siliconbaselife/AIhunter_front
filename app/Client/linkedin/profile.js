@@ -14,7 +14,6 @@ class Profile extends Base {
         resume["id"] = contactInfo["url"]
 
         let baseInfo = await this.dealBaseInfo();
-        console.log("baseInfo: ", JSON.stringify(baseInfo));
         resume["profile"]["name"] = baseInfo["name"];
         resume["profile"]["location"] = baseInfo["location"];
         resume["profile"]["role"] = baseInfo["role"];
