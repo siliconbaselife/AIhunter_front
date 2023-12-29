@@ -11,10 +11,9 @@ jobRouter.post("/register", async (ctx, next) => {
     /** @type {import("cluster").Worker}  */
     const worker = ProcessControl.createTemporaryChildProcess(ctx.userInfo, { platformType, account_name });
     try {
-        const platformID = await ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_REGISTER_EVENT_TYPE, { platformType, account_name });
+        const accountInfo = await ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_REGISTER_EVENT_TYPE, { platformType, account_name });
         ProcessControl.killChildProcess(worker);
-        console.log("platformID = ", platformID);
-        ctx.body = Result.ok(platformID);
+        ctx.body = Result.ok(accountInfo);
     } catch (error) {
         ctx.body = Result.fail(undefined, undefined, error);
     }

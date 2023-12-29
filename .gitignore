@@ -32,3 +32,4 @@ Thumbs.db
 yarn.lock
 dist/
 build/
+local-storage/

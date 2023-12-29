@@ -4,37 +4,50 @@ const { sleep } = require('../../utils');
 const Chat = require('./Chat');
 const logger = require('../../Logger');
 const Common = require('../common');
+const AccountManager = require("../../Account/index");
 
 class Client {
     userInfo;
     options;
     common = new Common();
 
-    loginPage = async () =>  {
-        this.page = await this.common.newPage({
-            width: 1792,
-            height: 984,
-        });
+    /**
+     * 获取账号信息accountInfo
+     * @param {?string} account_id
+     * @returns {{id: string, name: string}} 账号信息accountInfo 
+     */
+    loginPage = async (account_id) => {
+        if (account_id) this.userInfo = AccountManager.getAccountInfo(account_id);
+        if (!(this.userInfo && this.userInfo.id)) {
+            this.page = await this.common.newPage({
+                width: 1792,
+                height: 984,
+            });
 
-        this.options = this.options || {};
-        this.options.page = this.page;
-        this.login = new Login(this.options);
-        await this.login.dologin();
-
-        this.userInfo = this.login.maimaiUserInfo
+            this.options = this.options || {};
+            this.options.page = this.page;
+            this.login = new Login(this.options);
+            await this.login.dologin();
+            this.userInfo = this.login.maimaiUserInfo
+        }
         this.options.userInfo = this.userInfo;
+        // 储存账号信息到本地
+        const { id, name } = this.userInfo;
+        AccountManager.setAccountInfo(id, { id, name });
+
+        return this.userInfo;
     }
 
-    bind = async() => {
+    bind = async () => {
         await this.loginPage();
         return this.userInfo;
     }
 
-    getUserInfo = async() => {
+    getUserInfo = async () => {
         return this.userInfo;
     }
 
-    run = async() => {
+    run = async () => {
         global.running = true;
         console.log("脉脉启动");
 

@@ -26,9 +26,10 @@ class AccountManager {
 
     /**
      * 保存账号信息
-     * @param {{account_id: string, account_info: any}} param0 账号信息
+     * @param {account_id: string} account_id 账号id
+     * @param {account_info: any} account_info 账号信息
      */
-    setAccountInfo({ account_id, account_info }) {
+    setAccountInfo(account_id, account_info) {
         if (!account_id) throw new Error("保存账号信息失败, 没有account_id");
         // 获取储存的用户信息，以account_id为key, 将账号信息set进去
         const storedAccountInfo = LocalStorage.get(LOCAL_STORAGE_CONSTANTS.ACCOUNT_INFO_KEY) || {};
