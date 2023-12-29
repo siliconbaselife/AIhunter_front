@@ -14,7 +14,6 @@ class Login extends Base {
 
               let name = data.data.ucard.name;
               let uid = data.data.ucard.id;
-              uid = "account_maimai_lsd_test_123";
 
               this.maimaiUserInfo = {id: uid, name: name};
             }
