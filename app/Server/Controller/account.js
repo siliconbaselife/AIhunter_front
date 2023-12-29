@@ -3,6 +3,7 @@ const Result = require("../Domain/Result");
 
 const { PROCESS_CONSTANTS } = require("../../Config/index");
 const ProcessControl = require("../../ProcessControl/index");
+const { sleep } = require("../../utils");
 
 const jobRouter = new Router({ prefix: "/account" });
 
@@ -26,6 +27,7 @@ jobRouter.post("/execute", async (ctx, next) => {
     else if (!account_id) ctx.body = Result.fail("没有账号id: account");
     else {
         const worker = ProcessControl.createChildProcess(ctx.userInfo, { account_id, account_name, platformType });
+        await sleep(1000);
         ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_EXECUTE_EVENT_TYPE)
         ctx.body = Result.ok();
     }

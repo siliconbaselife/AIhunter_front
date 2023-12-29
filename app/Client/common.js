@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const logger = require('../Logger');
 const findChrome = require('carlo/lib/find_chrome');
+const AccountManager = require("../Account/index");
 
 class Common {
   browser;
@@ -195,17 +196,6 @@ class Common {
     throw "找不到当前页面";
   }
 
-  /**
-   * 获取cookies
-   * @param  {...string} urls 指定url,如果没有,则获取当前页面的cookies
-   * @returns {Promise<puppeteer.Protocol.Network.Cookie[]>}
-   */
-  getCookies = async(...urls) => {
-    let page = await this.getCurrentPage();
-    return page.cookies.apply(this, urls);
-  }
-
-
   closeWindow = async () => {
     if (this.browser) {
       await this.browser.close();
@@ -241,6 +231,21 @@ class Common {
     }
 
     return elements;
+  }
+
+  /**
+   * 给页面设置cookies
+   * @param {puppeteer.Page} page 
+   * @param {string} account_id 
+   * @returns {Promise<boolean>} 是否成功setcookie
+   */
+  async setCookies(page, account_id) {
+    const result = await AccountManager.setCookies(page, account_id);
+    console.log("setCookies", account_id, result, )
+    if (result) {
+      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+    }
+    return result;
   }
 }
 
