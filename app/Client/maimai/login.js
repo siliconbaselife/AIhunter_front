@@ -8,7 +8,7 @@ class Login extends Base {
             const url = response.url();
             if (url.startsWith('https://maimai.cn/bizjobs/company/manage/get_admin_current?channel')) {
               const data = await response.json();
-              Logger.info("脉脉 getUser data:", data);
+              logger.info("脉脉 getUser data:", data);
               if (!data.result || data.result != "ok")
                 return
 
@@ -37,7 +37,7 @@ class Login extends Base {
             try {
                 check();
             } catch (e) {
-                Logger.error("脉脉login error: ", e);
+                logger.error("脉脉login error: ", e);
             }
         });
     }
@@ -53,10 +53,10 @@ class Login extends Base {
   
         while(!this.maimaiUserInfo) {
             await sleep(2000);
-            Logger.info("脉脉等待登陆");
+            logger.info("脉脉等待登陆");
         }
   
-        Logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
+        logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
     }
 }
 
