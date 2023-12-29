@@ -46,12 +46,16 @@ class Client {
     getUserInfo = async () => {
         return this.userInfo;
     }
-
-    run = async () => {
+    
+    /**
+     * 执行任务
+     * @param {?string} account_id 
+     */
+    run = async (account_id) => {
         global.running = true;
         console.log("脉脉启动");
 
-        await this.loginPage();
+        await this.loginPage(account_id);
         console.log("脉脉 登陆完成");
         await sleep(2 * 1000);
 

@@ -29,8 +29,9 @@ class Manage {
 
     execute = async (platformType, account_name, account_id) => {
         try {
+            console.log(platformType, account_name, account_id);
             let client = await this.fetchClient(platformType);
-            await client.run();
+            await client.run(account_id);
         } catch (e) {
             logger.error(`执行账号异常 platformType: ${platformType} account_name: ${account_name} account_id: ${account_id}`);
         }
