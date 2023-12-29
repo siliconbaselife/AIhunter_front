@@ -7,11 +7,11 @@ class Manage {
     }
 
 
-    register = (platformType, account_name, callback) => {
+    register = async(platformType, account_name, callback) => {
 
     }
 
-    execute = (platformType, account_name, account_id) => {
+    execute = async(platformType, account_name, account_id) => {
 
     }
 }
