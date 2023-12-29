@@ -10,7 +10,8 @@ class Manage {
 
     fetchClient = async(platformType) => {
         if (platformType == "maimai") {
-            let client = require(`./${platformType}/client`);
+            let Client = require(`./${platformType}/client`);
+            let client = new Client();
             return client;
         }
     }
