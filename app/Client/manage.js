@@ -10,7 +10,8 @@ class Manage {
 
     fetchClient = async(platformType) => {
         if (platformType == "maimai") {
-            let client = require(`./${platformType}/client`);
+            let Client = require(`./${platformType}/client`);
+            let client = new Client();
             return client;
         }
     }
@@ -34,7 +35,7 @@ class Manage {
             let client = await this.fetchClient(platformType);
             await client.run();
         } catch (e) {
-            logger.error();
+            logger.error(`执行账号异常 platformType: ${platformType} account_name: ${account_name} account_id: ${account_id}`);
         }
     }
 }
