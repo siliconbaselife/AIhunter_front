@@ -65,7 +65,7 @@ class MainProcessManager {
     createChildProcess(userInfo, accountInfo) {
         if (!userInfo || !userInfo.user_name) throw new Error("创建子进程失败: 没有user_name");
         else if (!accountInfo || !accountInfo.account_id) throw new Error("创建子进程失败: 没有account_id");
-        this.setupPrimary(accountInfo);
+        this.setupPrimary(userInfo, accountInfo);
         const worker = cluster.fork();
         this.workers[accountInfo.account_id] = { userInfo, accountInfo, worker };
         return worker;
