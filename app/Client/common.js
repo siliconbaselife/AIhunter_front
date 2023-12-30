@@ -3,6 +3,7 @@ const logger = require('../Logger');
 const findChrome = require('carlo/lib/find_chrome');
 const AccountManager = require("../Account/index");
 const { sleep } = require('../utils');
+const { BIZ_DOMAIN } = require("../Config/index");
 
 class Common {
   browser;
@@ -252,8 +253,8 @@ class Common {
     const { status, data, msg } = await Request({
       url: `${BIZ_DOMAIN}/recruit/account/query`,
       data: {
-        platformType: this.platformType,
-        platformID: this.userInfo.userId
+        platformType: platformType,
+        platformID: id
       },
       method: 'POST'
     });

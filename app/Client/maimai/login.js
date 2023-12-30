@@ -62,6 +62,9 @@ class Login extends Base {
         if (!accountID) {
             accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
         }
+        if (!accountID)
+            throw new Error(`买卖登陆 没有accountID`);
+
         this.maimaiUserInfo.accountID = accountID;
 
         await AccountManager.setAccountInfo(this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
