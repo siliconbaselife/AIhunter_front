@@ -60,8 +60,15 @@ class Resume extends Base {
     dealTask = async(task) => {
         await this.dealTaskBefore();
         await this.setFilter(task);
-        await this.noopTask(task);
+        let noPeople = await this.isNoPeople();
+        if (!noPeople)
+            await this.noopTask(task);
         await this.dealTaskAfter();
+    }
+
+    isNoPeople = async() => {
+        let [noPeopleSpan] = await this.page.$x(`//span[text() = "暂无匹配人才，为您推荐以下人才"]`);
+        return !!noPeopleSpan;
     }
 
     dealTaskBefore = async() => {
@@ -304,10 +311,10 @@ class Resume extends Base {
     }
 
     waitPeopleNum = async() => {
-        let [peopleNumSpan] = await this.page.$x('//div[contains(@class, "items-end")]/span[contains(@class, "white-space-nowrap")]');
-        while(!peopleNumSpan) {
-            await sleep(500);
-            [peopleNumSpan] = await this.page.$x('//div[contains(@class, "items-end")]/span[contains(@class, "white-space-nowrap")]');
+        let peopleNumSpan = await this.waitElement(`//div[contains(@class, "items-end")]/span[contains(@class, "white-space-nowrap")]`, this.page);
+        if (!peopleNumSpan) {
+            logger.info(`脉脉 ${this.userInfo.name} 已经没有人了`);
+            return;
         }
 
         let txt = await this.page.evaluate(node => node.textContent, peopleNumSpan);
