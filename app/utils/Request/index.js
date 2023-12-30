@@ -45,7 +45,7 @@ const Request = async (options) => {
   }
 
   const timeout = options.timeout || 1000 * 60;
-  requestLogger.info(`start `, url, options, ` # ${traceId}`);
+  requestLogger.info(`start `, url, JSON.stringify(options), ` # ${traceId}`);
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     const timer = setTimeout(() => {

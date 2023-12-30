@@ -52,18 +52,17 @@ class Login extends Base {
         this.getUserInfo();
         await this.toPage(this.loginUrl);
 
-        await this.injectCookies(accountID, this.loginUrl);
+        if (accountID)
+            await this.injectCookies(accountID, this.loginUrl);
 
         while (!this.maimaiUserInfo) {
             await sleep(2000);
             logger.info("脉脉等待登陆");
         }
 
-        if (!accountID) {
-            accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
-        }
+        accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
         if (!accountID)
-            throw new Error(`买卖登陆 没有accountID`);
+            throw new Error(`脉脉登陆 没有accountID`);
 
         this.maimaiUserInfo.accountID = accountID;
 

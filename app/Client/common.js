@@ -3,6 +3,7 @@ const logger = require('../Logger');
 const findChrome = require('carlo/lib/find_chrome');
 const AccountManager = require("../Account/index");
 const { sleep } = require('../utils');
+const Request = require('../utils/Request');
 const { BIZ_DOMAIN } = require("../Config/index");
 
 class Common {
@@ -249,22 +250,26 @@ class Common {
     return result;
   }
   
-  queryAccountId = async (platformType, id) => {
-    const { status, data, msg } = await Request({
-      url: `${BIZ_DOMAIN}/recruit/account/query`,
-      data: {
-        platformType: platformType,
-        platformID: id
-      },
-      method: 'POST'
-    });
+  // queryAccountId = async (platformType, id) => {
+  //   const { status, data, msg } = await Request({
+  //     url: `${BIZ_DOMAIN}/recruit/account/query`,
+  //     data: {
+  //       platformType: platformType,
+  //       platformID: id
+  //     },
+  //     method: 'POST'
+  //   });
 
-    if (status === 0 && data) {
-      logger.info(`${platformType} ${id} 获取accountID: ${data.accountID}`);
-      return data.accountID;
-    } else {
-      logger.error(`${platformType} ${id} 查询账户获取accountID失败`, status, msg);
-    }
+  //   if (status === 0 && data) {
+  //     logger.info(`${platformType} ${id} 获取accountID: ${data.accountID}`);
+  //     return data.accountID;
+  //   } else {
+  //     logger.error(`${platformType} ${id} 查询账户获取accountID失败`, status, msg);
+  //   }
+  // }
+
+  queryAccountId = async (platformType, id) => {
+    return "account_" + platformType + "_" + id;
   }
 
   toPage = async (url) => {
