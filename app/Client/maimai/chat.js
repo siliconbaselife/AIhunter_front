@@ -221,9 +221,9 @@ class Chat extends Base {
                 await sleep(1000);
                 try {
                     logger.info(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 获取手机号`);
-                    await this.sendPhone();
+                    await this.sendPhone(peopleInfo.name);
                 } catch (e) {
-                    logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 获取手机号异常: ${e}`);
+                    logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 申请手机号异常: ${e}`);
                 }
             }
         } catch (e) {
@@ -263,22 +263,25 @@ class Chat extends Base {
         });
     }
 
-    sendPhone = async () => {
+    sendPhone = async (name) => {
         await sleep(1000);
-        let [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text")`);
+        let [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text") and (text() = "拨打电话" or text() = "申请中")]`);
         if (phoneBtn) {
-            let text = await this.frame.evaluate(node => node.textContent, phoneBtn);
-            if (text != "交换手机号")
-                return;
-        } else {
+            logger.info(`脉脉 ${this.userInfo.name} ${name} 已经有手机号或者在申请中`);
+            return;
+        }
+
+        [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text") and text() = "交换手机号"]`);
+        if (!phoneBtn) {
             logger.info(`脉脉 ${this.userInfo.name} 聊天栏没有手机号按钮`);
-            await this.sendPhoneOld();
+            // await this.sendPhoneOld();
             return;
         }
 
         await phoneBtn.click();
     }
 
+    //todo sendPhoneOld 需要跳转的简历不对
     sendPhoneOld = async () => {
         let [peopleDiv] = await this.frame.$x(`//i[contains(@class, "right-icon-single")]`);
         await peopleDiv.click();
@@ -295,6 +298,8 @@ class Chat extends Base {
         await closeBtn.click();
         await sleep(500);
     }
+
+    fetch
 
     transferMessages = async (messages) => {
         let res_messgaes = [];
@@ -461,6 +466,11 @@ class Chat extends Base {
         await this.putUnreadBtn(false);
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
+        if (!item) {
+            logger.info(`脉脉 ${this.userInfo.name} 获取不到召回的item`);
+            return;
+        }
+
         let itemInfo = await this.fetchItemInfo(item);
         
         let msgs = await this.doRecallMsg(item, itemInfo);
@@ -495,7 +505,7 @@ class Chat extends Base {
         if (!recallInfo)
             return messages;
 
-        await this.sendMessage(friend.recall_msg);
+        await this.sendMessage(recallInfo.recall_msg);
         await this.recallResult(peopleInfo.id);
 
         return messages;

@@ -52,15 +52,7 @@ class Login extends Base {
         this.getUserInfo();
         await this.toPage(this.loginUrl);
 
-        if (accountID) {
-            const accountInfo = AccountManager.getAccountInfo(accountID);
-            if (accountInfo) {
-                const result = await this.setCookies(this.page, accountID).catch(err => { console.log(err) });
-                this.maimaiUserInfo = accountInfo;
-                await this.toPage(this.loginUrl);
-                await sleep(1000);
-            }
-        }
+        await this.injectCookies(accountID, this.loginUrl);
 
         while (!this.maimaiUserInfo) {
             await sleep(2000);
@@ -73,7 +65,7 @@ class Login extends Base {
         this.maimaiUserInfo.accountID = accountID;
 
         await AccountManager.setAccountInfo(this.maimaiUserInfo.accountID, this.maimaiUserInfo, this.page);
-        logger.info("脉脉登陆成功 userInfo: ", this.maimaiUserInfo);
+        logger.info(`脉脉登陆成功 accountID: ${this.maimaiUserInfo.accountID} id: ${this.maimaiUserInfo.id} name: ${this.maimaiUserInfo.name}`);
     }
 }
 

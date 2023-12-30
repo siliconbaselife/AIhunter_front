@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const logger = require('../Logger');
 const findChrome = require('carlo/lib/find_chrome');
 const AccountManager = require("../Account/index");
+const { sleep } = require('../utils');
 
 class Common {
   browser;
@@ -270,6 +271,15 @@ class Common {
         await this.page.goto(url, { waitUntil: 'networkidle2' });
     } catch (e) {
         logger.error(`脉脉跳转页面异常,错误为:`, e);
+    }
+  }
+
+  injectCookies = async (accountID, url) => {
+    if (accountID) {
+      logger.info(`${accountID} 准备注入cookie`);
+      await this.setCookies(this.page, accountID).catch(err => { console.log(err) });
+      await this.toPage(this.loginUrl);
+      await sleep(2000);
     }
   }
 }

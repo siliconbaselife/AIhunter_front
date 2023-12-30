@@ -44,6 +44,7 @@ class Resume extends Base {
 
             if (task.helloSum <= 0) {
                 logger.info(`脉脉 ${this.userInfo.name} 任务 ${parseInt(index) + 1} 已经完成`);
+                continue;
             }
     
             logger.info(`脉脉 ${this.userInfo.name} 开始第 ${parseInt(index) + 1} 个任务`);
@@ -88,7 +89,7 @@ class Resume extends Base {
               logger.error(`maimai ${this.userInfo.name} get candidate list error: ${e}`);
            }
         }
-        this.page.on('response', getList);
+        this.page.on('response', this.getList);
     }
 
     dealTaskAfter = async() => {
@@ -520,7 +521,7 @@ class Resume extends Base {
             const { status, data } = await Request({
                 url: `${BIZ_DOMAIN}/recruit/candidate/filter/v2`,
                 data: {
-                    accountID: this.userInfo.id,
+                    accountID: this.userInfo.accountID,
                     jobID: task.jobID,
                     candidateInfo: peopleInfo
                 },
