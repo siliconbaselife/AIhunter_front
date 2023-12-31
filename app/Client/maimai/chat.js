@@ -238,7 +238,7 @@ class Chat extends Base {
           });
   
         const data = await Request({
-            url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
+            url: `${BIZ_DOMAIN}/recruit/candidate/chat/v2`,
             data: {
               accountID: this.userInfo.accountID,
               candidateID: id,
@@ -355,7 +355,7 @@ class Chat extends Base {
         form.append("phone", phoneNum);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
             if (err) {
                 logger.error(`脉脉手机号上传失败error ${e}`)
             }
@@ -708,10 +708,12 @@ class Chat extends Base {
         await msgBtn.click();
         await sleep(1000);
 
+        await this.waitElement(`//iframe[contains(@id, "imIframe")]`, this.page, 50);
+
         const pageFrame = await this.page.$('#imIframe');
         this.frame = await pageFrame.contentFrame();
 
-        let allBtn = await this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
+        let allBtn = await this.waitElement(`//div[text() = "全部"]`, this.frame);
         await allBtn.click();
         await this.waitElement(`//div[contains(@class, "message-list")]`, this.page);
     }

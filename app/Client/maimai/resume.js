@@ -459,6 +459,7 @@ class Resume extends Base {
             logger.info(`脉脉 ${this.userInfo.name} 下拉框没有出现，用户乱动`);
             await this.page.hover(`div.talent-common-card:nth-of-type(${parseInt(index) + 1})  .more___RBoc4`);
             await sleep(500);
+            dropDiv = await this.waitElement(`//div[contains(@class, "mui-popover-placement-bottomRight") and not(contains(@class, "mui-popover-hidden"))]`, this.page, 5);
             timesNum += 1;
         }
 
