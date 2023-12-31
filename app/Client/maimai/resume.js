@@ -68,6 +68,7 @@ class Resume extends Base {
 
     isNoPeople = async() => {
         let [noPeopleSpan] = await this.page.$x(`//span[text() = "暂无匹配人才，为您推荐以下人才"]`);
+        logger.info(`脉脉 ${this.userInfo.name} 没有人`);
         return !!noPeopleSpan;
     }
 
@@ -132,12 +133,12 @@ class Resume extends Base {
         let checkBtn1 = await this.waitElement(`//span[text() = "近期未查看" and not(@disabled)]`, this.page);
         await this.page.evaluate((item)=>item.scrollIntoView(), checkBtn1);
         await checkBtn1.click();
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
 
         let checkBtn2 = await this.waitElement(`//span[text() = "近期未沟通" and not(@disabled)]`, this.page);
         await this.page.evaluate((item)=>item.scrollIntoView(), checkBtn2);
         await checkBtn2.click();
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
     }
 
     setIndustry = async(task) => {
@@ -178,7 +179,7 @@ class Resume extends Base {
         await sureBtn.click();
         await sleep(500);
 
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
 
         await this.setReSetPosition();
     }
@@ -193,7 +194,7 @@ class Resume extends Base {
         await this.page.keyboard.type(searchTxt, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
         await this.page.keyboard.press('Enter');
 
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
     }
 
     setLocation = async(task) => {
@@ -224,7 +225,7 @@ class Resume extends Base {
             await sleep(1000);
         }
 
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
 
         await this.setReSetPosition();
     }
@@ -242,7 +243,7 @@ class Resume extends Base {
         if (educationSpan) 
             await educationSpan.click();
 
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
 
         await this.setReSetPosition();
     }
@@ -273,7 +274,7 @@ class Resume extends Base {
         let [sureBtn] = await this.page.$x(`//div[contains(@class, "mui-btn") and text() = "确定"]`);
         await sureBtn.click();
     
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
 
         await this.setReSetPosition();
     }
@@ -311,7 +312,7 @@ class Resume extends Base {
     }
 
     waitPeopleNum = async() => {
-        let peopleNumSpan = await this.waitElement(`//div[contains(@class, "items-end")]/span[contains(@class, "white-space-nowrap")]`, this.page);
+        let peopleNumSpan = await this.waitElement(`//div[contains(@class, "items-end")]/span[contains(@class, "white-space-nowrap")]`, this.page, 5);
         if (!peopleNumSpan) {
             logger.info(`脉脉 ${this.userInfo.name} 已经没有人了`);
             return;
@@ -319,6 +320,14 @@ class Resume extends Base {
 
         let txt = await this.page.evaluate(node => node.textContent, peopleNumSpan);
         logger.info(`脉脉 ${this.userInfo.name} 搜集人数 ${txt}`);
+    }
+
+    waitListRefresh = async() => {
+        let cardSpan = await this.waitElement(`//div[contains(@class, "talent-common-card")]`, this.page);
+        if (!cardSpan) {
+            logger.info(`列表没有出现`);
+            return;
+        }
     }
 
     refresh = async() => {
@@ -444,14 +453,32 @@ class Resume extends Base {
         await this.page.hover(`div.talent-common-card:nth-of-type(${parseInt(index) + 1})  .more___RBoc4`);
         await sleep(300);
 
-        let dropDiv = await this.waitElement(`//div[contains(@class, "mui-popover-placement-bottomRight") and not(contains(@class, "mui-popover-hidden"))]`, this.page);
+        let dropDiv = await this.waitElement(`//div[contains(@class, "mui-popover-placement-bottomRight") and not(contains(@class, "mui-popover-hidden"))]`, this.page, 5);
+        let timesNum = 0;
+        while (!dropDiv && timesNum < 5) {
+            logger.info(`脉脉 ${this.userInfo.name} 下拉框没有出现，用户乱动`);
+            await this.page.hover(`div.talent-common-card:nth-of-type(${parseInt(index) + 1})  .more___RBoc4`);
+            await sleep(500);
+            timesNum += 1;
+        }
+
         let [addFriendBtn] = await dropDiv.$x(`//div[text() = "加好友"]`);
         if (addFriendBtn)
             await addFriendBtn.click();
-
+  
+        await this.page.hover("body")
+           
         await sleep(300);
+        await this.checkFriendEnd();
         await this.checkdialog();
+    }
 
+    checkFriendEnd = async() => {
+        let [friendOverSpan] = await this.page.$x(`//span[contains(@class, color-diution) and text() = "加好友券已用完，请在我的资产页面兑换"]`);
+        if (friendOverSpan) {
+            logger.info(`脉脉 ${this.userInfo.name} 加好友用完了`);
+            this.friendEnd = true;
+        }
     }
 
     checkdialog = async() => {
@@ -565,7 +592,7 @@ class Resume extends Base {
         let [next_btn] = await this.page.$x(`//div[contains(@class, "nextPage___1s7KJ")]`);
         await next_btn.click();
 
-        await this.waitPeopleNum();
+        await this.waitListRefresh();
         return true;
     }
 }
