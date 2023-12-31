@@ -470,7 +470,7 @@ class Resume extends Base {
         await this.page.hover("body")
            
         await sleep(300);
-        await this.checkFriendEnd();
+        // await this.checkFriendEnd();
         await this.checkdialog();
     }
 
@@ -486,7 +486,8 @@ class Resume extends Base {
         let [btn] = await this.page.$x(`//span[text() = "我知道了"]`);
         if (btn) {
             await btn.click()
-            await sleep(300)
+            await sleep(500)
+            await this.checkEnd();
         }
     }
 

@@ -10,6 +10,8 @@ class Chat extends Base {
 
     keywordDelay = 40;
 
+    getPullMsgs;
+
     run = async() => {
         logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
         await this.setBefore();
@@ -629,7 +631,7 @@ class Chat extends Base {
     }
 
     setMsgReceive = async() => {
-        const getPullMsgs = async (response) => {
+        this.getPullMsgs = async (response) => {
             const url = response.url();
             const request = response.request();
             const method = request.method();
@@ -719,7 +721,7 @@ class Chat extends Base {
     }
 
     setEnd = async() => {
-        await this.page.removeListener('response', getPullMsgs);
+        await this.page.removeListener('response', this.getPullMsgs);
     }
 }
 
