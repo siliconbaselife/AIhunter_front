@@ -357,7 +357,7 @@ class Chat extends Base {
         form.append("phone", phoneNum);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
+        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
             if (err) {
                 logger.error(`脉脉手机号上传失败error ${e}`)
             }
@@ -376,6 +376,7 @@ class Chat extends Base {
                 logger.info(`脉脉 ${this.userInfo.name} 候选人: ${peopleInfo.name} 电话号码: ${phoneNum}`);
 
                 await this.uploadPhoneNum(peopleInfo, phoneNum);
+                await sleep(1000);
 
                 let [closeSpan] = await this.frame.$x(`//a[contains(@class, "confirm") and text() = "关闭"]`);
                 await closeSpan.click();
@@ -667,7 +668,7 @@ class Chat extends Base {
                 }
             }
         }
-        this.page.on('response', getPullMsgs);
+        this.page.on('response', this.getPullMsgs);
     }
 
     dealPullMsg = async(messages) => {
