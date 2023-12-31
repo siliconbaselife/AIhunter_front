@@ -60,7 +60,11 @@ class Login extends Base {
             logger.info("脉脉等待登陆");
         }
 
-        accountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
+        let generateAccountID = await this.queryAccountId("maimai", this.maimaiUserInfo.id);
+        if (accountID && accountID != generateAccountID)
+            throw new Error(`脉脉登陆异常 accountID不匹配 accountID: ${accountID} generateAccountID: ${generateAccountID}`);
+
+        accountID = generateAccountID;
         if (!accountID)
             throw new Error(`脉脉登陆 没有accountID`);
 

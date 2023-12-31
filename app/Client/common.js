@@ -24,6 +24,7 @@ class Common {
 
     page.on('close', () => {
       logger.info('页面被关闭');
+      global.running = false;
     });
 
     return page;

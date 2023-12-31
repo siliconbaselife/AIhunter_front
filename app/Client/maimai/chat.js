@@ -271,7 +271,7 @@ class Chat extends Base {
             return;
         }
 
-        [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text") and text() = "交换手机号"]`);
+        [phoneBtn] = await this.frame.$x(`//span[contains(@class, "tool-text") and text() = "交换手机"]`);
         if (!phoneBtn) {
             logger.info(`脉脉 ${this.userInfo.name} 聊天栏没有手机号按钮`);
             // await this.sendPhoneOld();
@@ -713,6 +713,7 @@ class Chat extends Base {
 
         let allBtn = await this.waitElement(`//div[contains(@class, "filter") and text() = "全部"]`, this.frame);
         await allBtn.click();
+        await this.waitElement(`//div[contains(@class, "message-list")]`, this.page);
     }
 
     setEnd = async() => {

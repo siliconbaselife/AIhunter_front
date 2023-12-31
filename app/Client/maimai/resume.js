@@ -362,7 +362,7 @@ class Resume extends Base {
     checkEnd = async() => {
         let AccountInfoSpans = await this.page.$x(`//div[contains(@class, "value___VDQPF")]`);
         let hiSpan = AccountInfoSpans[0];
-        let friendSpan = AccountInfoSpans[1];
+        let friendSpan = AccountInfoSpans[2];
 
         let hiNum = await this.page.evaluate(node => node.innerText, hiSpan);
         let friendNum = await this.page.evaluate(node => node.innerText, friendSpan);
@@ -397,7 +397,7 @@ class Resume extends Base {
         
             await this.page.evaluate((item)=>item.scrollIntoView(), peopleItem);
             let f = await this.filterPeople(peopleItem, peopleInfo, task);
-            if (f)
+            if (f) 
                 continue
 
             try {
@@ -554,6 +554,7 @@ class Resume extends Base {
             logger.info(`脉脉 ${this.userInfo.name} 没有分页栏`);
             return false;
         }
+        await pageDiv.click();
 
         let [disable_next_btn] = await this.page.$x(`//div[contains(@class, "nextPage___1s7KJ") and contains(@class, "disabled___kWxdU")]`);
         if (disable_next_btn) {
