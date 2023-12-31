@@ -361,6 +361,7 @@ class Chat extends Base {
             if (err) {
                 logger.error(`脉脉手机号上传失败error ${e}`)
             }
+            logger.error(`上传手机号成功`);
         });
     }
 
