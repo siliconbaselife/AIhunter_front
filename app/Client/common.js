@@ -14,7 +14,9 @@ class Common {
       await this.initBrowser(options);
     }
 
+    console.log("new page");
     const page = await this.browser.newPage();
+    console.log("page: ", page);
 
     await this.settingPage(page);
 
