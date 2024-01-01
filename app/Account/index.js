@@ -56,6 +56,7 @@ class AccountManager {
         } else {
             cookies = accountIdOrCookies;
         }
+        console.log("cookies", cookies);
         await page.setCookie(...cookies);
         return true
     }
