@@ -284,7 +284,7 @@ class Resume extends Base {
         await this.page.evaluate((item)=>item.scrollIntoView(), titleSpan);
         await sleep(200);
         await titleSpan.click();
-        await sleep(500);
+        await sleep(300);
     }
 
     setWorkTimeDrop = async(btn, timeNum) => {

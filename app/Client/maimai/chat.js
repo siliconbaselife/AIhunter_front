@@ -229,7 +229,7 @@ class Chat extends Base {
                 }
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 聊天发生异常: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 聊天发生异常: `, e);
         }
     }
 
@@ -472,6 +472,7 @@ class Chat extends Base {
         let item = await this.fetchRecallItem();
         if (!item) {
             logger.info(`脉脉 ${this.userInfo.name} 获取不到召回的item`);
+            await sleep(1000);
             return;
         }
 
@@ -558,7 +559,7 @@ class Chat extends Base {
             headers: {"Connection": "keep-alive"},
             method: 'POST'
         });
-        logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallResult ${id} data: ${data}`);
+        logger.info(`脉脉 ${this.userInfo.name} recallResult ${id} data: ${data}`);
     }
 
     needRecall = async (peopleInfo, messages) => {
@@ -617,7 +618,7 @@ class Chat extends Base {
             }
         }
 
-        if (this.beforeRecallAvactor.length == 0)
+        if (this.beforeRecallAvactor.length == 0 || next_item_index >= items.length)
             next_item_index = 0;
 
         if (next_item_index >= 0 || next_item_index < items.length)
