@@ -50,10 +50,8 @@ class Common {
         `--disable-dev-shm-usage`
       ];
 
-      console.log("1111");
       let chromeInfo = await findChrome({});
       let executablePath = chromeInfo.executablePath;
-      console.log("executablePath: ", executablePath);
       this.browser = await puppeteer.launch({
         executablePath: executablePath,
         headless: false,
@@ -61,7 +59,6 @@ class Common {
         ignoreHTTPSErrors: true,
         args
       });
-      console.log("2222");
 
       this.browser.on('disconnected', () => {
         logger.info('puppeteer disconnected 浏览器异常退出')
