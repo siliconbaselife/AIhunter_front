@@ -45,6 +45,7 @@ class Client {
      */
     run = async (account_id) => {
         global.running = true;
+        logger.info(`脉脉开始执行 account: ${account_id}`);
 
         await this.loginPage(account_id);
         await sleep(2 * 1000);
