@@ -494,7 +494,7 @@ class Chat extends Base {
             return;
 
         await item.click();
-        await sleep(3 * 1000);
+        await sleep(1 * 1000);
 
         let messages = await this.fetchPeopleMsgs(name, avator);
         if (!messages) {
