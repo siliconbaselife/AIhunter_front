@@ -359,7 +359,7 @@ class Chat extends Base {
 
         await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
             if (err) {
-                logger.error(`脉脉手机号上传失败error: `, ${err})
+                logger.error(`脉脉手机号上传失败error: `, err)
             }
             logger.info(`上传手机号成功`);
         });
