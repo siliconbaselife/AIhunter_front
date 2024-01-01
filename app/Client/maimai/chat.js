@@ -523,6 +523,8 @@ class Chat extends Base {
         if (f1 || f2) {
             this.recallIndex = 0;
             this.beforeRecallAvactor = "";
+            await this.page.reload();
+            await sleep(5 * 1000);
         }
     }
 
