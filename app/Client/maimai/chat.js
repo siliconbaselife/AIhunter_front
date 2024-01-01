@@ -620,8 +620,10 @@ class Chat extends Base {
             }
         }
 
-        if (this.beforeRecallAvactor.length == 0 || next_item_index >= items.length)
+        if (this.beforeRecallAvactor.length == 0 || next_item_index >= items.length) {
+            logger.info(`脉脉 ${this.userInfo.name} 召回找不到合适的item(${this.beforeRecallAvactor}), 重置到第一个节点。`);
             next_item_index = 0;
+        }
 
         if (next_item_index >= 0 || next_item_index < items.length)
             return items[next_item_index];
