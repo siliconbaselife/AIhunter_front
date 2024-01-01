@@ -1,4 +1,4 @@
-const Resume = require('./Resume');
+const Resume = require('./resume');
 const Login = require('./login');
 const { sleep } = require('../../utils');
 const Chat = require('./Chat');
