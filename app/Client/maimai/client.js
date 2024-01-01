@@ -17,12 +17,10 @@ class Client {
      * @returns {{id: string, name: string}} 账号信息accountInfo 
      */
     loginPage = async (account_id) => {
-        console.log("newPage before");
         this.page = await this.common.newPage({
             width: 1792,
             height: 984,
         });
-        console.log("newPage after");
         this.options = this.options || {};
         this.options.page = this.page;
         this.login = new Login(this.options);
