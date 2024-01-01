@@ -38,10 +38,11 @@ class Chat extends Base {
                 await this.doRecall();
             } catch (e) {
                 if (e.message.includes("Node is detached from document")) {
-                    logger.info("脉脉 ${this.userInfo.name} 出现special error, 召回item点不上的");
+                    logger.info(`脉脉 ${this.userInfo.name} 出现special error, 召回item点不上的`);
                 } else {
                     logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
                 }
+                await sleep(5 * 1000);
             }
         }
     }
@@ -91,7 +92,7 @@ class Chat extends Base {
 
         if (flag != nowflag) {
             await checkbox.click();
-            await sleep(500);
+            await sleep(3 * 1000);
             return true;
         }
 
