@@ -484,10 +484,10 @@ class Chat extends Base {
         let itemInfo = await this.fetchItemInfo(item);
         
         let msgs = await this.doRecallMsg(item, itemInfo);
-        await this.dealRecallEnd(msgs);
-
         this.recallIndex += 1;
         this.beforeRecallAvactor = itemInfo.avator;
+
+        await this.dealRecallEnd(msgs);
     }
 
     doRecallMsg = async(item, itemInfo) => {
@@ -526,6 +526,7 @@ class Chat extends Base {
         let f2 = await this.noMoreMsg();
 
         if (f1 || f2) {
+            logger.info(`脉脉 ${this.userInfo.name} f1: ${f1} f2: ${f2}`);
             this.recallIndex = 0;
             this.beforeRecallAvactor = "";
             await this.page.reload();
@@ -535,7 +536,7 @@ class Chat extends Base {
 
     noMoreMsg = async () => {
         let [noMoreDiv] = await this.page.$x(`//div[contains(@class, "message-nomore") and text() = "没有更多了"]`);
-        return !!!noMoreDiv
+        return !!noMoreDiv
     }
 
     isOutTime = async (messages) => {
