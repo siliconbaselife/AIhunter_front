@@ -37,7 +37,11 @@ class Chat extends Base {
             try {
                 await this.doRecall();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
+                if (e.message.includes("Node is detached from document")) {
+                    logger.info("脉脉 ${this.userInfo.name} 出现special error, 召回item点不上的");
+                } else {
+                    logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
+                }
             }
         }
     }
@@ -530,7 +534,7 @@ class Chat extends Base {
 
     noMoreMsg = async () => {
         let [noMoreDiv] = await this.page.$x(`//div[contains(@class, "message-nomore") and text() = "没有更多了"]`);
-        return !!noMoreDiv
+        return !!!noMoreDiv
     }
 
     isOutTime = async (messages) => {
