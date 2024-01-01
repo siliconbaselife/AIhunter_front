@@ -324,6 +324,7 @@ class Resume extends Base {
     }
 
     waitListRefresh = async() => {
+        await sleep(500);
         let cardSpan = await this.waitElement(`//div[contains(@class, "talent-common-card")]`, this.page);
         if (!cardSpan) {
             logger.info(`列表没有出现`);
