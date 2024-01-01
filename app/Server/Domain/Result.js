@@ -21,12 +21,12 @@ class Result {
 
     /**
      * 失败返回
-     * @param {any} data 
-     * @param {number} ret 
      * @param {string} msg 
+     * @param {number} ret 
+     * @param {any} data 
      * @returns {Result}
      */
-    static fail(data, ret, msg) {
+    static fail(msg, ret, data) {
         return Result.restResult(data || null, ret || Result.FAIL, msg || "操作失败");
     }
 
