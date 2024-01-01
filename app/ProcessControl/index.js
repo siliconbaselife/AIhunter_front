@@ -158,7 +158,7 @@ class MainProcessManager {
         })
         cluster.on("message", (worker, message) => {
             const pid = worker.process.pid;
-            console.log(`cluster监听到message, 子进程pid = ${pid}, message = ${message}`);
+            console.log(`cluster监听到message, 子进程pid = ${pid}, message = ${JSON.stringify(message)}`);
             const { eventName, data } = message;
             eventName && EventBus.call(`${eventName}${pid}`, data);
         })
