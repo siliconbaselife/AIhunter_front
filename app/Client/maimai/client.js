@@ -1,7 +1,7 @@
 const Resume = require('./resume');
 const Login = require('./login');
 const { sleep } = require('../../utils');
-const Chat = require('./Chat');
+const Chat = require('./chat');
 const logger = require('../../Logger');
 const Common = require('../common');
 const AccountManager = require("../../Account/index");
