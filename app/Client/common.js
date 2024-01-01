@@ -11,9 +11,7 @@ class Common {
 
   newPage = async (options = { width: 1580, height: 900 }) => {
     if (!this.browser) {
-      console.log("initBrowser before");
       await this.initBrowser(options);
-      console.log("initBrowser end");
     }
 
     const page = await this.browser.newPage();
