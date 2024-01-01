@@ -37,7 +37,12 @@ class Chat extends Base {
             try {
                 await this.doRecall();
             } catch (e) {
-                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
+                if (e.message.includes("Node is detached from document")) {
+                    logger.info(`脉脉 ${this.userInfo.name} 出现special error, 召回item点不上的`);
+                } else {
+                    logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
+                }
+                await sleep(5 * 1000);
             }
         }
     }
@@ -87,7 +92,7 @@ class Chat extends Base {
 
         if (flag != nowflag) {
             await checkbox.click();
-            await sleep(500);
+            await sleep(3 * 1000);
             return true;
         }
 
@@ -98,7 +103,7 @@ class Chat extends Base {
         let peopleIndex = 0;
         while(true) {
             await this.scrollChatToPosition(peopleIndex);
-            await sleep(3 * 1000);
+            await sleep(2 * 1000);
 
             let hasUnread = await this.dealOneUnread();
             if (!hasUnread) {
@@ -146,7 +151,7 @@ class Chat extends Base {
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
         await nameElement.click();
-        await sleep(5 * 1000);
+        await sleep(1 * 1000);
 
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
@@ -229,7 +234,7 @@ class Chat extends Base {
                 }
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 聊天发生异常: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} ${peopleInfo.name} 聊天发生异常: `, e);
         }
     }
 
@@ -359,7 +364,7 @@ class Chat extends Base {
 
         await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
             if (err) {
-                logger.error(`脉脉手机号上传失败error ${e}`)
+                logger.error(`脉脉手机号上传失败error: `, err)
             }
             logger.info(`上传手机号成功`);
         });
@@ -472,16 +477,17 @@ class Chat extends Base {
         let item = await this.fetchRecallItem();
         if (!item) {
             logger.info(`脉脉 ${this.userInfo.name} 获取不到召回的item`);
+            await sleep(1000);
             return;
         }
 
         let itemInfo = await this.fetchItemInfo(item);
         
         let msgs = await this.doRecallMsg(item, itemInfo);
-        await this.dealRecallEnd(msgs);
-
         this.recallIndex += 1;
         this.beforeRecallAvactor = itemInfo.avator;
+
+        await this.dealRecallEnd(msgs);
     }
 
     doRecallMsg = async(item, itemInfo) => {
@@ -493,7 +499,7 @@ class Chat extends Base {
             return;
 
         await item.click();
-        await sleep(3 * 1000);
+        await sleep(1 * 1000);
 
         let messages = await this.fetchPeopleMsgs(name, avator);
         if (!messages) {
@@ -520,8 +526,11 @@ class Chat extends Base {
         let f2 = await this.noMoreMsg();
 
         if (f1 || f2) {
+            logger.info(`脉脉 ${this.userInfo.name} f1: ${f1} f2: ${f2}`);
             this.recallIndex = 0;
             this.beforeRecallAvactor = "";
+            await this.page.reload();
+            await sleep(5 * 1000);
         }
     }
 
@@ -558,7 +567,7 @@ class Chat extends Base {
             headers: {"Connection": "keep-alive"},
             method: 'POST'
         });
-        logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallResult ${id} data: ${data}`);
+        logger.info(`脉脉 ${this.userInfo.name} recallResult ${id} data: ${data}`);
     }
 
     needRecall = async (peopleInfo, messages) => {
@@ -587,7 +596,7 @@ class Chat extends Base {
                     return recallList[0];
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: `, e);
         }
     }
 
@@ -617,8 +626,10 @@ class Chat extends Base {
             }
         }
 
-        if (this.beforeRecallAvactor.length == 0)
+        if (this.beforeRecallAvactor.length == 0 || next_item_index >= items.length) {
+            logger.info(`脉脉 ${this.userInfo.name} 召回找不到合适的item(${this.beforeRecallAvactor}), 重置到第一个节点。`);
             next_item_index = 0;
+        }
 
         if (next_item_index >= 0 || next_item_index < items.length)
             return items[next_item_index];
