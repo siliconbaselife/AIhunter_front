@@ -98,7 +98,7 @@ class Chat extends Base {
         let peopleIndex = 0;
         while(true) {
             await this.scrollChatToPosition(peopleIndex);
-            await sleep(3 * 1000);
+            await sleep(2 * 1000);
 
             let hasUnread = await this.dealOneUnread();
             if (!hasUnread) {
@@ -146,7 +146,7 @@ class Chat extends Base {
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
         await nameElement.click();
-        await sleep(5 * 1000);
+        await sleep(1 * 1000);
 
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
@@ -359,7 +359,7 @@ class Chat extends Base {
 
         await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
             if (err) {
-                logger.error(`脉脉手机号上传失败error ${e}`)
+                logger.error(`脉脉手机号上传失败error: `, ${err})
             }
             logger.info(`上传手机号成功`);
         });
@@ -590,7 +590,7 @@ class Chat extends Base {
                     return recallList[0];
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: ${e}`);
+            logger.error(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: `, e);
         }
     }
 
