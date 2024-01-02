@@ -572,7 +572,7 @@ class Resume extends Base {
                 return false;
             }
         } catch (e) {
-            logger.error(`筛选错误为##`, e);
+            logger.error(`脉脉 ${this.userInfo.name} 筛选错误为##`, e);
         }
 
         return true;
