@@ -538,11 +538,10 @@ class Resume extends Base {
         if (runOutTxt) {
             logger.info(`脉脉 ${this.userInfo.name} 打招呼用完`);
             this.hiEnd = true;
+            let [msgCloseBtn] = await this.page.$x(`//div[contains(@class, "mui-modal-close-x")]`);
+            if (msgCloseBtn)
+                await msgCloseBtn.click();
         }
-
-        let [msgCloseBtn] = await this.page.$x(`//div[contains(@class, "mui-modal-close-x")]`);
-        if (msgCloseBtn)
-            await msgCloseBtn.click();
     }
 
     filterPeople = async(peopleItem, peopleInfo, task) => {
@@ -573,7 +572,7 @@ class Resume extends Base {
                 return false;
             }
         } catch (e) {
-            logger.error(`筛选错误为##`, e);
+            logger.error(`脉脉 ${this.userInfo.name} 筛选错误为##`, e);
         }
 
         return true;
