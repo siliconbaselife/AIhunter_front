@@ -480,6 +480,7 @@ class Chat extends Base {
             await sleep(1000);
             return;
         }
+        await this.frame.evaluate((item)=>item.scrollIntoView(), item);
 
         let itemInfo = await this.fetchItemInfo(item);
         
@@ -567,7 +568,7 @@ class Chat extends Base {
             headers: {"Connection": "keep-alive"},
             method: 'POST'
         });
-        logger.info(`脉脉 ${this.userInfo.name} recallResult ${id} data: ${data}`);
+        logger.info(`脉脉 ${this.userInfo.name} recallResult ${id} data: ${JSON.stringify(data)}`);
     }
 
     needRecall = async (peopleInfo, messages) => {
@@ -588,7 +589,7 @@ class Chat extends Base {
               headers: {"Connection": "keep-alive"},
               method: 'POST'
             });
-            logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recall status: ${status} data: ${data}`);
+            logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recall status: ${status} data: ${JSON.stringify(data)}`);
 
             if (status == 0) {
                 let recallList = data;

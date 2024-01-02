@@ -8,6 +8,10 @@ class Resume extends Base {
     keywordDelay = 40;
     peopleCache;
     getList;
+
+    constructor(options) {
+        super(options)
+    }
 }
 
 module.exports = Resume;
