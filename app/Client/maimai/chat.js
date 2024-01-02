@@ -12,6 +12,10 @@ class Chat extends Base {
 
     getPullMsgs;
 
+    nowTime;
+
+    recallErrorNum = 0;
+
     run = async() => {
         logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
         await this.setBefore();
@@ -488,7 +492,22 @@ class Chat extends Base {
         this.recallIndex += 1;
         this.beforeRecallAvactor = itemInfo.avator;
 
+        await this.countRecallError(msgs);
         await this.dealRecallEnd(msgs);
+    }
+
+    countRecallError = async(msgs) => {
+        if (!msgs) {
+            this.recallErrorNum += 1;
+            if (this.recallErrorNum > 10) {
+                logger.info(`脉脉 ${this.userInfo.name} 召回获取消息异常超过10次`);
+                this.recallIndex = 0;
+                this.beforeRecallAvactor = "";
+                await this.page.reload();
+            }
+        } else {
+            this.recallErrorNum = 0;
+        }
     }
 
     doRecallMsg = async(item, itemInfo) => {
@@ -639,6 +658,7 @@ class Chat extends Base {
     setBefore = async() => {
         this.AvactarMsgCache = {};
         this.NameMsgCache = {};
+        this.nowTime = new Date().getTime() / 1000;
 
         await this.setMsgReceive();
         await this.setChatPage();
