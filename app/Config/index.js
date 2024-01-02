@@ -52,6 +52,6 @@ module.exports = {
   PROCESS_CONSTANTS,
   BIZ_DOMAIN: 'http://aistormy.com',
   // BIZ_DOMAIN: 'http://114.248.220.242:32040',
-  BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台zh域名
-  // BACK_ADMIN_DOMAIN: "http://www.shadowhiring.cn", // 后台zh域名
+  // BACK_ADMIN_DOMAIN: "http://localhost:5173", // 后台zh域名
+  BACK_ADMIN_DOMAIN: "http://www.shadowhiring.cn", // 后台zh域名
 }

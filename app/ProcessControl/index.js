@@ -118,7 +118,7 @@ class MainProcessManager {
                 rs(data);
             });
             worker.on("exit", (code, signal) => {
-                rj(`进程异常关闭, 还等到返回消息: code = ${code}, signal =${signal}`);
+                rj(`进程异常关闭, 还没等到返回消息: code = ${code}, signal =${signal}`);
             })
             worker.send({ eventName, data });
         })
