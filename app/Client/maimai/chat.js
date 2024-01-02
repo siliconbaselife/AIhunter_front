@@ -32,6 +32,7 @@ class Chat extends Base {
                 await this.doUnread();
             } catch (e) {
                 logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
+                await sleep(5 * 1000);
             }
 
             let unreadNum = await this.hasUnread();
