@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "pkg": "ncc build -o build/lib ./app/index.js && pkg . --public"
+    "pkg": "pkg . --public"
   },
   "main": "./app/index.js",
   "bin": "./app/index.js",
@@ -13,10 +13,12 @@
       "./app/**/*.js"
     ],
     "targets": [
-      "node18-win-x64"
+      "node18-win-x64",
+      "node16-macos-x64"
     ],
     "outputPath": "dist"
   },
+  "//": "打包macos-arm 在pkg.scripts.targets替换成一个 node18-macos-arm64",
   "type": "commonjs",
   "author": "",
   "license": "ISC",
