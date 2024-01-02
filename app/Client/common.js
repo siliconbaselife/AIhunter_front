@@ -6,7 +6,10 @@ const { sleep } = require('../utils');
 const Request = require('../utils/Request');
 const { BIZ_DOMAIN } = require("../Config/index");
 
+const ProcessControl = require("../ProcessControl/index");
+
 class Common {
+  /** @type {import("puppeteer").Browser} */
   browser;
 
   newPage = async (options = { width: 1580, height: 900 }) => {
@@ -65,6 +68,11 @@ class Common {
       this.browser.on('targetdestroyed', () => {
         logger.info('puppeteer targetdestroyed 正常退出');
         logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
+      });
+
+      this.browser.on("disconnected", () => {
+        logger.info(`已关闭浏览器`);
+        ProcessControl.close(); // 关闭当前进程
       })
     } catch (e) {
       console.log(`browser 启动失败##`, e);
@@ -250,7 +258,7 @@ class Common {
     }
     return result;
   }
-  
+
   // queryAccountId = async (platformType, id) => {
   //   const { status, data, msg } = await Request({
   //     url: `${BIZ_DOMAIN}/recruit/account/query`,
@@ -275,9 +283,9 @@ class Common {
 
   toPage = async (url) => {
     try {
-        await this.page.goto(url, { waitUntil: 'networkidle2' });
+      await this.page.goto(url, { waitUntil: 'networkidle2' });
     } catch (e) {
-        logger.error(`脉脉跳转页面异常,错误为:`, e);
+      logger.error(`脉脉跳转页面异常,错误为:`, e);
     }
   }
 

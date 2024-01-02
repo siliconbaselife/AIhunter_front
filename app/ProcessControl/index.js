@@ -2,6 +2,7 @@ const path = require("path");
 const cluster = require("cluster");
 const { PROCESS_CONSTANTS } = require("../Config/index");
 const EventBus = require("../utils/EventBus/index");
+const logger = require("../Logger/index");
 // import cluster from "cluster";
 
 /**
@@ -117,7 +118,7 @@ class MainProcessManager {
                 rs(data);
             });
             worker.on("exit", (code, signal) => {
-                rj(`进程异常关闭: code = ${code}, signal =${signal}`);
+                rj(`进程异常关闭, 还等到返回消息: code = ${code}, signal =${signal}`);
             })
             worker.send({ eventName, data });
         })
@@ -133,32 +134,44 @@ class MainProcessManager {
         else worker = this.getChildProcess(findOptions);
         if (worker) {
             worker.kill(PROCESS_CONSTANTS.PROCESS_NORMAL_CLOASE_SINGAL);
+            this.workersRemoveChildProcess(worker);
         }
     }
 
     /**
+     * workers列表移除一个进程(private的,外面不要调用)
+     * @private
+     * @param {import("cluster").Worker} worker 
+     */
+    workersRemoveChildProcess(worker) {
+        const pid = worker.process.pid;
+        const key = Object.keys(this.workers).find(account_id => {
+            const cProcess = this.workers[account_id];
+            return cProcess.worker.process.pid === pid;
+        })
+        if (key) { delete this.workers[key] };
+    }
+
+    /**
     * 处理主cluster接收到的事件(private的,外面不要调用)
+    * @private
     */
     addListenerOnCluster() {
         cluster.on("fork", (worker) => {
             console.log(`已创建子进程, pid = ${worker.process.pid}`);
+            logger.info(`已创建子进程, pid = ${worker.process.pid}`);
         })
         cluster.on("exit", (worker, code, signal) => {
-            if (signal === PROCESS_CONSTANTS.PROCESS_NORMAL_CLOASE_SINGAL) { // 正常关闭
+            if (signal === PROCESS_CONSTANTS.PROCESS_NORMAL_CLOASE_SINGAL || signal === 0) { // 正常关闭
             } else { // 异常关闭
-                console.log("异常关闭")
+                logger.error("异常关闭")
             }
-            const pid = worker.process.pid;
-            const key = Object.keys(this.workers).find(account_id => {
-                const cProcess = this.workers[account_id];
-                return cProcess.worker.process.pid === pid;
-            })
-            if (key) { delete this.workers[key] };
-            console.log(`子进程已关闭, pid = ${pid}, ${code}, ${signal}`);
+            this.workersRemoveChildProcess(worker);
+            logger.info(`子进程已关闭, pid = ${worker.process.pid}, ${code}, ${signal}`);
         })
         cluster.on("message", (worker, message) => {
             const pid = worker.process.pid;
-            console.log(`cluster监听到message, 子进程pid = ${pid}, message = ${JSON.stringify(message)}`);
+            logger.info(`cluster监听到message, 子进程pid = ${pid}, message = ${JSON.stringify(message)}`);
             const { eventName, data } = message;
             eventName && EventBus.call(`${eventName}${pid}`, data);
         })
@@ -203,6 +216,7 @@ class ChildProcessManager {
 
     /**
      * 处理worker接收到的事件(private的,外面不要调用)
+     * @private
      */
     addListenerOnWorker() {
         this.currentWorker.on("message", (message) => {
