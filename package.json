@@ -18,6 +18,7 @@
     ],
     "outputPath": "dist"
   },
+  "//": "打包macos-arm 在pkg.scripts.targets增加 node18-macos-arm64",
   "type": "commonjs",
   "author": "",
   "license": "ISC",
