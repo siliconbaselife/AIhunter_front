@@ -124,7 +124,7 @@ class Chat extends Base {
         await item.click();
         await sleep(2 * 1000);
 
-        let messages = await this.fetchPeopleMsgs(id);
+        let messages = await this.fetchPeopleMsgsByCache(id);
         if (!messages) {
             logger.info(`boss ${this.userInfo.name} 当前处理 ${name} 异常,获取不到消息`);
             return;
@@ -147,8 +147,65 @@ class Chat extends Base {
 
     }
 
-    fetchPeopleMsgs = async () => {
+    fetchPeopleMsgsByCache = async (id) => {
+        let messagesRaw = this.messageCache[id];
+        if (!messagesRaw)
+            return;
+
+        let messages = [];
+        for (let messageRaw of messagesRaw) {
+            let txt = await this.fetchTxt(messageRaw);
+            let speaker = await this.fetchSpeaker(messageRaw, txt);
+            let noUse = await this.isNoUserMsg(messageRaw, txt);
+            if (noUse)
+                continue;
+
+            messages.push({
+                speaker: speaker,
+                msg: usertext,
+                time: messageRaw.time
+            });
+        }
+        return messages;
+    }
+
+    fetchTxt = async(message) => {
+        const pushText = message.pushText;
+        let ts = pushText.split(":");
+        return ts[1];
+    }
+
+    fetchSpeaker = async (message, txt) => {
+        const pushText = message.pushText;
+        let ts = pushText.split(":");
+        let userName = ts[0];
+        let specialTxts = ["我想要和您交换联系方式，您是否同意", "我想要和您交换微信，您是否同意", "对方想发送附件简历给您，您是否同意", userName + "的微信号", "您可至邮箱中查看和下载", "接受与您交换微信", "接受与您交换联系方式", "对方拒绝了您的交换微信请求"]
         
+        for (let specialTxt of specialTxts) {
+            if (txt.includes(specialTxt))
+                return "system";
+        }
+
+        if (userName == this.userInfo.name)
+            return "robot";
+
+        return "user"
+    }
+
+    isNoUserMsg = async (message, txt) => {
+        if (message.uncount === 1)
+            return true;
+
+        if (message.status !== 2 && message.status !== 1)
+            return true;
+
+        if (message.body.templateId === 3)
+            return true;
+
+        if (txt.match("发来一张图片"))
+            return true;
+
+        return false;
     }
 
     chatWithRobot = async (id, name, messages) => {
