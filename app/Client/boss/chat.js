@@ -139,12 +139,43 @@ class Chat extends Base {
             await this.chatWithRobot(id, name, messages);
 
             await sleep(10 * 1000);
-            messages = await this.fetchMsgsByHtml();
+            messages = await this.fetchMsgsByHtml(name);
         }
     }
 
-    fetchMsgsByHtml = async () => {
+    fetchMsgsByHtml = async (name) => {
+        let messages = [];
+        let msgItems = await this.page.$x(`//div[contains(@class, "chat-message-list")]/div[contains(@class, "message-item")]`);
+        for (let msgItem of msgItems) {
+            let {speaker, txt} = await this.fetchItemMsg(msgItem, name);
+            if (!txt || txt.length == 0)
+                break;
 
+            messages.push({
+                speaker: speaker,
+                msg: txt
+            });
+        }
+
+        return messages;
+    }
+
+    fetchItemMsg = async (msgItem, name) => {
+        let [txtSpan] = await msgItem.$x(`//div[contains(@class, "text")]`);
+        let txt = await this.frame.evaluate(node => node.innerText, txtSpan);
+
+        let speaker = "system";
+        let [friendSpan] = await msgItem.$x(`/div[contains(@class, "item-friend")]`);
+        if (friendSpan)
+            speaker = "user";
+        let [robotSpan] = await msgItem.$x(`/div[contains(@class, "item-myself")]`);
+        if (robotSpan)
+            speaker = "robot";
+
+        let systemTxt= await this.isSystemSpeakerTxt(txt, name);
+        if (systemTxt)
+            speaker = "system";
+        return {speaker, txt};
     }
 
     fetchPeopleMsgsByCache = async (id) => {
@@ -162,7 +193,7 @@ class Chat extends Base {
 
             messages.push({
                 speaker: speaker,
-                msg: usertext,
+                msg: txt,
                 time: messageRaw.time
             });
         }
@@ -179,17 +210,23 @@ class Chat extends Base {
         const pushText = message.pushText;
         let ts = pushText.split(":");
         let userName = ts[0];
-        let specialTxts = ["我想要和您交换联系方式，您是否同意", "我想要和您交换微信，您是否同意", "对方想发送附件简历给您，您是否同意", userName + "的微信号", "您可至邮箱中查看和下载", "接受与您交换微信", "接受与您交换联系方式", "对方拒绝了您的交换微信请求"]
-        
-        for (let specialTxt of specialTxts) {
-            if (txt.includes(specialTxt))
-                return "system";
-        }
+        system = await this.isSystemSpeakerTxt(txt, userName);
+        if (system)
+            return "system";
 
         if (userName == this.userInfo.name)
             return "robot";
 
         return "user"
+    }
+
+    isSystemSpeakerTxt = async(txt, userName) => {
+        let specialTxts = ["我想要和您交换联系方式，您是否同意", "我想要和您交换微信，您是否同意", "对方想发送附件简历给您，您是否同意", userName + "的微信号", "您可至邮箱中查看和下载", "接受与您交换微信", "接受与您交换联系方式", "对方拒绝了您的交换微信请求"]
+        for (let specialTxt of specialTxts) {
+            if (txt.includes(specialTxt))
+                return "system";
+        }
+        return;
     }
 
     isNoUserMsg = async (message, txt) => {
@@ -246,12 +283,16 @@ class Chat extends Base {
         await sleep(500);
 
         let wxBtn = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
-        await wxBtn.click();
-        await sleep(500);
+        if (wxBtn) {
+            await wxBtn.click();
+            await sleep(500);
+        }
 
         let phoneBtn = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换手机"]/parent::*/span[contains(@class, "operate-btn")]`);
-        await phoneBtn.click();
-        await sleep(500);
+        if (phoneBtn) {
+            await phoneBtn.click();
+            await sleep(500);
+        }
     }
 
     sendEmoji = async () => {
@@ -321,17 +362,35 @@ class Chat extends Base {
     }
 
     dealSystemView = async () => {
-        await this.dealResume();
+        await this.dealSystemResume();
         await this.dealWX();
         await this.dealPhone();
     }
 
-    dealResume = async () => {
+    dealSystemResume = async () => {
+        let items = await this.page.$x(`//div[contains(@class, "message-item")]`);
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
+            let robotSpan = await item.$x(`/div[contains(@class, "item-myself")]`);
+            if (robotSpan)
+                break;
 
+            let cardBtn = await item.$x(`//span[contains(@class, "card-btn")]`);
+            if (!cardBtn)
+                continue;
+
+            let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
+
+            if (btnTxt == "点击预览附件简历")
+                await this.downloadResume();
+        }
     }
 
     dealWX = async () => {
-
+        let [phoneBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看电话"]`);
+        if (phoneBtn) {
+            await phoneBtn.click();
+        }
     }
 
     dealPhone = async () => {
