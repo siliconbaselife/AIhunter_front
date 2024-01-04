@@ -156,7 +156,7 @@ class Chat extends Base {
         let [imgElement] = await msgItem.$x(`//img[contains(@class, "message-avatar")]`);
         let [nameElement] = await msgItem.$x(`//h6[contains(@class, "message-user-name")]`);
         await nameElement.click();
-        await sleep(1 * 1000);
+        await sleep(3 * 1000);
 
         let name = await this.frame.evaluate(node => node.innerText, nameElement);
         let avator = await this.frame.evaluate(node => node.src, imgElement);
