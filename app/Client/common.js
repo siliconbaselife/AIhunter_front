@@ -7,7 +7,7 @@ const Request = require('../utils/Request');
 const { BIZ_DOMAIN } = require("../Config/index");
 
 const ProcessControl = require("../ProcessControl/index");
-
+ 
 class Common {
   /** @type {import("puppeteer").Browser} */
   browser;
