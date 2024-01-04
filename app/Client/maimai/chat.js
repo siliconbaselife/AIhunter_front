@@ -32,6 +32,7 @@ class Chat extends Base {
                 await this.doUnread();
             } catch (e) {
                 logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
+                await sleep(5 * 1000);
             }
 
             let unreadNum = await this.hasUnread();
@@ -501,13 +502,20 @@ class Chat extends Base {
             this.recallErrorNum += 1;
             if (this.recallErrorNum > 10) {
                 logger.info(`脉脉 ${this.userInfo.name} 召回获取消息异常超过10次`);
-                this.recallIndex = 0;
-                this.beforeRecallAvactor = "";
-                await this.page.reload();
+                await this.refreshChat();
             }
         } else {
             this.recallErrorNum = 0;
         }
+    }
+
+    refreshChat = async() => {
+        this.recallIndex = 0;
+        this.beforeRecallAvactor = "";
+        await this.page.reload();
+        await sleep(5000);
+        const pageFrame = await this.page.$('#imIframe');
+        this.frame = await pageFrame.contentFrame();
     }
 
     doRecallMsg = async(item, itemInfo) => {
@@ -547,10 +555,7 @@ class Chat extends Base {
 
         if (f1 || f2) {
             logger.info(`脉脉 ${this.userInfo.name} f1: ${f1} f2: ${f2}`);
-            this.recallIndex = 0;
-            this.beforeRecallAvactor = "";
-            await this.page.reload();
-            await sleep(5 * 1000);
+            await this.refreshChat();
         }
     }
 
