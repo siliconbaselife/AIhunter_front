@@ -478,7 +478,7 @@ class Chat extends Base {
     }
 
     downloadResume = async () => {
-
+        
     }
 
     setDownloadDir = async() => {
