@@ -32,10 +32,11 @@ class Chat extends Base {
                 await this.doUnread();
             } catch (e) {
                 if (e.message.includes("Attempted to use detached Frame")) {
+                    logger.info(`脉脉 ${this.userInfo.name} 出现 frame的问题`);
                     await this.dealErrorEvent();
+                } else {
+                    logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
                 }
-
-                logger.error(`脉脉 ${this.userInfo.name} 处理未读消息异常: `, e);
                 await sleep(5 * 1000);
             }
 
@@ -49,9 +50,11 @@ class Chat extends Base {
                 if (e.message.includes("Node is detached from document")) {
                     logger.info(`脉脉 ${this.userInfo.name} 出现special error, 召回item点不上的`);
                 } else if (e.message.includes("Attempted to use detached Frame")) {
+                    logger.info(`脉脉 ${this.userInfo.name} 出现 frame的问题`);
                     await this.dealErrorEvent();
+                } else {
+                    logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
                 }
-                logger.error(`脉脉 ${this.userInfo.name} 处理召回异常: `, e);
                 await sleep(5 * 1000);
             }
         }
@@ -481,7 +484,7 @@ class Chat extends Base {
             const wrap = $(".virtualized-message-list")[0];
   
             wrap.scrollTo(0, scrollLength);
-        }, 76 * index);
+        }, 76 * (index + 1));
     }
 
     doRecall = async() => {
