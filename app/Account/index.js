@@ -79,7 +79,7 @@ class AccountManager {
         } else if (options.cookies) { // 删除本页面指定cookies
             cookies = options.cookies;
         } else if (options.all) { // 删除本页面的所有cookies
-            cookies = page.cookies();
+            cookies = await page.cookies();
         }
         await page.deleteCookie(cookies);
         return true;
