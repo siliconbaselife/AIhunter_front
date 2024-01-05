@@ -60,6 +60,30 @@ class AccountManager {
         await page.setCookie(...cookies);
         return true
     }
+
+    /**
+     * 删除当前页面cookies
+     * @param {import("puppeteer").Page} page 页面 
+     * @param { {all?: boolean} | {cookies?: import("puppeteer").Protocol.Network.DeleteCookiesRequest[]} | {account_id?: string, deleteStorageToo?: boolean} } options 选项
+     */
+    removeCookies = async (page, options) => {
+        let cookies;
+        if (options.account_id) { // 删除本页面 指定账号id的cookies
+            let accountInfo = this.getAccountInfo(options.account_id);
+            if (!(accountInfo && accountInfo.cookies)) return false;
+            cookies = accountInfo.cookies;
+            if (options.deleteStorageToo) { // 同时删除账号本地储存的cookies
+                delete accountInfo.cookies;
+                this.setAccountInfo(options.account_id, accountInfo);
+            }
+        } else if (options.cookies) { // 删除本页面指定cookies
+            cookies = options.cookies;
+        } else if (options.all) { // 删除本页面的所有cookies
+            cookies = page.cookies();
+        }
+        await page.deleteCookie(cookies);
+        return true;
+    }
 }
 
 module.exports = AccountManager.getInstance();
