@@ -9,6 +9,7 @@ class Chat extends Base {
     keywordDelay = 40;
     messageCache = {};
     recallIndex;
+    itemHeight = 78;
 
     run = async() => {
         logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
@@ -85,6 +86,80 @@ class Chat extends Base {
         }
     }
 
+    doRecall = async() => {
+        await this.putAllMessageBtn();
+        await this.scrollChatToPosition(this.recallIndex);
+        let item = await this.fetchRecallItem();
+        await this.frame.evaluate((item)=>item.scrollIntoView(), item);
+        let {id, name} = await this.fetchItemNameAndId();
+
+        let recallInfo = await this.needRecall(id);
+        if (!recallInfo)
+            return;
+
+        await this.sendMessage(recallInfo.recall_msg);
+        await this.recallResult(id);
+        this.recallIndex += 1;
+
+        await this.dealRecallEnd();
+    }
+
+    scrollChatToPosition = async(index) => {
+        await this.page.evaluate((scrollLength) => {
+            const wrap = $(".user-list")[0];
+            wrap.scrollBy(0, scrollLength);
+        }, this.itemHeight * index);
+    }
+
+    fetchRecallItem = async() => {
+        let items = this.page.$x(`//div[contains(@class, "listitem")]`);
+        return items[this.recallIndex];
+    }
+
+    dealRecallEnd = async() => {
+        let items = this.page.$x(`//div[contains(@class, "listitem")]`);
+        if (this.recallIndex >= items.length) {
+            this.recallIndex = 0;
+        }
+    }
+
+    needRecall = async(id) => {
+        try {
+            const { status, data } = await Request({
+              url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
+              data: {
+                accountID: this.userInfo.accountID,
+                candidateIDs: [id],
+                candidateIDs_read: []
+              },
+              headers: {"Connection": "keep-alive"},
+              method: 'POST'
+            });
+            logger.info(`boss ${this.userInfo.name} name: ${peopleInfo.name} recall status: ${status} data: ${JSON.stringify(data)}`);
+
+            if (status == 0) {
+                let recallList = data;
+                if (recallList.length > 0)
+                    return recallList[0];
+            }
+        } catch (e) {
+            logger.error(`boss ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: `, e);
+        }
+    }
+
+    recallResult = async(id) => {
+        const { status, data } = await Request({
+            url: `${BIZ_DOMAIN}/recruit/candidate/recallResult`,
+            data: {
+              accountID: this.userInfo.accountID,
+              candidateID: id
+            },
+            headers: {"Connection": "keep-alive"},
+            method: 'POST'
+        });
+        logger.info(`boss ${this.userInfo.name} recallResult ${id} data: ${JSON.stringify(data)}`);
+    }
+
     hasUnread = async() => {
         let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "unread-nums")]`);
         if (!unreadSpan)
@@ -112,6 +187,13 @@ class Chat extends Base {
         while (index < items.length) {
             items = this.page.$x(`//div[contains(@class, "role")]`);
             let item = items[index];
+            await this.scrollChatToPosition(index);
+
+            try {
+                await this.dealOnePeople(item);
+            } catch (e) {
+                logger.error(`boss ${this.userInfo.name} 处理未读消息出现异常: `, e);
+            }
 
             index += 1;
         }
@@ -362,9 +444,18 @@ class Chat extends Base {
     }
 
     dealSystemView = async () => {
+        await this.clickOkAll();
         await this.dealSystemResume();
         await this.dealWX();
         await this.dealPhone();
+    }
+
+    clickOkAll = async () => {
+        let agreeBtns = await this.page.$x(`//span[contains(@class, "card-btn") and text()="同意" and not(contains(@class,'disable'))]`);
+        for (let agreeBtn of agreeBtns) {
+            await agreeBtn.click();
+            await sleep(500);
+          }
     }
 
     dealSystemResume = async () => {
@@ -383,6 +474,34 @@ class Chat extends Base {
 
             if (btnTxt == "点击预览附件简历")
                 await this.downloadResume();
+        }
+    }
+
+    downloadResume = async () => {
+
+    }
+
+    setDownloadDir = async() => {
+        let dirPath = path.join(this.downloadDir, this.userInfo.id.toString());
+        logger.info(`boss ${this.userInfo.name} 下载路径: `, dirPath);
+        try {
+          await rmDir(dirPath);
+          fs.mkdir(dirPath,(err)=>{
+            if(err){
+              logger.error(`boss ${this.userInfo.name} 新建目录出错:`, err);
+            }
+          })
+        } catch(e) {
+          logger.error(`boss ${this.userInfo.name} 新建目录出错:`, e);
+        }
+    }
+
+    clearDownloadDir = async() => {
+        let dirPath = path.join(this.downloadDir, this.userInfo.id.toString());
+        try {
+            await rmDir(dirPath);
+        } catch(e) {
+            logger.error(`boss ${this.userInfo.name} 清理目录出错:`, e);
         }
     }
 
