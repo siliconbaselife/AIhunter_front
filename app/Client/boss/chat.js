@@ -502,7 +502,7 @@ class Chat extends Base {
     }
 
     uploadResume = async(id, name) => {
-        let filedir = path.join(process.cwd(), this.userInfo.id.toString());
+        let filedir = path.join(process.cwd(), this.userInfo.accountID.toString());
         let files = fs.readdirSync(filedir);
         let filename = files[0];
         const crs = fs.createReadStream(filedir + "/" + filename);
@@ -512,7 +512,7 @@ class Chat extends Base {
         form.append('jobID', '');
 
         const reqParam = {
-            accountID: this.userInfo.id,
+            accountID: this.userInfo.accountID,
             candidateID: id,
             candidateName: name,
             filename: filename
@@ -531,7 +531,7 @@ class Chat extends Base {
     }
 
     makeDownloadDir = async() => {
-        let dirPath = path.join(process.cwd(), this.userInfo.id.toString());
+        let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
         logger.info(`boss ${this.userInfo.name} 下载路径: `, dirPath);
         try {
           await rmDir(dirPath);
@@ -546,7 +546,7 @@ class Chat extends Base {
     }
 
     clearDownloadDir = async() => {
-        let dirPath = path.join(this.downloadDir, this.userInfo.id.toString());
+        let dirPath = path.join(this.downloadDir, this.userInfo.accountID.toString());
         try {
             await rmDir(dirPath);
         } catch(e) {
@@ -567,7 +567,7 @@ class Chat extends Base {
         const form = new FormData();  
 
         const reqParam = {
-          accountID: this.userInfo.id,
+          accountID: this.userInfo.accountID,
           candidateID: id,
           candidateName: name
         }
@@ -603,7 +603,7 @@ class Chat extends Base {
         const form = new FormData();  
 
         const reqParam = {
-          accountID: this.userInfo.id,
+          accountID: this.userInfo.accountID,
           candidateID: id,
           candidateName: name
         }
