@@ -297,6 +297,23 @@ class Common {
       await sleep(2000);
     }
   }
+
+  /**
+   * 设定浏览器下载路径
+   */
+  setDownloadPath = async () => {
+    const downloadPath = path.join(process.cwd(), this.userInfo.id.toString());
+    try {
+      const client = await this.page.target().createCDPSession();
+      await client.send('Page.setDownloadBehavior', {
+          behavior: 'allow',
+          downloadPath: downloadPath
+      });
+    }
+    catch(e) {
+      logger.error("设定浏览器下载路径异常: ", e)
+    }
+  }
 }
 
 module.exports = Common;

@@ -27,6 +27,7 @@ class Chat extends Base {
 
         await this.setMsgReceive();
         await this.setChatPage();
+        await this.setDownloadPath();
     }
 
     setChatPage = async() => {
@@ -217,7 +218,7 @@ class Chat extends Base {
 
     chatOnePeopleNoop = async (id, name, messages) => {
         while(!messages) {
-            await this.dealSystemView();
+            await this.dealSystemView(id, name);
             await this.chatWithRobot(id, name, messages);
 
             await sleep(10 * 1000);
@@ -443,11 +444,11 @@ class Chat extends Base {
         });
     }
 
-    dealSystemView = async () => {
+    dealSystemView = async (id, name) => {
         await this.clickOkAll();
-        await this.dealSystemResume();
-        await this.dealWX();
-        await this.dealPhone();
+        await this.dealSystemResume(id, name);
+        await this.dealWX(id, name);
+        await this.dealPhone(id, name);
     }
 
     clickOkAll = async () => {
@@ -458,7 +459,7 @@ class Chat extends Base {
           }
     }
 
-    dealSystemResume = async () => {
+    dealSystemResume = async (id, name) => {
         let items = await this.page.$x(`//div[contains(@class, "message-item")]`);
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
@@ -473,16 +474,64 @@ class Chat extends Base {
             let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
 
             if (btnTxt == "点击预览附件简历")
-                await this.downloadResume();
+                await this.dealResume(item, id, name);
         }
     }
 
-    downloadResume = async () => {
-        
+    dealResume = async (item, id, name) => {
+        await this.makeDownloadDir();
+        await this.downloadResume(item);
+        await this.uploadResume(id, name);
+        await this.clearDownloadDir();
     }
 
-    setDownloadDir = async() => {
-        let dirPath = path.join(this.downloadDir, this.userInfo.id.toString());
+    downloadResume = async(item) => {
+        await this.page.evaluate((item)=>item.scrollIntoView(), item);
+        let [showBtn] = item.$x(`//span[text() = "点击预览附件简历"]`);
+        await showBtn.click();
+        await sleep(1 * 1000);
+
+        const pageFrame = await this.page.$('#imIframe');
+        let resumeFrame = await pageFrame.contentFrame();
+        let btns = await resumeFrame.$x(`//div[contains(@class, "attachment-resume-btns")]/span`);
+        await btns[btns.length - 1].click();
+        await sleep(1 * 1000);
+        let [closeBtn] = await this.page.$x(`//div[contains(@class, "boss-popup__close")]`);
+        await closeBtn.click();
+        await sleep(500);
+    }
+
+    uploadResume = async(id, name) => {
+        let filedir = path.join(process.cwd(), this.userInfo.id.toString());
+        let files = fs.readdirSync(filedir);
+        let filename = files[0];
+        const crs = fs.createReadStream(filedir + "/" + filename);
+
+        const form = new FormData();  
+        form.append('cv', crs);
+        form.append('jobID', '');
+
+        const reqParam = {
+            accountID: this.userInfo.id,
+            candidateID: id,
+            candidateName: name,
+            filename: filename
+        }
+
+        Object.keys(reqParam).map((key) => {
+            form.append(key, reqParam[key]);
+        })
+  
+        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
+            if (err) {
+                logger.error(`简历上传失败error: `, err)
+            }
+        });
+        await sleep(2 * 1000);
+    }
+
+    makeDownloadDir = async() => {
+        let dirPath = path.join(process.cwd(), this.userInfo.id.toString());
         logger.info(`boss ${this.userInfo.name} 下载路径: `, dirPath);
         try {
           await rmDir(dirPath);
@@ -505,15 +554,76 @@ class Chat extends Base {
         }
     }
 
-    dealWX = async () => {
-        let [phoneBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看电话"]`);
-        if (phoneBtn) {
-            await phoneBtn.click();
+    dealWX = async (id, name) => {
+        let [wxBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看微信"]`);
+        if (!wxBtn) {
+            return;
         }
+        await wxBtn.click();
+        let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
+        let textExchangeDiv = exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let wx = await this.frame.evaluate(node => node.innerText, textExchangeDiv);
+
+        const form = new FormData();  
+
+        const reqParam = {
+          accountID: this.userInfo.id,
+          candidateID: id,
+          candidateName: name
+        }
+
+        Object.keys(reqParam).map((key) => {
+          form.append(key, reqParam[key]);
+        })
+
+        form.append("wechat", wx);
+        form.append("jobID", "");
+
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err) {
+            if (err) {
+              logger.error(`微信上传失败error: `, e)
+            }
+        });
+        await sleep(500);
+
+        let closeBtn = await textExchangeDiv.$x(`//span[text() = "取消"]`);
+        await closeBtn.click();
     }
 
-    dealPhone = async () => {
+    dealPhone = async (id, name) => {
+        let [phoneBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看电话"]`);
+        if (!phoneBtn) {
+            return;
+        }
+        await phoneBtn.click();
+        let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
+        let textExchangeDiv = exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let phone = await this.frame.evaluate(node => node.innerText, textExchangeDiv);
 
+        const form = new FormData();  
+
+        const reqParam = {
+          accountID: this.userInfo.id,
+          candidateID: id,
+          candidateName: name
+        }
+
+        Object.keys(reqParam).map((key) => {
+          form.append(key, reqParam[key]);
+        })
+
+        form.append("phone", phone);
+        form.append("jobID", "");
+
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err) {
+            if (err) {
+              logger.error(`手机号上传失败error: `, e)
+            }
+        });
+        await sleep(500);
+
+        let closeBtn = await textExchangeDiv.$x(`//span[text() = "取消"]`);
+        await closeBtn.click();
     }
 
     fetchItemNameAndId = async(item) => {
