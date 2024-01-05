@@ -537,6 +537,7 @@ class Chat extends Base {
         if (isSystemFlag)
             return;
 
+        await this.page.evaluate((item)=>item.scrollIntoView(), item);
         await item.click();
         await sleep(1 * 1000);
 
