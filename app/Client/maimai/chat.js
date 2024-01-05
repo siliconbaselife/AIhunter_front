@@ -480,11 +480,15 @@ class Chat extends Base {
     }
 
     scrollChatToPosition = async(index) => {
+        let tmpIndex = index - 3;
+        if (tmpIndex < 0)
+            tmpIndex = 0;
+
         await this.frame.evaluate((scrollLength) => {
             const wrap = $(".virtualized-message-list")[0];
   
             wrap.scrollTo(0, scrollLength);
-        }, 76 * (index + 1));
+        }, 76 * (index));
     }
 
     doRecall = async() => {
@@ -496,8 +500,6 @@ class Chat extends Base {
             await sleep(1000);
             return;
         }
-        await this.frame.evaluate((item)=>item.scrollIntoView(), item);
-
         let itemInfo = await this.fetchItemInfo(item);
         
         let msgs = await this.doRecallMsg(item, itemInfo);
@@ -537,7 +539,6 @@ class Chat extends Base {
         if (isSystemFlag)
             return;
 
-        await this.page.evaluate((item)=>item.scrollIntoView(), item);
         await item.click();
         await sleep(1 * 1000);
 
