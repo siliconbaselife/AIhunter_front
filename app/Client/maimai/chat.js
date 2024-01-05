@@ -61,7 +61,7 @@ class Chat extends Base {
     }
 
     dealErrorEvent = async() => {
-        recallErrorNum = 0;
+        this.recallErrorNum = 0;
         await this.refreshChat();
     }
 
