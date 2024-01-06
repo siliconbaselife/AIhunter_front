@@ -562,15 +562,13 @@ class Resume extends Base {
         let name = peopleInfo.name;
         let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
 
-        await this.page.evaluate(()=> {
+        await this.page.evaluate((sayMsg)=> {
             let textarea = document.querySelector(".templateInput___19bTd");
-            textarea.value = "";
-            textarea.innerText = "";
-            const inputEvent = new Event("input", { bubbles: true });
+            textarea.value = sayMsg;
+            textarea.innerText = sayMsg;
+            const inputEvent = new Event("change", { bubbles: true });
             textarea.dispatchEvent(inputEvent);
-        });
-        await sleep(200);
-        await textarea.type(sayMsg);
+        }, sayMsg);
         await sleep(500);  
     }
 
