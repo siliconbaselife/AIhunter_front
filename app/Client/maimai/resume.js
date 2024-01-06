@@ -539,6 +539,7 @@ class Resume extends Base {
             await this.page.keyboard.press("Backspace");
             textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
             text = await this.page.evaluate(node => node.textContent, textarea);
+            logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 是否清除干净: ${text}`);
           }
           await sleep(500);
           await textarea.type(sayMsg);
