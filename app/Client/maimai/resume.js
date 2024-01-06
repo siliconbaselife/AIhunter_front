@@ -530,7 +530,7 @@ class Resume extends Base {
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        let text = await this.page.evaluate(()=> {
            let textarea = document.querySelector(".templateInput___19bTd");
-           if (textarea) return textarea.value;
+           if (textarea) return textarea.innerText;
        })
 
        if (sayMsg != text) {
@@ -540,13 +540,14 @@ class Resume extends Base {
             await this.page.evaluate(()=> {
                 let textarea = document.querySelector(".templateInput___19bTd");
                 textarea.value = "";
+                textarea.innerText = "";
                 const inputEvent = new Event("input", { bubbles: true });
                 textarea.dispatchEvent(inputEvent);
             })
             await sleep(200);
             text = await this.page.evaluate(()=> {
                 let textarea = document.querySelector(".templateInput___19bTd");
-                if (textarea) return textarea.value;
+                if (textarea) return textarea.innerText;
             })
             logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 是否清除干净: ${text}`);
             await sleep(300);
