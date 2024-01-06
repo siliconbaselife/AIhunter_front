@@ -481,7 +481,8 @@ class Resume extends Base {
         let [shade] = await this.page.$x(`//div[contains(@class, "ant-drawer-mask")]`);
         if (shade) {
             logger.info(`脉脉 ${this.userInfo.name} 出现遮罩异常`);
-            await shade.click();
+            let [closeBtn] = await this.page.$x(`//div[contains(@class, "ant-drawer-title")]/div/div[contains(@class, "ml-auto")]/span`);
+            await closeBtn.click();
             await sleep(300);
         }
     }
@@ -529,7 +530,7 @@ class Resume extends Base {
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        let text = await this.page.evaluate(node => node.textContent, textarea);
        if (sayMsg != text) {
-          logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术`);
+          logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text}`);
           while(sayMsg != text && text.length > 0) {
             await textarea.focus();
             await sleep(200);
