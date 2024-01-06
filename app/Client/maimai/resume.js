@@ -525,7 +525,7 @@ class Resume extends Base {
        await this.checkHiEnd();
     }
 
-    dealSayHiTxt = async(sayMsg, peopleInfo) => {
+    dealSayHiTxtOld = async(sayMsg, peopleInfo) => {
        let name = peopleInfo.name;
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        let text = await this.page.evaluate(()=> {
@@ -556,6 +556,22 @@ class Resume extends Base {
           await textarea.type(sayMsg);
           await sleep(500);  
        }
+    }
+
+    dealSayHiTxt = async(sayMsg) => {
+        let name = peopleInfo.name;
+        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
+
+        await this.page.evaluate(()=> {
+            let textarea = document.querySelector(".templateInput___19bTd");
+            textarea.value = "";
+            textarea.innerText = "";
+            const inputEvent = new Event("input", { bubbles: true });
+            textarea.dispatchEvent(inputEvent);
+        });
+        await sleep(200);
+        await textarea.type(sayMsg);
+        await sleep(500);  
     }
 
     checkHiEnd = async() => {
