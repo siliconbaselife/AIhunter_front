@@ -558,7 +558,7 @@ class Resume extends Base {
        }
     }
 
-    dealSayHiTxt = async(sayMsg) => {
+    dealSayHiTxt = async(sayMsg, peopleInfo) => {
         let name = peopleInfo.name;
         let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
 
