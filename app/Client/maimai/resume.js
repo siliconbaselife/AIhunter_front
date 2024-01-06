@@ -530,7 +530,7 @@ class Resume extends Base {
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        let text = await this.page.evaluate(node => node.textContent, textarea);
        if (sayMsg != text) {
-          logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text}`);
+          logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text} sayMsg: ${sayMsg}`);
           while(text.length > 0) {
             await textarea.focus();
             await sleep(200);
