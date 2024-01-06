@@ -531,7 +531,7 @@ class Resume extends Base {
        let text = await this.page.evaluate(node => node.textContent, textarea);
        if (sayMsg != text) {
           logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text}`);
-          while(sayMsg != text && text.length > 0) {
+          while(text.length > 0) {
             await textarea.focus();
             await sleep(200);
             await textarea.click({clickCount: 3});
