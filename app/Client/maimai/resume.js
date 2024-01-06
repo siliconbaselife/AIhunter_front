@@ -528,16 +528,26 @@ class Resume extends Base {
     dealSayHiTxt = async(sayMsg, peopleInfo) => {
        let name = peopleInfo.name;
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
-       let text = await this.page.evaluate(node => node.textContent, textarea);
+    //    let text = await this.page.evaluate(node => node.textContent, textarea);
+       let text = await this.page.evaluate(()=> {
+           let textarea = document.querySelector(".templateInput___19bTd");
+           if (textarea) return textarea.value;
+       })
+
        if (sayMsg != text) {
           logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text}`);
           while(text.length > 0) {
             await textarea.focus();
-            await sleep(200);
-            await textarea.click({clickCount: 3});
-            await sleep(500);
-            await this.page.keyboard.press("Backspace");
-            textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
+            // await sleep(200);
+            // await textarea.click({clickCount: 3});
+            // await sleep(500);
+            // await this.page.keyboard.press("Backspace");
+            // await textarea.type("");
+            await this.page.evaluate(()=> {
+                let textarea = document.querySelector(".templateInput___19bTd");
+                textarea.value = "";
+            })
+
             text = await this.page.evaluate(node => node.textContent, textarea);
             logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 是否清除干净: ${text}`);
           }
