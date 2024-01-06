@@ -427,7 +427,7 @@ class Resume extends Base {
         await this.page.evaluate((item)=>item.scrollIntoView({block: "center"}), peopleItem);
         await sleep(200);
         if (!this.friendEnd)
-            await this.addFriend(peopleItem, index);
+            await this.addFriend(peopleItem, index, peopleInfo);
         if (!this.hiEnd)
             await this.sayHi(peopleItem, peopleInfo, task);
     }
@@ -451,7 +451,7 @@ class Resume extends Base {
         task.helloSum -= 1;
     }
 
-    addFriend = async(peopleItem, index) => {
+    addFriend = async(peopleItem, index, peopleInfo) => {
         await this.page.hover(`div.talent-common-card:nth-of-type(${parseInt(index) + 1})  .more___RBoc4`);
         await sleep(300);
 
@@ -473,7 +473,17 @@ class Resume extends Base {
            
         await sleep(300);
         // await this.checkFriendEnd();
+        await this.closeProfile(peopleInfo.name);
         await this.checkdialog();
+    }
+
+    closeProfile = async(name) => {
+        let [shade] = await this.page.$x(`//div[contains(@class, "ant-drawer-mask")]`);
+        if (shade) {
+            logger.info(`脉脉 ${this.userInfo.name} 出现遮罩异常`);
+            await shade.click();
+            await sleep(300);
+        }
     }
 
     checkFriendEnd = async() => {
@@ -502,7 +512,7 @@ class Resume extends Base {
 
        let sayMsg = task.touch_msg;
        await chatBtn.click();
-       await this.dealSayHiTxt(sayMsg);
+       await this.dealSayHiTxt(sayMsg, peopleInfo);
 
        let [sendBtn] = await this.page.$x(`//button[text() = "立即发送"]`);
        if (!sendBtn) {
@@ -514,11 +524,12 @@ class Resume extends Base {
        await this.checkHiEnd();
     }
 
-    dealSayHiTxt = async(sayMsg) => {
+    dealSayHiTxt = async(sayMsg, peopleInfo) => {
+       let name = peopleInfo.name;
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        let text = await this.page.evaluate(node => node.textContent, textarea);
        if (sayMsg != text) {
-          logger.info(`脉脉 ${this.userInfo.name} 打招呼需要切换话术`);
+          logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术`);
           while(sayMsg != text && text.length > 0) {
             await textarea.focus();
             await sleep(200);
