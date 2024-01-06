@@ -503,7 +503,7 @@ class Resume extends Base {
             await this.checkEnd();
         }
 
-        let closeBtn = await this.page.$x(`//button[contains(@class, "mui-modal-close")]`);
+        let [closeBtn] = await this.page.$x(`//button[contains(@class, "mui-modal-close")]`);
         if (closeBtn) {
             await closeBtn.click();
             await sleep(500);
