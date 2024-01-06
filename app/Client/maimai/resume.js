@@ -543,7 +543,7 @@ class Resume extends Base {
                 const inputEvent = new Event("input", { bubbles: true });
                 textarea.dispatchEvent(inputEvent);
             })
-
+            await sleep(200);
             text = await this.page.evaluate(()=> {
                 let textarea = document.querySelector(".templateInput___19bTd");
                 if (textarea) return textarea.value;
