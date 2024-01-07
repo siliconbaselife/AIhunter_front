@@ -10,7 +10,11 @@
   "bin": "./app/index.js",
   "pkg": {
     "scripts": [
-      "./app/**/*.js"
+      "./app/**/*.js",
+      "./app/**/*.json"
+    ],
+    "assets": [
+      "./extension/**/*"
     ],
     "targets": [
       "node18-win-x64",

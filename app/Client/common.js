@@ -9,7 +9,9 @@ const { BIZ_DOMAIN } = require("../Config/index");
 
 const ProcessControl = require("../ProcessControl/index");
 
-const EXTENSION_PATH = path.join(__dirname, "../Extension"); // 扩展程序路径
+console.log(path.join(__dirname, "../../extension"));
+const EXTENSION_PATH = path.join(__dirname, "../../extension"); // 扩展程序路径
+// const EXTENSION_PATH = path.join(__dirname, "../Extension"); // 扩展程序路径
 // const EXTENSION_PATH = path.join(process.cwd(), "./app/Extension"); // 扩展程序路径
 
 class Common {
