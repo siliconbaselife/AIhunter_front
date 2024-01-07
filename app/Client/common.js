@@ -9,7 +9,8 @@ const { BIZ_DOMAIN } = require("../Config/index");
 
 const ProcessControl = require("../ProcessControl/index");
 
-const EXTENSION_PATH = path.resolve(__dirname, "../Extension"); // 扩展程序路径
+// const EXTENSION_PATH = path.resolve(__dirname, "../Extension"); // 扩展程序路径
+const EXTENSION_PATH = path.join(process.cwd(), "./app/Extension"); // 扩展程序路径
 
 class Common {
   /** @type {import("puppeteer").Browser} 浏览器实例 */
