@@ -4,6 +4,7 @@
 target/
 # eclipse ignore
 .settings/
+logs/
 .project
 .classpath
 # idea ignore
