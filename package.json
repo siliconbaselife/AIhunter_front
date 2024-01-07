@@ -13,11 +13,17 @@
       "./app/**/*.js"
     ],
     "targets": [
-      "node18-macos-arm64"
+      "node18-win-x64",
+      "node16-macos-x64"
     ],
     "outputPath": "dist"
   },
-  "//": "打包macos-arm 在pkg.scripts.targets替换成一个 node18-macos-arm64",
+  "//打包在pkg.scripts.targets替换为以下内容": "",
+  "//macos-arm": ["node18-macos-arm64"],
+  "//win-x64&macos-x64": [
+    "node18-win-x64",
+    "node16-macos-x64"
+  ],
   "type": "commonjs",
   "author": "",
   "license": "ISC",

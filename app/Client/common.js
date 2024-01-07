@@ -1,3 +1,4 @@
+const path = require("path");
 const puppeteer = require('puppeteer');
 const logger = require('../Logger');
 const findChrome = require('carlo/lib/find_chrome');
@@ -8,9 +9,13 @@ const { BIZ_DOMAIN } = require("../Config/index");
 
 const ProcessControl = require("../ProcessControl/index");
 
+const EXTENSION_PATH = path.resolve(__dirname, "../Extension"); // 扩展程序路径
+
 class Common {
-  /** @type {import("puppeteer").Browser} */
+  /** @type {import("puppeteer").Browser} 浏览器实例 */
   browser;
+  /** @type {import("puppeteer").WebWorker} 扩展程序WebWorker实例 */
+  extension;
 
   newPage = async (options = { width: 1580, height: 900 }) => {
     if (!this.browser) {
@@ -48,7 +53,9 @@ class Common {
         '--disable-features=IsolateOrigins,site-per-process',
         `--window-size=${width},${height}`,
         `--disable-gpu`,
-        `--disable-dev-shm-usage`
+        `--disable-dev-shm-usage`,
+        `--disable-extensions-except=${EXTENSION_PATH}`, // 扩展程序
+        `--load-extension=${EXTENSION_PATH}`, // 扩展程序
       ];
 
       let chromeInfo = await findChrome({});
@@ -58,26 +65,60 @@ class Common {
         headless: false,
         defaultViewport: null,
         ignoreHTTPSErrors: true,
-        args
+        waitForInitialPage: false,
+        args,
       });
 
-      this.browser.on('disconnected', () => {
-        logger.info('puppeteer disconnected 浏览器异常退出')
-      });
+      return this.saveExtensionTarget()
+        .then(() => {
+          this.browser.on('disconnected', () => {
+            logger.info('puppeteer disconnected 浏览器异常退出')
+          });
 
-      this.browser.on('targetdestroyed', () => {
-        logger.info('puppeteer targetdestroyed 正常退出');
-        logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
-      });
+          this.browser.on('targetdestroyed', () => {
+            logger.info('puppeteer targetdestroyed 正常退出');
+            logger.info(`当前还剩 ${this.browser.targets().length} 个page`);
+          });
 
-      this.browser.on("disconnected", () => {
-        logger.info(`已关闭浏览器`);
-        ProcessControl.close(); // 关闭当前进程
-      })
+          this.browser.on("disconnected", () => {
+            logger.info(`已关闭浏览器`);
+            ProcessControl && ProcessControl.close(); // 关闭当前进程
+          })
+        })
+        .catch((err) => {
+          console.log("保存扩展程序失败:", err);
+          this.browser.close();
+          this.browser.disconnect();
+          this.browser = null;
+          console.log("正在重新加载浏览器");
+          return this.initBrowser(options);
+        })
     } catch (e) {
       console.log(`browser 启动失败##`, e);
       logger.error(`browser 启动失败##`, e);
     }
+  }
+
+  /**
+   * 保存扩展程序
+   * @returns {Promise<import("puppeteer").WebWorker>}
+   */
+  async saveExtensionTarget() {
+    return new Promise((rs, rj) => {
+
+      let timer = setTimeout(() => { // 等2秒，如果还没有找到扩展程序，则抛出异常
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        if (!this.extension) {
+          rj("没有找到扩展程序");
+        }
+      }, 2000);
+      this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
+        .then(extensionTarget => extensionTarget.worker())
+        .then(extension => { rs(this.extension = extension) })
+    })
   }
 
   settingPage = async (page) => {
@@ -259,6 +300,20 @@ class Common {
     return result;
   }
 
+  /**
+   * 通过扩展程序创建页面
+   * @param { {index?: number , openerTabId?: number ,url?: string ,pinned?: boolean ,windowId?: number ,active?: boolean ,selected?: boolean }} options
+   * @returns { Promise<{page: puppeteer.Page, tab: {status?: string | undefined, index: number, openerTabId?: number | undefined, title?: string | undefined, url?: string | undefined, pendingUrl?: string | undefined, pinned: boolean, highlighted: boolean, windowId: number, active: boolean, favIconUrl?: string | undefined, id?: number | undefined, incognito: boolean, selected: boolean, audible?: boolean | undefined, discarded: boolean, autoDiscardable: boolean, mutedInfo?: MutedInfo | undefined, width?: number | undefined, height?: number | undefined, sessionId?: string | undefined, groupId: number}}> }
+   */
+  async createNewTabViaExt(options) {
+    const tab = await this.extension.evaluate((insideOptions) => {
+      return chrome.tabs.create(insideOptions)
+    }, options);
+    const pages = await this.browser.pages();
+    const page = pages[pages.length - 1];
+    return { page, tab };
+  }
+
   // queryAccountId = async (platformType, id) => {
   //   const { status, data, msg } = await Request({
   //     url: `${BIZ_DOMAIN}/recruit/account/query`,
@@ -306,11 +361,11 @@ class Common {
     try {
       const client = await this.page.target().createCDPSession();
       await client.send('Page.setDownloadBehavior', {
-          behavior: 'allow',
-          downloadPath: downloadPath
+        behavior: 'allow',
+        downloadPath: downloadPath
       });
     }
-    catch(e) {
+    catch (e) {
       logger.error("设定浏览器下载路径异常: ", e)
     }
   }
