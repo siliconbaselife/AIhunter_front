@@ -34,3 +34,4 @@ yarn.lock
 dist/
 build/
 local-storage/
+extension/

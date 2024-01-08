@@ -8,11 +8,7 @@ const Request = require('../utils/Request');
 const { BIZ_DOMAIN } = require("../Config/index");
 
 const ProcessControl = require("../ProcessControl/index");
-
-console.log(path.join(__dirname, "../../extension"));
-const EXTENSION_PATH = path.join(__dirname, "../../extension"); // 扩展程序路径
-// const EXTENSION_PATH = path.join(__dirname, "../Extension"); // 扩展程序路径
-// const EXTENSION_PATH = path.join(process.cwd(), "./app/Extension"); // 扩展程序路径
+const ExtensionHelper = require("../Extension/index");
 
 class Common {
   /** @type {import("puppeteer").Browser} 浏览器实例 */
@@ -57,8 +53,8 @@ class Common {
         `--window-size=${width},${height}`,
         `--disable-gpu`,
         `--disable-dev-shm-usage`,
-        `--disable-extensions-except=${EXTENSION_PATH}`, // 扩展程序
-        `--load-extension=${EXTENSION_PATH}`, // 扩展程序
+        `--disable-extensions-except=${ExtensionHelper.EXTENSION_PATH}`, // 扩展程序
+        `--load-extension=${ExtensionHelper.EXTENSION_PATH}`, // 扩展程序
       ];
 
       let chromeInfo = await findChrome({});
@@ -108,7 +104,6 @@ class Common {
    */
   async saveExtensionTarget() {
     return new Promise((rs, rj) => {
-
       let timer = setTimeout(() => { // 等2秒，如果还没有找到扩展程序，则抛出异常
         if (timer) {
           clearTimeout(timer);
