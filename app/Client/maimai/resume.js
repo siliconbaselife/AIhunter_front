@@ -469,8 +469,8 @@ class Resume extends Base {
         if (addFriendBtn)
             await addFriendBtn.click();
   
-        await this.page.hover("body")
-           
+        await this.page.hover("body");
+    
         await sleep(300);
         // await this.checkFriendEnd();
         await this.closeProfile(peopleInfo.name);

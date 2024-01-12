@@ -30,7 +30,7 @@ class Login extends Base {
         
                 if (this.userInfo) {
                   this.page.removeListener('response', getUser);
-                  Logger.info(`linkedin getUserInfo success: ${this.userInfo}`);
+                  logger.info(`linkedin getUserInfo success: ${this.userInfo}`);
                   return resolve();
                 }
                 check();
@@ -43,21 +43,25 @@ class Login extends Base {
         });
     }
 
-    doLogin = async () => {
+    dologin = async (accountID) => {
         this.getUserInfo();
-
-        try {
-            await this.page.goto(this.loginUrl, {
-              waitUntil: 'networkidle2'
-            });
-        } catch (e) {
-            logger.error(`linkedin 跳转登录页超时，错误为: `, e);
-        }
+        await this.toPage(this.loginUrl);
+        
+        if (accountID)
+            await this.injectCookies(accountID, this.loginUrl);
 
         while(!this.userInfo) {
             await sleep(2000);
             logger.info("linkedin 等待登陆");
         }
+
+        let generateAccountID = await this.queryAccountId("maimai", this.userInfo.id);
+        if (accountID && accountID != generateAccountID)
+            throw new Error(`linkedin登陆异常 accountID不匹配 accountID: ${accountID} generateAccountID: ${generateAccountID}`);
+
+        accountID = generateAccountID;
+        if (!accountID)
+            throw new Error(`linkedin登陆 没有accountID`);
 
         let name = await this.getName();
         this.userInfo.name = name;
@@ -66,11 +70,11 @@ class Login extends Base {
     }
 
     getName = async() => {
-      let btn = await this.waitElement(`//button[contains(@class, 'global-nav__primary-link') and contains(@class, 'global-nav__primary-link-me-menu-trigger')]`);
+      let btn = await this.waitElement(`//button[contains(@class, 'global-nav__primary-link') and contains(@class, 'global-nav__primary-link-me-menu-trigger')]`, this.page);
       await btn.click();
       await sleep(1000);
 
-      let imgBlock = await this.waitElement(`//img[contains(@class, "global-nav__me-photo")]`);
+      let imgBlock = await this.waitElement(`//img[contains(@class, "global-nav__me-photo")]`, this.page);
       let name = await this.page.evaluate(node => node.alt, imgBlock);
       logger.info("linkedin getName name: ", name);
 

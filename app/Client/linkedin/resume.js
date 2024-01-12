@@ -3,6 +3,7 @@ const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
+const Search = require("./search");
 
 class Resume extends Search {
     keywordDelay = 40;
@@ -223,12 +224,12 @@ class Resume extends Search {
 
     sayHiToPeople = async(task, peopleProfile) => {
         let name = peopleProfile["profile"]["name"];
-        let dialogDiv = await this.waitElement(`//div[contains(@role, "dialog")]`);
+        let dialogDiv = await this.waitElement(`//div[contains(@role, "dialog")]`, this.page);
 
         let [noteBtn] = await dialogDiv.$x(`//span[contains(@class, "artdeco-button__text") and text() = "Add a note"]`);
         await noteBtn.click();
 
-        let textarea = await waitElement(`//textarea[contains(@name, "message") and contains(@placeholder, "Ex: We know each other from…")]`, dialogDiv);
+        let textarea = await this.waitElement(`//textarea[contains(@name, "message") and contains(@placeholder, "Ex: We know each other from…")]`, dialogDiv);
         await textarea.focus();
         let hiMsg = "hi, " + name + "," + task.touch_msg;
         await this.page.keyboard.type(hiMsg, { delay: parseInt(1 + Math.random() * 1) });

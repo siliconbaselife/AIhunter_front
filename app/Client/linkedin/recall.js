@@ -3,6 +3,7 @@ const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
 const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
+const Search = require("./search");
 
 class Recall extends Search {
     keywordDelay = 40;

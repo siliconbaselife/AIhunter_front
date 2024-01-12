@@ -11,17 +11,15 @@ class Client {
     options;
     common = new Common();
 
-    loginPage = async () =>  {
+    loginPage = async (account_id) =>  {
         this.page = await this.common.newPage({
             width: 1792,
             height: 984,
         });
-
         this.options = this.options || {};
         this.options.page = this.page;
         this.login = new Login(this.options);
-
-        await this.login.dologin();
+        await this.login.dologin(account_id);
 
         this.userInfo = this.login.userInfo;
         this.options.userInfo = this.userInfo;
