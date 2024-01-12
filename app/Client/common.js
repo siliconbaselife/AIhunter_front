@@ -336,7 +336,8 @@ class Common {
 
   toPage = async (url) => {
     try {
-      await this.page.goto(url, { waitUntil: 'networkidle2' });
+      await this.page.setDefaultNavigationTimeout(0);
+      await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     } catch (e) {
       logger.error(`跳转页面异常,错误为:`, e);
     }

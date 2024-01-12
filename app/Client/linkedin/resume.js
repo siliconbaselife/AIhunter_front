@@ -19,6 +19,7 @@ class Resume extends Search {
         logger.info(`linkedin ${this.userInfo.name} 打招呼，开始执行打招呼任务`);
         let tasks = await this.queryTasks();
         logger.info(`linkedin ${this.userInfo.name} 获取到 ${tasks.length} 个打招呼任务, 任务如下: ${JSON.stringify(tasks)}`);
+        await this.minConversation();
 
         this.hiEnd = false;
         for (let index in tasks) {

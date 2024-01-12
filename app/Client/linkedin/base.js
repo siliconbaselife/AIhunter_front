@@ -1,5 +1,6 @@
 const Common = require('../common');
 const logger = require('../../Logger');
+const { sleep } = require('../../utils');
 
 class Base extends Common {
     loginUrl = "https://www.linkedin.com/"
@@ -37,6 +38,14 @@ class Base extends Common {
     refresh = async() => {
         let homeBtn = await this.waitElement(`//span[contains(@title, "Home") and text() = "Home"]`, this.page);
         await homeBtn.click();
+    }
+
+    minConversation = async() => {
+        let [openBtn] = await this.page.$x(`//button[contains(@class, "msg-overlay-bubble-header__control")]/span[text() = "You are on the messaging overlay. Press enter to minimize it."]`);
+        if (!openBtn)
+            return;
+        await openBtn.click();
+        await sleep(1000);
     }
 }
 
