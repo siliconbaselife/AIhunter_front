@@ -1,6 +1,7 @@
 const Base = require('./Base');
 const { sleep } = require('../../utils');
 const logger = require('../../Logger');
+const AccountManager = require("../../Account/index");
 
 class Login extends Base {
     getUserInfo = async () => {
@@ -55,7 +56,7 @@ class Login extends Base {
             logger.info("linkedin 等待登陆");
         }
 
-        let generateAccountID = await this.queryAccountId("maimai", this.userInfo.id);
+        let generateAccountID = await this.queryAccountId("Linkedin", this.userInfo.id);
         if (accountID && accountID != generateAccountID)
             throw new Error(`linkedin登陆异常 accountID不匹配 accountID: ${accountID} generateAccountID: ${generateAccountID}`);
 
@@ -66,6 +67,9 @@ class Login extends Base {
         let name = await this.getName();
         this.userInfo.name = name;
 
+        this.userInfo.accountID = accountID;
+
+        await AccountManager.setAccountInfo(this.userInfo.accountID, this.userInfo, this.page);
         logger.info("linkedin 登陆成功: ", this.userInfo);
     }
 

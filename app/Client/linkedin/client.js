@@ -34,27 +34,27 @@ class Client {
         return this.userInfo;
     }
 
-    run = async() => {
+    run = async(account_id) => {
         global.running = true;
         logger.info("linkedin启动");
 
-        await this.loginPage();
+        await this.loginPage(account_id);
         logger.info("linkedin 登陆完成");
         await sleep(2 * 1000);
 
         let chat = new Chat(this.options);
         logger.info(`linkedin ${this.userInfo.name} 初步沟通`);
-        await chat.chatList();
+        // await chat.chatList();
 
         let resume = new Resume(this.options);
         await resume.run();
         logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
 
         let recall = new Recall(this.options);
-        await recall.run();
+        // await recall.run();
         ogger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
 
-        await chat.run();
+        // await chat.run();
         logger.info(`linkedin ${this.userInfo.name} 要退出了`);
     }
 }

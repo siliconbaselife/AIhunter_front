@@ -4,6 +4,7 @@ const Request = require('../../utils/Request');
 const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
 const Search = require("./search");
+const Profile = require("./profile");
 
 class Resume extends Search {
     keywordDelay = 40;
@@ -59,7 +60,7 @@ class Resume extends Search {
             }
 
             logger.info(`linkedin ${this.userInfo.name} 当前任务处理到第 ${page} 页`);
-            await this.dealPeople(task);
+            // await this.dealPeople(task);
     
             await this.closeAllMsgDivs();
 
