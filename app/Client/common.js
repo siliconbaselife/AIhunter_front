@@ -293,7 +293,7 @@ class Common {
   async setCookies(page, account_id) {
     const result = await AccountManager.setCookies(page, account_id);
     if (result) {
-      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
+      await page.reload({ waitUntil: ["domcontentloaded"] });
     }
     return result;
   }
@@ -338,7 +338,7 @@ class Common {
     try {
       await this.page.goto(url, { waitUntil: 'networkidle2' });
     } catch (e) {
-      logger.error(`脉脉跳转页面异常,错误为:`, e);
+      logger.error(`跳转页面异常,错误为:`, e);
     }
   }
 

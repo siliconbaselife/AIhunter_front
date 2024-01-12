@@ -58,7 +58,7 @@ class Resume extends Base {
     }
 
     dealTask = async(task) => {
-        await this.dealTaskBefore();
+        await this.dealTaskBefore(task);
         await this.setFilter(task);
         let noPeople = await this.isNoPeople();
         if (!noPeople)

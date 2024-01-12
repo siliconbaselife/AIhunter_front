@@ -31,7 +31,7 @@ class Login extends Base {
         
                 if (this.userInfo) {
                   this.page.removeListener('response', getUser);
-                  logger.info(`linkedin getUserInfo success: ${this.userInfo}`);
+                  logger.info(`linkedin getUserInfo success: ${JSON.stringify(this.userInfo)}`);
                   return resolve();
                 }
                 check();

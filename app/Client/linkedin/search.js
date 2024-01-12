@@ -15,7 +15,7 @@ class Search extends Base {
         const {status, data, msg} = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/fetch/v2`,
             data: {
-                accountID: this.userInfo.id,
+                accountID: this.userInfo.accountID,
             },
             method: 'POST'
           });
@@ -24,7 +24,7 @@ class Search extends Base {
         return data["task"];
     }
 
-    dealTaskBefore = async() => {
+    dealTaskBefore = async(task) => {
         await this.refresh();
         await this.setSearchTxt(task);
         await this.setLocation(task);

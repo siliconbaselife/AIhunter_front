@@ -52,7 +52,7 @@ class Client {
 
         let recall = new Recall(this.options);
         // await recall.run();
-        ogger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
+        logger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
 
         // await chat.run();
         logger.info(`linkedin ${this.userInfo.name} 要退出了`);

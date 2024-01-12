@@ -1,3 +1,5 @@
+const Base = require('./Base');
+
 class Profile extends Base {
     constructor(options) {
         super(options)
