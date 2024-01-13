@@ -1,5 +1,6 @@
 const Base = require('./Base');
 const logger = require('../../Logger');
+const { sleep } = require('../../utils');
 
 class Profile extends Base {
     constructor(options) {
@@ -27,6 +28,7 @@ class Profile extends Base {
             }
         } catch (e) {
             logger.error(`linkedin ${this.userInfo.name} id: ${id} 处理简历信息异常: `, e);
+            await sleep(60 * 1000);
         }
 
         await this.dealAfter(id);
@@ -36,10 +38,11 @@ class Profile extends Base {
 
     dealBefore = async(id) => {
         let url = "https://www." + id;
-        let { page: newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
+        let { page: newPage, tab } = await this.createNewTabViaExt({ url: url, active: false, selected: false });
         this.page = newPage;
         this.hiEnd = false;
         this.id = id;
+        await this.page.bringToFront();
 
         logger.info(`linkedin ${this.userInfo.name} id: ${id} 新建page并跳转成功`);
     }
@@ -158,7 +161,9 @@ class Profile extends Base {
     }
 
     fetch = async() => {
+        console.log(`page: `, this.page);
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page);
+        console.log("111111");
 
         let resume = {}
         resume["profile"] = {}
@@ -196,13 +201,13 @@ class Profile extends Base {
             let contactSection = contactSections[index];
             let keySpan;
             if (index == 0) {
-                keySpan = await contactSection.$x(`//h3[contains(@class, "pv-contact-info__header")]`);
+                [keySpan] = await contactSection.$x(`//h3[contains(@class, "pv-contact-info__header")]`);
             } else {
-                keySpan = await contactSection.$x(`//div[contains(@class, "pv-contact-info__header")]`);
+                [keySpan] = await contactSection.$x(`//div[contains(@class, "pv-contact-info__header")]`);
             }
             let key = await this.page.evaluate(node => node.innerText, keySpan);
 
-            let valueSpan = await contactSection.$x(`//div[contains(@class, "pv-contact-info__ci-container")]`);
+            let [valueSpan] = await contactSection.$x(`//div[contains(@class, "pv-contact-info__ci-container")]`);
             let value = await this.page.evaluate(node => node.innerText, valueSpan);
 
             contactInfo[key] = value;
@@ -355,7 +360,7 @@ class Profile extends Base {
             if (timeSpan)
                 schoolInfo["timeInfo"] = await this.page.evaluate(node => node.innerText, timeSpan);
 
-            let schoolsummarySpan = await educationLi.$x(`//div[contains(@class, "mv1")]//span[contains(@class, "visually-hidden")]`);
+            let [schoolsummarySpan] = await educationLi.$x(`//div[contains(@class, "mv1")]//span[contains(@class, "visually-hidden")]`);
             if (schoolsummarySpan)
                 schoolInfo["summary"] = await this.page.evaluate(node => node.innerText, schoolsummarySpan);
             educations.push(education);
