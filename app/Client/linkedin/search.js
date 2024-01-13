@@ -247,11 +247,6 @@ class Search extends Base {
         await this.waitPeopleNum();
     }
 
-
-    setFilter = async() => {
-        await this.refresh();
-    }
-
     nextPage = async() => {
 
     }

@@ -44,7 +44,6 @@ class Resume extends Search {
 
     dealTask = async(task) => {
         await this.dealTaskBefore(task);
-        await this.setFilter(task);
         await this.noopTask(task);
         await this.refresh();
     }

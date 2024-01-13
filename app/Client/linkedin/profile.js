@@ -20,22 +20,23 @@ class Profile extends Base {
             let filterFlag = await this.filterItem(resume, task, id);
             if (filterFlag) {
                 logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要打招呼`);
-                return;
+                await this.dealAfter(id);
+                return this.hiEnd;
             }
+            logger.info(`linkedin ${this.userInfo.name} id: ${id} 需要打招呼`);
 
-            let touchFlag = await this.touchPeople(task, id, resume);
-            if (touchFlag) {
-                await this.reportPeople(id, task);
-                task.helloSum -= 1;
-            }
+            // let touchFlag = await this.touchPeople(task, id, resume);
+            // if (touchFlag) {
+            //     await this.reportPeople(id, task);
+            //     task.helloSum -= 1;
+            // }
         } catch (e) {
             logger.error(`linkedin ${this.userInfo.name} id: ${id} 处理简历信息异常: `, e);
-            await sleep(60 * 1000);
         }
 
         await this.dealAfter(id);
 
-        return this.hiEnd
+        return this.hiEnd;
     }
 
     dealBefore = async(id) => {
@@ -45,7 +46,6 @@ class Profile extends Base {
         this.page = newPage;
         this.hiEnd = false;
         this.id = id;
-        await this.page.bringToFront();
 
         logger.info(`linkedin ${this.userInfo.name} id: ${id} 新建page并跳转成功`);
     }
@@ -246,7 +246,9 @@ class Profile extends Base {
         let [experienceDiv] = await this.page.$x(`//span[text() = "Experience"][1]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*`);
         if (experienceDiv)
             return experiences;
-
+        await this.page.evaluate((item)=>item.scrollIntoView({block: "center"}), experienceDiv);
+        await sleep(300);
+        
         let lis = await experienceDiv.$x(`//li[contains(@class, "artdeco-list__item")]`);
         for (let li of lis) {
             let circles = await li.$x(`//span[contains(@class, "pvs-entity__path-node")]`);
@@ -347,6 +349,8 @@ class Profile extends Base {
         let [educationSection] = await this.page.$x(`//span[text() = "Education"][1]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*`);
         if (!educationSection)
             return educations;
+        await this.page.evaluate((item)=>item.scrollIntoView({block: "center"}), educationSection);
+        await sleep(300);
 
         let educationLis = await educationSection.$x(`//li[contains(@class, "artdeco-list__item")]/span[contains(@class, "visually-hidden")]`);
         for (let educationLi of educationLis) {
@@ -378,10 +382,12 @@ class Profile extends Base {
         let [languageSection] = await this.page.$x(`//span[text() = "Languages" and contains(@class, "visually-hidden")]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*`);
         if (!languageSection)
             return languages;
+        await this.page.evaluate((item)=>item.scrollIntoView({block: "center"}), languageSection);
+        await sleep(300);
 
         let [showBtn] = await languageSection.$x(`//a[contains(@id, navigation-index-see-all-languages)]`);
         if (showBtn) {
-            languages = await this.dealLanguagesFirst(languageSection, showBtn);
+            languages = await this.dealLanguagesFirst(showBtn);
         } else {
             languages = await this.dealLanguagesSecond(languageSection);
         }
@@ -393,9 +399,10 @@ class Profile extends Base {
         let languages = []
          await showMoreBtn.click();
          await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]/section/div[contains(@class, "ph3")]/div/h2[text() = "Languages"]`, this.page);
-         let mainDiv = await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`);
-         let lis = mainDiv.$x(`//li`);
+         let mainDiv = await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page);
+         let lis = await mainDiv.$x(`//li`);
          for (let li of lis) {
+            let language = {};
             let [languageNameSpan] = await li.$x(`//div[contains(@class, "mr1")]/span[contains(@class, "visually-hidden")]`);
             let languageName = await this.page.evaluate(node => node.innerText, languageNameSpan);
             language["language"] = languageName;
