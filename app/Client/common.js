@@ -69,7 +69,7 @@ class Common {
       });
 
       return this.saveExtensionTarget()
-        .then(async () => {
+        .then(() => {
           this.browser.on('disconnected', () => {
             logger.info('puppeteer disconnected 浏览器异常退出')
           });
@@ -83,8 +83,6 @@ class Common {
             logger.info(`已关闭浏览器`);
             ProcessControl && ProcessControl.close(); // 关闭当前进程
           })
-
-          sleep(500).then(() => this.pluginDoLogin());
         })
         .catch((err) => {
           console.log("保存扩展程序失败:", err);
@@ -119,17 +117,6 @@ class Common {
         .then(extensionTarget => extensionTarget.worker())
         .then(extension => { rs(this.extension = extension) })
     })
-  }
-
-  /**
-   * 插件登录(自动带上该进程所绑定的会员信息)
-   * @returns {Promise<void>}
-   */
-  async pluginDoLogin() {
-    return this.extension.evaluate((userInfo) => {
-      console.log("userInfo", userInfo)
-      return chrome.storage.session.set(userInfo);
-    }, ProcessControl.userInfo)
   }
 
   settingPage = async (page) => {
@@ -323,7 +310,6 @@ class Common {
     const pages = await this.browser.pages();
     const page = pages[pages.length - 1];
     await sleep(500);
-    page.bringToFront();
     return { page, tab };
   }
 

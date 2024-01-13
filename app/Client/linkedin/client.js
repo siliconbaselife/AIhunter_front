@@ -48,28 +48,20 @@ class Client {
         logger.info("linkedin 登陆完成");
         await sleep(2 * 1000);
 
-        await sleep(2000);
-        this.page.evaluate(() => {
-            let el = document.getElementsByClassName("rp-btn-item")[2];
-            el.click();
-        })
+        let chat = new Chat(this.options);
+        logger.info(`linkedin ${this.userInfo.name} 初步沟通`);
+        // await chat.chatList();
 
-        await sleep(99999999);
+        let resume = new Resume(this.options);
+        await resume.run();
+        logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
 
-        // let chat = new Chat(this.options);
-        // logger.info(`linkedin ${this.userInfo.name} 初步沟通`);
-        // // await chat.chatList();
+        let recall = new Recall(this.options);
+        // await recall.run();
+        logger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
 
-        // let resume = new Resume(this.options);
-        // await resume.run();
-        // logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
-
-        // let recall = new Recall(this.options);
-        // // await recall.run();
-        // logger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
-
-        // // await chat.run();
-        // logger.info(`linkedin ${this.userInfo.name} 要退出了`);
+        // await chat.run();
+        logger.info(`linkedin ${this.userInfo.name} 要退出了`);
     }
 }
 
