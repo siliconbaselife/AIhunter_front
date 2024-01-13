@@ -248,7 +248,19 @@ class Search extends Base {
     }
 
     nextPage = async() => {
+        await this.page.evaluate(() => {
+            window.scrollTo({ top: 10000, left: 0, behavior: 'smooth' });
+        });
+        let nextBtn = await this.waitElement(`//button[contains(@aria-label, "Next") and not(contains(@class, "artdeco-button--disabled"))]`, this.page, 5);
+        if (!nextBtn) {
+            return false;
+        }
 
+        await nextBtn.click();
+        let = await this.waitElement();
+        await this.waitPeopleNum();
+
+        return true;
     }
 
     fetchPeopleId = async(item) => {
