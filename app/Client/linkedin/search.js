@@ -257,7 +257,7 @@ class Search extends Base {
     }
 
     fetchPeopleId = async(item) => {
-        let hrefDiv = await item.$x(`//div[contains(@class, "entity-result__universal-image")]//a`);
+        let [hrefDiv] = await item.$x(`//div[contains(@class, "entity-result__universal-image")]//a`);
         let httpUrl = await this.page.evaluate(node => node.href, hrefDiv);
 
         httpUrl = httpUrl.split("?")[0];

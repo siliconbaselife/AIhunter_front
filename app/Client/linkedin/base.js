@@ -10,10 +10,13 @@ class Base extends Common {
         logger.info(`linkedin base options: ${JSON.stringify(options)}`);
 
         this.options = options || {};
-        const {page, browser, userInfo} = this.options;
+        const {page, browser, userInfo, extension} = this.options;
 
         this.browser = browser;
         this.page = page;
+
+        if (extension)
+            this.extension = extension;
 
         if (userInfo)
             logger.info(`linkedin userInfo: ${JSON.stringify(userInfo)}`);

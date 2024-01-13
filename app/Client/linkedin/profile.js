@@ -1,4 +1,5 @@
 const Base = require('./Base');
+const logger = require('../../Logger');
 
 class Profile extends Base {
     constructor(options) {
@@ -8,19 +9,23 @@ class Profile extends Base {
     deal = async(id, task) => {
         await this.dealBefore(id);
 
-        let resume = await this.fetch();
-        logger.info(`linkedin ${this.userInfo.name} id: ${id} resume: ${JSON.stringify(resume)}`);
+        try {
+            let resume = await this.fetch();
+            logger.info(`linkedin ${this.userInfo.name} id: ${id} resume: ${JSON.stringify(resume)}`);
 
-        let filterFlag = await this.filterItem(resume);
-        if (filterFlag) {
-            logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要打招呼`);
-            return;
-        }
+            let filterFlag = await this.filterItem(resume);
+            if (filterFlag) {
+                logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要打招呼`);
+                return;
+            }
 
-        let touchFlag = await this.touchPeople(task, id, resume);
-        if (touchFlag) {
-            await this.reportPeople(id, task);
-            task.helloSum -= 1;
+            let touchFlag = await this.touchPeople(task, id, resume);
+            if (touchFlag) {
+                await this.reportPeople(id, task);
+                task.helloSum -= 1;
+            }
+        } catch (e) {
+            logger.error(`linkedin ${this.userInfo.name} id: ${id} 处理简历信息异常: `, e);
         }
 
         await this.dealAfter();
@@ -29,7 +34,7 @@ class Profile extends Base {
     }
 
     dealBefore = async(id) => {
-        const { newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
+        let { page: newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
         this.page = newPage;
         this.hiEnd = false;
         this.id = id;
