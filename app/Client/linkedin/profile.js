@@ -5,6 +5,151 @@ class Profile extends Base {
         super(options)
     }
 
+    deal = async(id, task) => {
+        await this.dealBefore(id);
+
+        let resume = await this.fetch();
+
+        let filterFlag = await this.filterItem(resume);
+        if (filterFlag) {
+            logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要打招呼`);
+            return;
+        }
+
+        let touchFlag = await this.touchPeople(task, id, resume);
+        if (touchFlag) {
+            await this.reportPeople(id, task);
+            task.helloSum -= 1;
+        }
+
+        await this.dealAfter();
+
+        return this.hiEnd
+    }
+
+    dealBefore = async(id) => {
+        let {newPage, tab} = await this.createNewTabViaExt(options);
+        this.page = newPage;
+        await this.toPage(id);
+        this.hiEnd = false;
+
+        logger.info("新建page并跳转成功");
+    }
+
+    dealAfter = async() => {
+        await this.page.close();
+
+        logger.info("page close");
+    }
+
+    filterItem = async() => {
+        try {
+            const { status, data } = await Request({
+                url: `${BIZ_DOMAIN}/recruit/candidate/filter`,
+                data: {
+                    accountID: this.accountID,
+                    jobID: this.jobID,
+                    candidateInfo: item
+                },
+                headers: {"Connection": "keep-alive"},
+                method: 'POST'
+            });
+  
+            logger.info(`linkedin ${this.userInfo.name} 筛选结果 ${item.name} ${status} ${data.touch} ` );
+  
+            if (status === 0 && data.touch) {
+                return false;
+            }
+        } catch (e) {
+            Logger.error(`linkedin ${this.userInfo.name} 筛选错误: `, e);
+        }
+
+        return true;
+    }
+
+    touchPeople = async(task, id, peopleProfile) => {
+        let [cardDiv] = await this.page.$x(`//main[contains(@class, "scaffold-layout__main")]/section[contains(@class, "artdeco-card")][1]`);
+        await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), cardDiv);
+
+        let [pendingBtn] = await cardDiv.$x(`//span[text() = "Pending"]`);
+        if (pendingBtn) {
+            logger.info(`linkedin ${this.userInfo.name} id: ${id} 已经被connect过了`);
+            return;
+        }
+
+        let clickFlag = await this.connectPeople1(cardDiv, task, peopleProfile);
+        if (clickFlag)
+            return true;
+
+        clickFlag = await this.connectPeople2(cardDiv, task, peopleProfile);
+        if(clickFlag)
+            return true;
+
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} connect异常, 没有connect按钮`);
+        return false;
+    }
+
+    connectPeople1 = async(cardDiv, task, peopleProfile) => {
+        let [connectBtn] = await cardDiv.$x(`//span[contains(@class, "artdeco-button__text") and text() = "Connect"]`);
+        if (!connectBtn)
+            return false;
+
+        await connectBtn.click();
+        await this.sayHiToPeople(task, peopleProfile);
+
+        return true;
+    }
+
+    connectPeople2 = async(cardDiv, task, peopleProfile) => {
+        let [moreBtn] = await cardDiv.$x(`//span[text() = "More"]`);
+        await moreBtn.click();
+
+        let dropDiv = await this.waitElement(`//div[contains(@class, "artdeco-dropdown__content--is-open")]`, this.page);
+        let [connectBtn] = dropDiv.$x(`//span[text() = "Connect"]`);
+        if (!connectBtn)
+            return false;
+
+        await connectBtn.click();
+        await this.sayHiToPeople(task, peopleProfile);
+
+        return true;
+    }
+
+    sayHiToPeople = async(task, peopleProfile) => {
+        let name = peopleProfile["profile"]["name"];
+        let dialogDiv = await this.waitElement(`//div[contains(@role, "dialog")]`, this.page);
+
+        let [noteBtn] = await dialogDiv.$x(`//span[contains(@class, "artdeco-button__text") and text() = "Add a note"]`);
+        await noteBtn.click();
+
+        let textarea = await this.waitElement(`//textarea[contains(@name, "message") and contains(@placeholder, "Ex: We know each other from…")]`, dialogDiv);
+        await textarea.focus();
+        let hiMsg = "hi, " + name + "," + task.touch_msg;
+        await this.page.keyboard.type(hiMsg, { delay: parseInt(1 + Math.random() * 1) });
+
+        let [sendBtn] = await dialogDiv.$x(`//span[contains(@class, "artdeco-button__text") and text() = "Send"]`);
+        await sendBtn.click();
+        await this.checkEnd();
+
+        [dialogDiv] = await this.page.$x(`//div[contains(@role, "dialog")]`);
+        if (dialogDiv) {
+            logger.info(`linkedin ${this.userInfo.name} id: ${peopleProfile.id} 异常 打招呼的dialog不消失`);
+            let [closeBtn] = await dialogDiv.$x(`//button[contains(@aria-label, "Dismiss")]`);
+            await closeBtn.click();
+        }
+    }
+
+    checkEnd = async() => {
+        let [finishMsg] = await this.page.$x(`//h2[contains(@id, "ip-fuse-limit-alert__header") and text()="You’ve reached the weekly invitation limit"]`);
+        if (!finishMsg)
+            return;
+
+        this.hiEnd = true;
+        logger.info(`linkedin ${this.userInfo.name} 这周的connect用光了`);
+        let [getBtn] = await this.page.$x(`//span[contains(@class, "artdeco-button__text") and text() = "Got it"]`);
+        await getBtn.click();
+    }
+
     fetch = async() => {
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page);
 

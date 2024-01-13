@@ -198,7 +198,7 @@ class Search extends Base {
     }
 
     setPastCompany = async(task) => {
-        if (!task.filter.past_company || task.filter.past_company.length == 0)
+        if (!task.filter.ex_company || task.filter.ex_company.length == 0)
             return;
 
         let allBtn = await this.waitElement(`//button[contains(@class, "artdeco-pill") and text() = "All filters"]`, this.page);
@@ -209,7 +209,7 @@ class Search extends Base {
         let [pastCompanyDiv] = await filtersDiv.$x(`//h3[text() = "Past company"]/parent::*`);
         await filtersDiv.evaluate((item)=>item.scrollIntoView({ block: "center" }), pastCompanyDiv);
 
-        for (let company of task.filter.past_company) {
+        for (let company of task.filter.ex_company) {
             let [addcompanyBtn] = await pastCompanyDiv.$x(`//span[text() = "Add a company"]`);
             await filtersDiv.evaluate((item)=>item.scrollIntoView({ block: "center" }), addcompanyBtn);
             if (addcompanyBtn)
