@@ -309,6 +309,8 @@ class Common {
     }, options);
     const pages = await this.browser.pages();
     const page = pages[pages.length - 1];
+    await sleep(500);
+    page.bringToFront();
     return { page, tab };
   }
 
