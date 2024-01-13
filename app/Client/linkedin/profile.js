@@ -28,9 +28,8 @@ class Profile extends Base {
     }
 
     dealBefore = async(id) => {
-        let {newPage, tab} = await this.createNewTabViaExt(options);
+        const { newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
         this.page = newPage;
-        await this.toPage(id);
         this.hiEnd = false;
 
         logger.info("新建page并跳转成功");
@@ -38,7 +37,6 @@ class Profile extends Base {
 
     dealAfter = async() => {
         await this.page.close();
-
         logger.info("page close");
     }
 
