@@ -7,6 +7,7 @@ class Profile extends Base {
     }
 
     deal = async(id, task) => {
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} 开始处理简历`);
         await this.dealBefore(id);
 
         try {
@@ -28,12 +29,13 @@ class Profile extends Base {
             logger.error(`linkedin ${this.userInfo.name} id: ${id} 处理简历信息异常: `, e);
         }
 
-        await this.dealAfter();
+        await this.dealAfter(id);
 
         return this.hiEnd
     }
 
     dealBefore = async(id) => {
+        let url = "https://www." + id;
         let { page: newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
         this.page = newPage;
         this.hiEnd = false;
@@ -42,7 +44,7 @@ class Profile extends Base {
         logger.info(`linkedin ${this.userInfo.name} id: ${id} 新建page并跳转成功`);
     }
 
-    dealAfter = async() => {
+    dealAfter = async(id) => {
         await this.page.close();
         logger.info(`linkedin ${this.userInfo.name} id: ${id} page close`);
     }
