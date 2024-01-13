@@ -9,6 +9,7 @@ class Profile extends Base {
         await this.dealBefore(id);
 
         let resume = await this.fetch();
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} resume: ${JSON.stringify(resume)}`);
 
         let filterFlag = await this.filterItem(resume);
         if (filterFlag) {
@@ -31,13 +32,14 @@ class Profile extends Base {
         const { newPage, tab } = await this.createNewTabViaExt({ url: id, active: false, selected: false });
         this.page = newPage;
         this.hiEnd = false;
+        this.id = id;
 
-        logger.info("新建page并跳转成功");
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} 新建page并跳转成功`);
     }
 
     dealAfter = async() => {
         await this.page.close();
-        logger.info("page close");
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} page close`);
     }
 
     filterItem = async() => {
