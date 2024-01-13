@@ -20,28 +20,35 @@ common.initBrowser()
         console.log("page", page, "tab", tab);
     })
     .then(async () => {
-        await sleep(5000);
+        await sleep(5 * 1000);
         const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
         console.log("page", page, "tab", tab);
-        page.bringToFront();
+        // 新建一个"new"浏览器
+        const common2 = new Common();
+        common2.initBrowser({
+            headless: "new", 
+            width: 1580,
+            height: 900,
+        });
+        common2.newPage();
     })
     .then(async () => {
-        await sleep(5000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5000);
+        await sleep(5 * 1000);
         const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
         console.log("page", page, "tab", tab);
     })
     .then(async () => {
-        await sleep(5000);
+        await sleep(5 * 1000);
+        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
+        console.log("page", page, "tab", tab);
+    })
+    .then(async () => {
+        await sleep(5 * 1000);
+        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
+        console.log("page", page, "tab", tab);
+    })
+    .then(async () => {
+        await sleep(5 * 1000);
         const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
         console.log("page", page, "tab", tab);
     })

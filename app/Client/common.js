@@ -36,13 +36,19 @@ class Common {
 
     return page;
   }
-
+  
+  /**
+   * 
+   * @param {{width: number, height: number, headless: boolean | 'new' }} options 
+   * @returns 
+   */
   initBrowser = async (options = {
     width: 1580,
     height: 900,
+    headless: false,
   }) => {
     try {
-      const { width, height } = options;
+      const { width, height, headless } = options;
       const args = [
         // '--start-fullscreen',
         '--disable-notifications=true',
@@ -61,7 +67,7 @@ class Common {
       let executablePath = chromeInfo.executablePath;
       this.browser = await puppeteer.launch({
         executablePath: executablePath,
-        headless: false,
+        headless,
         defaultViewport: null,
         ignoreHTTPSErrors: true,
         waitForInitialPage: false,
