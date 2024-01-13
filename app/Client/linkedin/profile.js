@@ -46,7 +46,8 @@ class Profile extends Base {
         this.page = newPage;
         this.hiEnd = false;
         this.id = id;
-        await tab.bringToFront();
+        // await tab.bringToFront();
+        await tab.move();
 
         logger.info(`linkedin ${this.userInfo.name} id: ${id} 新建page并跳转成功`);
     }
