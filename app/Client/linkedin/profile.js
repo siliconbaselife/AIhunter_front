@@ -1,6 +1,8 @@
 const Base = require('./Base');
 const logger = require('../../Logger');
 const { sleep } = require('../../utils');
+const { BIZ_DOMAIN } = require("../../Config/index");
+const Request = require('../../utils/Request');
 
 class Profile extends Base {
     constructor(options) {
@@ -15,7 +17,7 @@ class Profile extends Base {
             let resume = await this.fetch();
             logger.info(`linkedin ${this.userInfo.name} id: ${id} resume: ${JSON.stringify(resume)}`);
 
-            let filterFlag = await this.filterItem(resume);
+            let filterFlag = await this.filterItem(resume, task, id);
             if (filterFlag) {
                 logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要打招呼`);
                 return;
@@ -39,6 +41,7 @@ class Profile extends Base {
     dealBefore = async(id) => {
         let url = "https://www." + id;
         let { page: newPage, tab } = await this.createNewTabViaExt({ url: url, active: false, selected: false });
+        await sleep(500);
         this.page = newPage;
         this.hiEnd = false;
         this.id = id;
@@ -52,26 +55,26 @@ class Profile extends Base {
         logger.info(`linkedin ${this.userInfo.name} id: ${id} page close`);
     }
 
-    filterItem = async() => {
+    filterItem = async(resume, task, id) => {
         try {
             const { status, data } = await Request({
                 url: `${BIZ_DOMAIN}/recruit/candidate/filter`,
                 data: {
-                    accountID: this.accountID,
-                    jobID: this.jobID,
-                    candidateInfo: item
+                    accountID: this.userInfo.accountID,
+                    jobID: task.jobID,
+                    candidateInfo: resume
                 },
                 headers: {"Connection": "keep-alive"},
                 method: 'POST'
             });
   
-            logger.info(`linkedin ${this.userInfo.name} 筛选结果 ${item.name} ${status} ${data.touch} ` );
+            logger.info(`linkedin ${this.userInfo.name} 筛选结果 ${id} ${status} ${data.touch} ` );
   
             if (status === 0 && data.touch) {
                 return false;
             }
         } catch (e) {
-            Logger.error(`linkedin ${this.userInfo.name} 筛选错误: `, e);
+            logger.error(`linkedin ${this.userInfo.name} 筛选错误: `, e);
         }
 
         return true;
@@ -161,9 +164,7 @@ class Profile extends Base {
     }
 
     fetch = async() => {
-        console.log(`page: `, this.page);
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page);
-        console.log("111111");
 
         let resume = {}
         resume["profile"] = {}
@@ -199,21 +200,23 @@ class Profile extends Base {
         let contactSections = await this.page.$x(`//section[contains(@class, "pv-contact-info__contact-type")]`);
         for (let index in contactSections) {
             let contactSection = contactSections[index];
-            let keySpan;
-            if (index == 0) {
-                [keySpan] = await contactSection.$x(`//h3[contains(@class, "pv-contact-info__header")]`);
-            } else {
+            let [keySpan] = await contactSection.$x(`//h3[contains(@class, "pv-contact-info__header")]`);
+            if (!keySpan)
                 [keySpan] = await contactSection.$x(`//div[contains(@class, "pv-contact-info__header")]`);
-            }
             let key = await this.page.evaluate(node => node.innerText, keySpan);
 
             let [valueSpan] = await contactSection.$x(`//div[contains(@class, "pv-contact-info__ci-container")]`);
+            if (!valueSpan)
+                [valueSpan] = await contactSection.$x(`//a`);
+
             let value = await this.page.evaluate(node => node.innerText, valueSpan);
 
             contactInfo[key] = value;
         }
 
-        await this.page.goback();
+        let closeBtn = await this.waitElement(`//button[contains(@class, "artdeco-modal__dismiss")]`, this.page);
+        await closeBtn.click();
+
         await sleep(500);
 
         return contactInfo;
@@ -235,7 +238,7 @@ class Profile extends Base {
         let summaryDiv = await this.waitElement(`//span[text() = "About"][1]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*//div[contains(@class, "inline-show-more-text")]//span[1]`, this.page);
         baseInfo["summary"] = await this.page.evaluate(node => node.innerText, summaryDiv);
 
-        return contactInfo;
+        return baseInfo;
     }
 
     dealExperience = async() => {
@@ -312,7 +315,7 @@ class Profile extends Base {
         let experience = {
             "companyName": null,
             "timeInfo": null,
-            "work": [{}]};
+            "works": [{}]};
         let [companyNameSpan] = await experienceLi.$x(`//span[contains(@class, "t-14 t-normal") and not(contains(@class, "t-black--light"))]/span[contains(@class, "visually-hidden")]`);
         if (companyNameSpan)
             experience["companyName"] = await this.page.evaluate(node => node.innerText, companyNameSpan);
@@ -321,27 +324,27 @@ class Profile extends Base {
         if (timeInfoSpan) {
             let timeInfo = await this.page.evaluate(node => node.innerText, timeInfoSpan);
             experience["timeInfo"] = timeInfo;
-            experience["work"][0]["workTimeInfo"] = timeInfo;
+            experience["works"][0]["workTimeInfo"] = timeInfo;
         }
 
         let [locationSpan] = await experienceLi.$x(`//span[contains(@class, "t-14 t-normal") and not(contains(@class, "t-black--light"))]/span[not(contains(@class, "visually-hidden"))]`);
         if (locationSpan)
-            experience["work"][0]["worklocation"] = await this.page.evaluate(node => node.innerText, locationSpan);
+            experience["works"][0]["workLocationInfo"] = await this.page.evaluate(node => node.innerText, locationSpan);
 
         let [workPositionSpan] = await experienceLi.$x(`//div[contains(@class, "mr1")]//span[contains(@class, "visually-hidden")]`);
         if (workPositionSpan)
-            experience["work"][0]["workPosition"] = await this.page.evaluate(node => node.innerText, workPositionSpan);
+            experience["works"][0]["workPosition"] = await this.page.evaluate(node => node.innerText, workPositionSpan);
 
         let [workDescriptionSpan] = await experienceLi.$x(`//div[contains(@class, "inline-show-more-text")]//span[contains(@class, "visually-hidden")]`);
         if (workDescriptionSpan)
-            experience["work"][0]["workDescription"] = await this.page.evaluate(node => node.innerText, workDescriptionSpan);
+            experience["works"][0]["workDescription"] = await this.page.evaluate(node => node.innerText, workDescriptionSpan);
 
         return experience;
     }
 
     dealEducation = async() => {
         let educations = [];
-        let educationSection = await this.page.$x(`//span[text() = "Education"][1]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*`);
+        let [educationSection] = await this.page.$x(`//span[text() = "Education"][1]/parent::*/parent::*/parent::*/parent::*/parent::*/parent::*`);
         if (!educationSection)
             return educations;
 
@@ -378,7 +381,7 @@ class Profile extends Base {
 
         let [showBtn] = await languageSection.$x(`//a[contains(@id, navigation-index-see-all-languages)]`);
         if (showBtn) {
-            languages = await this.dealLanguagesFirst(languageSection, showMoreBtn);
+            languages = await this.dealLanguagesFirst(languageSection, showBtn);
         } else {
             languages = await this.dealLanguagesSecond(languageSection);
         }
@@ -401,11 +404,11 @@ class Profile extends Base {
                 language["des"] = await this.page.evaluate(node => node.innerText, languageNameSpan);
             languages.push(language);
          }
-
-         await this.page.goback();
          await sleep(500);
+         let closeBtn = await this.waitElement(`//button[contains(@class, "artdeco-button--muted")]`, mainDiv);
+         await closeBtn.click();
 
-         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`);
+         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page);
          
          return languages;
     }
