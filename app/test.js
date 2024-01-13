@@ -16,31 +16,5 @@ const { sleep } = require("./utils");
 const common = new Common();
 common.initBrowser()
     .then(async () => {
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-    })
-    .then(async () => {
-        await sleep(5 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
+        common.newPage();
     })
