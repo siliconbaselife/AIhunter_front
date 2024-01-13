@@ -1,6 +1,22 @@
 const path = require("path");
 const fs = require("fs");
 
+
+const pluginUtils = require("./plugin/utils/index");
+const contentUtils = require("./plugin/content/main/utils");
+const contentTabHelper = require("./plugin/helper/tab-helper/content");
+const contentLinkedinBase = require("./plugin/content/main/execution/linkedin/base");
+const contentLinkedinChat = require("./plugin/content/main/execution/linkedin/linkedinChat");
+const contentLinkedinPerson = require("./plugin/content/main/execution/linkedin/linkedinPerson");
+const contentLinkedin = require("./plugin/content/main/execution/linkedin");
+
+// 测试代码
+const testMission = require("./plugin/content/main/execution/test");
+
+
+
+const TabHelper = require("./Tab");
+
 class ExtensionHelper {
     /** @type {ExtensionHelper} */
     static instance;
@@ -10,62 +26,84 @@ class ExtensionHelper {
         return ExtensionHelper.instance;
     }
 
+    /** @type {import("puppeteer").WebWorker} 扩展程序WebWorker实例 */
+    extension;
+
+    /** @type {TabHelper} 标签页管理 */
+    tabHelper = TabHelper;
+
     /** @readonly 扩展程序路径 这个文件夹必须是在程序执行的目录下 */
     EXTENSION_PATH = path.join(process.cwd(), "extension");
     /** @readonly 扩展程序content.js文件 */
     CONTENT_JS_NAME = "content.js";
     /** @readonly 扩展程序content.js内容 */
     CONTENT_JS = `
-        
-    `;
-    /** @readonly 扩展程序json配置文件 */
-    MANIFEST_JSON_NAME = "manifest.json";
-    /** @readonly 扩展程序json内容 */
-    MANIFEST_JSON = `
-        {
-          "manifest_version": 3,
-          "name": "AIhunter",
-          "description": "AIhunter",
-          "version": "1.0",
-          "author": "lewis",
-          "background": {
-              "service_worker": "background.js",
-              "type": "module"
-          },
-          "content_scripts": [
-            {
-                "matches": [
-                    "https://*.maimai.cn/*",
-                    "https://*.linkedin.com/*"
-                ],
-                "js": [
-                    ${this.CONTENT_JS_NAME}
-                ],
-                "run_at": "document_idle"
-            }
-          ],
-          "host_permissions": [
-              "*://*/*",
-              "http://*/*",
-              "https://*/*",
-              "<all_urls>"
-          ],
-          "permissions": [
-              "tabs",
-              "storage",
-              "activeTab",
-              "scripting",
-              "webRequest",
-              "cookies"
-          ]
-        }
+        ${pluginUtils}
+        ${contentUtils}
+        ${contentTabHelper}
+        ${contentLinkedinBase}
+        ${contentLinkedinChat}
+        ${contentLinkedinPerson}
+        ${contentLinkedin}
+        ${testMission}
     `;
     /** @readonly background文件名 */
     BACKGROUND_JS_NAME = "background.js";
     /** @readonly background内容 */
     BACKGROUND_JS = `
-        console.log("manifest start");
+        // Background.js
     `;
+    /** @readonly 扩展程序json配置文件 */
+    MANIFEST_JSON_NAME = "manifest.json";
+    /** @readonly 扩展程序json内容 */
+    MANIFEST_JSON = `
+            {
+              "manifest_version": 3,
+              "name": "AIhunter",
+              "description": "AIhunter",
+              "version": "1.0",
+              "author": "lewis",
+              "background": {
+                  "service_worker": "${this.BACKGROUND_JS_NAME}",
+                  "type": "module"
+              },
+              "content_scripts": [
+                {
+                    "matches": [
+                        "https://*.maimai.cn/*",
+                        "https://*.linkedin.com/*"
+                    ],
+                    "js": [
+                        "${this.CONTENT_JS_NAME}"
+                    ],
+                    "run_at": "document_idle"
+                },
+                {
+                    "matches": [
+                        "https://*.baidu.com/*"
+                    ],
+                    "js": [
+                        "${this.CONTENT_JS_NAME}"
+                    ],
+                    "run_at": "document_idle"
+                }
+              ],
+              "host_permissions": [
+                  "*://*/*",
+                  "http://*/*",
+                  "https://*/*",
+                  "<all_urls>"
+              ],
+              "permissions": [
+                  "tabs",
+                  "storage",
+                  "activeTab",
+                  "scripting",
+                  "webRequest",
+                  "cookies"
+              ]
+            }
+        `;
 
     constructor() {
         this.initialize();
@@ -76,22 +114,26 @@ class ExtensionHelper {
         if (!fs.existsSync(this.EXTENSION_PATH)) {
             fs.mkdirSync(this.EXTENSION_PATH);
         }
-        // 如果扩展目录不存在background.js则创建
+        // 如果扩展目录不存在manifest.json则创建
         let manifestJsonPath = `${this.EXTENSION_PATH}/${this.MANIFEST_JSON_NAME}`;
-        if (!fs.existsSync(manifestJsonPath)) {
-            fs.appendFileSync(manifestJsonPath, this.MANIFEST_JSON);
-        }
+        if (fs.existsSync(manifestJsonPath)) fs.rmSync(manifestJsonPath);
+        fs.appendFileSync(manifestJsonPath, this.MANIFEST_JSON);
         let backgroundJsPath = `${this.EXTENSION_PATH}/${this.BACKGROUND_JS_NAME}`;
-        if (!fs.existsSync(backgroundJsPath)) { // 如果扩展目录不存在background.js则创建
-            fs.appendFileSync(backgroundJsPath, this.BACKGROUND_JS);
-        }
+        if (fs.existsSync(backgroundJsPath)) fs.rmSync(backgroundJsPath);
+        fs.appendFileSync(backgroundJsPath, this.BACKGROUND_JS);
         let contentJsPath = `${this.EXTENSION_PATH}/${this.CONTENT_JS_NAME}`;
-        if (!fs.existsSync(contentJsPath)) { // 如果扩展目录不存在background.js则创建
-            fs.appendFileSync(contentJsPath, this.CONTENT_JS);
-        }
+        if (fs.existsSync(contentJsPath)) fs.rmSync(contentJsPath);
+        fs.appendFileSync(contentJsPath, this.CONTENT_JS);
     }
 
-    
+    /** 
+     * 拿到扩展程序操作
+     * @param {import("puppeteer").WebWorker} extension 扩展程序WebWorker实例
+     */
+    initializeWithExtension(extension) {
+        this.extension = extension;
+        this.tabHelper.extension = extension;
+    }
 }
 
 module.exports = ExtensionHelper.getInstance();

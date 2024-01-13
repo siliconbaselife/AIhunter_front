@@ -10,27 +10,23 @@
 
 
 
+
 // 测试通过扩展程序新建页面, 每5秒创建一个
 const Common = require("./Client/common");
 const { sleep } = require("./utils");
+const ExecuteHelper = require("./Extension/execute");
 const common = new Common();
 common.initBrowser()
     .then(async () => {
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.linkedin.com/", active: false, selected: false });
-        console.log("page", page, "tab", tab);
-        await page.evaluate(() => {
-            const a = document.querySelector(`[data-tracking-control-name="homepage-basic_sign-in-submit-btn"]`);
-            console.log("a", a)
-            a.click();
-        })
+        common.newPage();
+        await sleep(5 * 1000);
     })
     .then(async () => {
-        await sleep(200 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
+        console.log("heelo")
+        const { status, payload } = await ExecuteHelper.test.search("https://www.baidu.com", "关键词123");
+        console.log(status, payload);
     })
     .then(async () => {
-        await sleep(200 * 1000);
-        const { page, tab } = await common.createNewTabViaExt({ url: "https://www.baidu.com", active: false, selected: false });
-        console.log("page", page, "tab", tab);
+        await sleep(9999 * 1000);
+        common.newPage();
     })
