@@ -257,7 +257,6 @@ class Search extends Base {
         }
 
         await nextBtn.click();
-        let = await this.waitElement();
         await this.waitPeopleNum();
 
         return true;
