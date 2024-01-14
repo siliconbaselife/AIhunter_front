@@ -81,6 +81,7 @@ class Resume extends Search {
 
         for (let i = 0; i < itemsNum; i++) {
             let peopleItem = peopleItems[i];
+            await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
             if (this.hiEnd)
                 break;
 
@@ -136,6 +137,9 @@ class Resume extends Search {
     }
 
     needDealPeople = async(item, id, task) => {
+        if (id == "linkedin.com/search/results/people/headless")
+            return false;
+
         let [nameSpan] = await item.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
         let name = await this.page.evaluate(node => node.innerText, nameSpan);
 

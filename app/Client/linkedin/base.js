@@ -7,8 +7,6 @@ class Base extends Common {
 
     constructor(options) {
         super();
-        logger.info(`linkedin base options: ${JSON.stringify(options)}`);
-
         this.options = options || {};
         const {page, browser, userInfo, extension} = this.options;
 
@@ -19,7 +17,6 @@ class Base extends Common {
             this.extension = extension;
 
         if (userInfo)
-            logger.info(`linkedin userInfo: ${JSON.stringify(userInfo)}`);
             this.userInfo = userInfo;
     }
 
