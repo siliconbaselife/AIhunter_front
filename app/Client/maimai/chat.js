@@ -762,12 +762,12 @@ class Chat extends Base {
         await msgBtn.click();
         await sleep(1000);
 
-        await this.waitElement(`//iframe[contains(@id, "imIframe")]`, this.page, 50);
+        await this.waitElement(`//iframe[contains(@id, "imIframe")]`, this.page, 1000);
 
         const pageFrame = await this.page.$('#imIframe');
         this.frame = await pageFrame.contentFrame();
 
-        let allBtn = await this.waitElement(`//div[text() = "全部"]`, this.frame);
+        let allBtn = await this.waitElement(`//div[text() = "全部"]`, this.frame, 1000);
         await allBtn.click();
         await this.waitElement(`//div[contains(@class, "message-list")]`, this.page);
     }
