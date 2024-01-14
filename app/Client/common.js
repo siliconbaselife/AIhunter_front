@@ -15,6 +15,8 @@ class Common {
   browser;
   /** @type {import("puppeteer").WebWorker} 扩展程序WebWorker实例 */
   extension;
+  /** @type {ExtensionHelper} 扩展程序WebWorker管理 */
+  ExtensionHelper = ExtensionHelper;
 
   newPage = async (options = { width: 1580, height: 900 }) => {
     if (!this.browser) {
@@ -69,7 +71,7 @@ class Common {
       });
 
       return this.saveExtensionTarget()
-        .then(async () => {
+        .then(() => {
           this.browser.on('disconnected', () => {
             logger.info('puppeteer disconnected 浏览器异常退出')
           });
@@ -83,8 +85,6 @@ class Common {
             logger.info(`已关闭浏览器`);
             ProcessControl && ProcessControl.close(); // 关闭当前进程
           })
-
-          sleep(500).then(() => this.pluginDoLogin());
         })
         .catch((err) => {
           console.log("保存扩展程序失败:", err);
@@ -117,19 +117,12 @@ class Common {
       }, 2000);
       this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
         .then(extensionTarget => extensionTarget.worker())
-        .then(extension => { rs(this.extension = extension) })
+        .then(extension => {
+          this.extension = extension;
+          ExtensionHelper.initializeWithExtension(extension);
+          rs(extension);
+        })
     })
-  }
-
-  /**
-   * 插件登录(自动带上该进程所绑定的会员信息)
-   * @returns {Promise<void>}
-   */
-  async pluginDoLogin() {
-    return this.extension.evaluate((userInfo) => {
-      console.log("userInfo", userInfo)
-      return chrome.storage.session.set(userInfo);
-    }, ProcessControl.userInfo)
   }
 
   settingPage = async (page) => {
@@ -309,22 +302,6 @@ class Common {
       await page.reload({ waitUntil: ["domcontentloaded"] });
     }
     return result;
-  }
-
-  /**
-   * 通过扩展程序创建页面
-   * @param { {index?: number , openerTabId?: number ,url?: string ,pinned?: boolean ,windowId?: number ,active?: boolean ,selected?: boolean }} options
-   * @returns { Promise<{page: puppeteer.Page, tab: {status?: string | undefined, index: number, openerTabId?: number | undefined, title?: string | undefined, url?: string | undefined, pendingUrl?: string | undefined, pinned: boolean, highlighted: boolean, windowId: number, active: boolean, favIconUrl?: string | undefined, id?: number | undefined, incognito: boolean, selected: boolean, audible?: boolean | undefined, discarded: boolean, autoDiscardable: boolean, mutedInfo?: MutedInfo | undefined, width?: number | undefined, height?: number | undefined, sessionId?: string | undefined, groupId: number}}> }
-   */
-  async createNewTabViaExt(options) {
-    const tab = await this.extension.evaluate((insideOptions) => {
-      return chrome.tabs.create(insideOptions)
-    }, options);
-    const pages = await this.browser.pages();
-    const page = pages[pages.length - 1];
-    await sleep(500);
-    page.bringToFront();
-    return { page, tab };
   }
 
   // queryAccountId = async (platformType, id) => {
