@@ -46,7 +46,9 @@ const Request = async (options) => {
 
   const timeout = options.timeout || 1000 * 60;
   requestLogger.info(`start `, url, JSON.stringify(options), ` # ${traceId}`);
+
   return new Promise((resolve, reject) => {
+
     const startTime = Date.now();
     const timer = setTimeout(() => {
       const now = Date.now();
@@ -54,7 +56,7 @@ const Request = async (options) => {
       requestLogger.info(msg)
       resolve({
         status: -1,
-        msg
+        data: msg
       })
     }, timeout);
     
@@ -75,7 +77,7 @@ const Request = async (options) => {
           if (error) {
             reject({
               status: -100,
-              msg: `请求异常，${error.message}`,
+              data: `请求异常，${error.message}`,
               error
             })
           }
@@ -87,13 +89,13 @@ const Request = async (options) => {
         } catch(e) {
           Logger.error("RequestBase error: ", e);
           reject({status: -100,
-            msg: `请求异常，${error.message}`});
+            data: `请求异常，${error.message}`});
         }
       })
     } catch (e) {
       Logger.error("request promise error: ", e);
       reject({status: -100,
-        msg: `请求异常`});
+        data: `请求异常`});
     }
     
   })
