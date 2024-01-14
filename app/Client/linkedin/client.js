@@ -53,11 +53,11 @@ class Client {
         // await chat.chatList();
 
         let resume = new Resume(this.options);
-        await resume.run();
+        // await resume.run();
         logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
 
         let recall = new Recall(this.options);
-        // await recall.run();
+        await recall.run();
         logger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
 
         // await chat.run();
