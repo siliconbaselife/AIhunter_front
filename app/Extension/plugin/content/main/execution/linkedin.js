@@ -12,11 +12,11 @@ class LinkedinExecutor {
     };
 
     // linkedinEnterprise = LinkedinEnterprise.getInstance();
-    // linkedinPerson = LinkedinPerson.getInstance();
+    linkedinPerson = LinkedinPerson.getInstance();
     linkedinChat = LinkedinChat.getInstance();
 
     initialize() {
-        // this.linkedinPerson.initialize();
+        this.linkedinPerson.initialize();
         // this.linkedinEnterprise.initialize();
         this.linkedinChat.initialize();
     }

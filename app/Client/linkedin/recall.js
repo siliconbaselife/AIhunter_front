@@ -16,6 +16,7 @@ class Recall extends Search {
         logger.info(`linkedin ${this.userInfo.name} 二次召回，开始执行任务`);
         let tasks = await this.queryTasks();
         logger.info(`linkedin ${this.userInfo.name} 获取到 ${tasks.length} 个二次召回任务, 任务如下: ${JSON.stringify(tasks)}`);
+        await this.minConversation();
 
         for (let index in tasks) {
             let task = tasks[index];
@@ -31,12 +32,28 @@ class Recall extends Search {
     }
 
     dealTask = async(task) => {
-        await this.setFilter(task);
-        await this.noopTask();
+        await this.dealTaskBefore(task);
+        await this.setOneDegree();
+        await this.noopTask(task);
         await this.refresh();
     }
 
-    noopTask = async() => {
+    setOneDegree = async() => {
+        let locationBtn = await this.waitElement(`//button[text() = "Connections"]`, this.page);
+        await locationBtn.click();
+
+        let mainDiv = await this.waitElement(`//div[contains(@class, "artdeco-hoverable-content--visible")]`, this.page);
+        let oneDegreeBtn = await this.waitElement(`//span[contains(@class, "t-14") and text() = "1st"]`, mainDiv);
+        await oneDegreeBtn.click();
+
+        let [showBtn] = await mainDiv.$x(`//button[contains(@data-control-name, "filter_show_results")]`);
+        await showBtn.click();
+
+        await this.waitPeopleNum();
+    }
+
+
+    noopTask = async(task) => {
         let page = 1;
         while(true) {
             logger.info(`linkedin ${this.userInfo.name} 当前二次召回任务处理到第 ${page} 页`);
@@ -62,6 +79,8 @@ class Recall extends Search {
             let msgBtn = await this.waitElement(`//span[text() = "Message"]`, peopleItem);
             let nameSpan = await peopleItem.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
             let name = await this.page.evaluate(node => node.innerText, nameSpan);
+            await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
+            await sleep(300);
             if (!msgBtn) {
                 logger.info(`linkedin ${this.userInfo.name} ${name} 异常,没有message按钮`);
                 continue;
@@ -89,7 +108,7 @@ class Recall extends Search {
             const { status, data } = await Request({
               url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
               data: {
-                accountID: this.userInfo.id,
+                accountID: this.userInfo.accountID,
                 candidateIDs: [id],
                 candidateIDs_read: []
               },

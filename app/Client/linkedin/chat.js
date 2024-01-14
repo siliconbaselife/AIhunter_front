@@ -47,6 +47,7 @@ class Chat extends Base {
             let unreadMsgItem = await this.fetchUnreadMsgItem();
             
             if (unreadMsgItem) {
+                logger.info(`linkedin ${this.userInfo.name} 获取到未读消息`);
                 await unreadMsgItem.click();
                 await sleep(500);
                 await this.chatOnePeople();
@@ -87,14 +88,14 @@ class Chat extends Base {
 
         while(true) {
             let messages = await this.fetchMsgs();
-            logger.info(`linkedin ${this.userInfo.name} id: ${id} 获取到聊天记录: ${messages}`);
+            logger.info(`linkedin ${this.userInfo.name} id: ${id} 获取到聊天记录: ${JSON.stringify(messages)}`);
 
             let needTalk = await this.needTalkCheck(messages);
             if (!needTalk) {
                 logger.info(`linkedin ${this.userInfo.name} id: ${id} 聊天结束`);
                 break;
             }
-            await this.chatToPeople(messages);
+            await this.chatToPeople(messages, id);
 
             await this.closeAllMsgDivs();
         }
@@ -167,7 +168,7 @@ class Chat extends Base {
         const data = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
             data: {
-              accountID: this.accountID,
+              accountID: this.userInfo.accountID,
               candidateID: id,
               candidateName: name,
               historyMsg: messages,
@@ -193,7 +194,7 @@ class Chat extends Base {
         if (messages.length == 0)
             return false;
 
-        if (messages[messages.length - 1].userType == "robot")
+        if (messages[messages.length - 1].speaker == "robot")
             return false;
 
         return true;
@@ -215,12 +216,12 @@ class Chat extends Base {
                 msgName =  await this.page.evaluate(node => node.innerText, nameSpan);
             }
 
-            if (!msgName) {
+            if (msgName) {
                 nowName = msgName;
             }
 
             if (!nowName) {
-                logger.info(`linkedin ${this.userInfo.name} 萃取消息名字 出现异常 index = ${i}`);
+                logger.error(`linkedin ${this.userInfo.name} 萃取消息名字 出现异常 index = ${i}`);
             }
 
             let userType;
@@ -260,7 +261,7 @@ class Chat extends Base {
         let url = await this.page.url();
         let id = url;
 
-        await this.page.goback();
+        await this.page.goBack();
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main scaffold-layout__list-detail")]`, this.page);
 
         return id;
@@ -269,7 +270,7 @@ class Chat extends Base {
     toChatPage = async() => {
         logger.info(`linkedin ${this.userInfo.name} 准备跳转到聊天界面`);
         await this.refresh();
-        let msgBtn = await this.waitElement(`//span[contains(@title, "Messaging")]/parent::*/parent::*`);
+        let msgBtn = await this.waitElement(`//span[contains(@title, "Messaging")]/parent::*/parent::*`, this.page);
         await msgBtn.click();
 
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main")]`, this.page, 20);

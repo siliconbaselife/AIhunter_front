@@ -34,12 +34,12 @@ class ExecuteHelper {
          * @param {string} url 链接
          * @returns {Promise<{status: "fail" | "success", payload: any}>}
          */
-        async resume(url) {
+        async resume(url, param2) {
             const result = await TabHelper.createTab({
                 url,
                 active: false,
                 selected: false,
-                args: ["linkedin_profile_fetch"]
+                args: ["linkedin_profile_fetch", param2]
             })
             console.log("执行结果", result);
             return result;

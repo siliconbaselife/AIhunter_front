@@ -22,7 +22,7 @@ class Profile extends Base {
 
     fetchResume = async (url) => {
         const { status, result } = await ExecuteHelper.Linkedin.resume(url);
-        logger.info(`linkedin ${this.userInfo.name} id: ${id} status: ${status} result: ${result}`);
+        logger.info(`linkedin ${this.userInfo.name} url: ${url} status: ${status} result: ${result}`);
     }
 
     filterItem = async (resume, task, id) => {

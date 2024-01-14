@@ -27,7 +27,7 @@ class LinkedinPerson extends Base {
             } catch (error) {
                 // 标记失败，带去错误信息
                 TabHelper.getInstance().markExecuteStatus("fail", error);
-                console.log("获取并上传当前profile失败: ", error);
+                console.log("获取当前profile失败: ", error);
             }
         }
     }
@@ -43,11 +43,13 @@ class LinkedinPerson extends Base {
     }
 
     async dealOneResume() {
+        console.log("dealOneResume start");
         let resume = { "profile": {} };
 
         let contactInfo = await this.dealContactInfo();
         resume["profile"]["contactInfo"] = contactInfo
         resume["id"] = contactInfo["url"]
+        console.log("dealContactInfo end");
 
         let baseInfo = await this.dealBaseInfo();
         console.log("baseInfo: ", JSON.stringify(baseInfo));
@@ -55,15 +57,19 @@ class LinkedinPerson extends Base {
         resume["profile"]["location"] = baseInfo["location"];
         resume["profile"]["role"] = baseInfo["role"];
         resume["profile"]["summary"] = baseInfo["summary"];
+        console.log("dealBaseInfo end");
 
         let experiences = await this.dealExperience();
         resume["profile"]["experiences"] = experiences;
+        console.log("dealExperience end");
 
         let educations = await this.dealEducation();
         resume["profile"]["educations"] = educations;
+        console.log("dealEducation end");
 
         let languages = await this.dealLanguages();
         resume["profile"]["languages"] = languages;
+        console.log("dealLanguages end");
 
         console.log("resume: ", JSON.stringify(resume));
 
