@@ -1,3 +1,4 @@
+const { sleep } = require("../utils");
 const TabHelper = require("./Tab");
 class ExecuteHelper {
     /** @private */
@@ -56,6 +57,25 @@ class ExecuteHelper {
             })
             console.log("执行结果", result);
             return result;
+        },
+
+        async search2(url, keyword) {
+            const tab = await TabHelper.createATab({
+                url,
+                active: false,
+                selected: false,
+            })
+
+            await sleep(1000);
+
+            const result1 = await TabHelper.sendMessageToTab(tab.id, "testMission", keyword);
+
+            console.log("result1", result1);
+
+            const result2 = await TabHelper.sendMessageToTab(tab.id, "testMission2", "12344");
+
+            console.log("result2", result2);
+            return {result1, result2, tab}
         }
     }
 }

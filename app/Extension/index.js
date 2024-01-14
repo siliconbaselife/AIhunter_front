@@ -3,12 +3,15 @@ const fs = require("fs");
 
 
 const pluginUtils = require("./plugin/utils/index");
+const contentMessageHelper = require("./plugin/helper/message-helper/content"); 
 const contentUtils = require("./plugin/content/main/utils");
 const contentTabHelper = require("./plugin/helper/tab-helper/content");
 const contentLinkedinBase = require("./plugin/content/main/execution/linkedin/base");
 const contentLinkedinChat = require("./plugin/content/main/execution/linkedin/linkedinChat");
 const contentLinkedinPerson = require("./plugin/content/main/execution/linkedin/linkedinPerson");
 const contentLinkedin = require("./plugin/content/main/execution/linkedin");
+
+const backgroundMessageHelper = require("./plugin/helper/message-helper/background");
 
 // 测试代码
 const testMission = require("./plugin/content/main/execution/test");
@@ -39,6 +42,7 @@ class ExtensionHelper {
     /** @readonly 扩展程序content.js内容 */
     CONTENT_JS = `
         ${pluginUtils}
+        ${contentMessageHelper}
         ${contentUtils}
         ${contentTabHelper}
         ${contentLinkedinBase}
@@ -52,6 +56,7 @@ class ExtensionHelper {
     /** @readonly background内容 */
     BACKGROUND_JS = `
         // Background.js
+        ${backgroundMessageHelper}
     `;
     /** @readonly 扩展程序json配置文件 */
     MANIFEST_JSON_NAME = "manifest.json";

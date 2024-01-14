@@ -115,13 +115,17 @@ class Common {
           rj("没有找到扩展程序");
         }
       }, 2000);
-      this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
-        .then(extensionTarget => extensionTarget.worker())
-        .then(extension => {
-          this.extension = extension;
-          ExtensionHelper.initializeWithExtension(extension);
-          rs(extension);
-        })
+        this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
+          .then(extensionTarget => extensionTarget.worker())
+          .then(extension => {
+            this.extension = extension;
+            ExtensionHelper.initializeWithExtension(extension);
+            rs(extension);
+          })
+          .catch(err => {
+            rj && rj(err)
+          })
+
     })
   }
 

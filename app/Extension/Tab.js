@@ -13,7 +13,7 @@ class TabHelper {
     extension;
 
     /**
-     * 创建新标签页
+     * 创建新标签页(带参数)
      * @param { {index?: number , openerTabId?: number ,url?: string ,pinned?: boolean ,windowId?: number ,active?: boolean ,selected?: boolean, args: any[] }} options
      * @returns {Promise<{status: "fail" | "success", payload: any}>}
      */
@@ -59,11 +59,47 @@ class TabHelper {
             args
         })
         const result = res[0].result;
-        this.extension.evaluate((id) => { // 关闭2: 关闭新建的标签页
-            chrome.tabs.remove(id);
-        }, tab.id)
 
-        return result;
+        this.closeTab(tab.id);
+
+        return { result };
+    }
+
+    
+    /**
+     * 向标签页发送消息
+     * @param {number} tabId 标签页id(该标签页的链接一定要是插件manifest.json的content_scripts有定义的)
+     * @param {string} eventName 事件名称
+     * @param {any} message 消息 
+     * @returns {Promise<any>} 
+     */
+    async sendMessageToTab(tabId, eventName, message) {
+        return this.extension.evaluate((id, name, msg) => {
+            return globalThis.OMH.callFromOthers(id, name, msg)
+        }, tabId, eventName, message)
+    }
+
+
+    /**
+     * 创建一个标签页
+     * @param { {index?: number , openerTabId?: number ,url?: string ,pinned?: boolean ,windowId?: number ,active?: boolean ,selected?: boolean }} options
+     * @returns { Promise<{index: number,openerTabId?: number | undefined,title?: string | undefined,url?: string | undefined,pendingUrl?: string | undefined,pinned: boolean,highlighted: boolean,windowId: number,active: boolean,favIconUrl?: string | undefined,id?: number | undefined,incognito: boolean,selected: boolean,audible?: boolean | undefined,discarded: boolean,autoDiscardable: boolean,mutedInfo?: MutedInfo | undefined,width?: number | undefined,height?: number | undefined,sessionId?: string | undefined, groupId: number}> }
+     */
+    async createATab(options) {
+        return this.extension.evaluate((insideOptions) => {
+            return chrome.tabs.create(insideOptions);
+        }, options)
+    }
+
+    /**
+     * 关闭一个标签页
+     * @param {number} tabId
+     * @returns {Promise<void>} 
+     */
+    async closeTab(tabId) { // 标签页id
+        return this.extension.evaluate((id) => {
+            chrome.tabs.remove(id)
+        }, tabId)
     }
 }
 

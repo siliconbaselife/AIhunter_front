@@ -15,6 +15,7 @@
 const Common = require("./Client/common");
 const { sleep } = require("./utils");
 const ExecuteHelper = require("./Extension/execute");
+const TabHelper = require("./Extension/Tab");
 const common = new Common();
 common.initBrowser()
     .then(async () => {
@@ -22,9 +23,9 @@ common.initBrowser()
         await sleep(5 * 1000);
     })
     .then(async () => {
-        console.log("heelo")
-        const { status, payload } = await ExecuteHelper.test.search("https://www.baidu.com", "关键词123");
-        console.log(status, payload);
+        const {tab, result1, result2} = await ExecuteHelper.test.search2("https://www.baidu.com", "关键词123");
+        console.log(result1, result2);
+        TabHelper.closeTab(tab.id) // 随时可以关闭标签页，只要有标签页id
     })
     .then(async () => {
         await sleep(9999 * 1000);
