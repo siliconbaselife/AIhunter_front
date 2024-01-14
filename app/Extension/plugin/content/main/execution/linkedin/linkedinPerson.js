@@ -22,11 +22,11 @@ class LinkedinPerson extends Base {
         if (type === this.LINKEDIN_PROFILE_FETCH) {
             try {
                 let resume = await this.dealOneResume();
-                TabHelper.getInstance().markExecuteStatus(Constants.STORED_INJECT_STATUS_SUCCESS, [resume]);
+                TabHelper.getInstance().markExecuteStatus("success", [resume]);
                 console.log("成功处理完简历");
             } catch (error) {
                 // 标记失败，带去错误信息
-                TabHelper.getInstance().markExecuteStatus(Constants.STORED_INJECT_STATUS_FAIL, error);
+                TabHelper.getInstance().markExecuteStatus("fail", error);
                 console.log("获取并上传当前profile失败: ", error);
             }
         }
