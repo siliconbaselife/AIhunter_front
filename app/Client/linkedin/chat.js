@@ -70,7 +70,7 @@ class Chat extends Base {
         let beforeNum = lis.length;
 
         await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), lis[lis.length - 1]);
-        await this.sleep(500);
+        await sleep(3 * 1000);
 
         let newlis = await this.page.$x(`//li[contains(@class, "ember-view")]`);
         let newNum = newlis.length;
@@ -97,6 +97,7 @@ class Chat extends Base {
             }
             await this.chatToPeople(messages, id);
 
+            await sleep(10 * 1000);
             await this.closeAllMsgDivs();
         }
     }
@@ -215,15 +216,18 @@ class Chat extends Base {
             if (nameSpan) {
                 msgName =  await this.page.evaluate(node => node.innerText, nameSpan);
             }
+            logger.info(`linkedin ${this.userInfo.name} msgName: ${msgName}`);
 
             if (msgName) {
-                nowName = msgName;
+                nowName = msgName.trim();
             }
 
+            logger.info(`linkedin ${this.userInfo.name} nowName: ${nowName}`);
             if (!nowName) {
                 logger.error(`linkedin ${this.userInfo.name} 萃取消息名字 出现异常 index = ${i}`);
             }
 
+            logger.info(`linkedin ${this.userInfo.name} friendName: ${friendName} equal: ${nowName == friendName}`);
             let userType;
             if (nowName == friendName) {
                 userType = "user"
@@ -236,6 +240,10 @@ class Chat extends Base {
                 continue;
             }
             let msgText = await this.page.evaluate(node => node.innerText, msgTxtSpan);
+            let noUse = await this.noUseMsg(msgText);
+            if (noUse)
+                continue;
+
             messages.push({
                 speaker: userType,
                 msg: msgText
@@ -243,6 +251,13 @@ class Chat extends Base {
         }
 
         return messages;
+    }
+
+    noUseMsg = async (msgText) => {
+        if (msgText == "This message has been deleted.")
+            return true;
+
+        return false;
     }
 
     fetchFriendName = async () => {
@@ -259,7 +274,7 @@ class Chat extends Base {
         await this.waitElement(`//div[contains(@id, "profile-content")]`, this.page);
 
         let url = await this.page.url();
-        let id = url;
+        let id = url.replace("https://www.", "");
 
         await this.page.goBack();
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main scaffold-layout__list-detail")]`, this.page);
