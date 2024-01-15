@@ -13,6 +13,8 @@ const contentLinkedin = require("./plugin/content/main/execution/linkedin");
 
 const backgroundMessageHelper = require("./plugin/helper/message-helper/background");
 
+const resume = require("./plugin/content/main/execution/linkedin/resume")
+
 // 测试代码
 const testMission = require("./plugin/content/main/execution/test");
 
@@ -48,6 +50,7 @@ class ExtensionHelper {
         ${contentLinkedinBase}
         ${contentLinkedinChat}
         ${contentLinkedinPerson}
+        ${resume}
         ${contentLinkedin}
         ${testMission}
     `;

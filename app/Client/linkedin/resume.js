@@ -93,24 +93,24 @@ class Resume extends Search {
             await this.page.evaluate((item)=>item.scrollIntoView({block: "center"}), peopleItem);
             logger.info(`linkedin ${this.userInfo.name} 还剩 ${task.helloSum} 个招呼`);
 
-            let id = await this.fetchPeopleId(peopleItem);
+            let {id, httpUrl} = await this.fetchPeopleId(peopleItem);
             logger.info(`linkedin ${this.userInfo.name} 当前处理people: ${id}`);
 
             try {
-                await this.dealOnePeople(id, task, peopleItem);
+                await this.dealOnePeople(id, httpUrl, task, peopleItem);
             } catch (e) {
                 logger.error(`linkedin ${this.userInfo.name} id: ${id} dealOnePeople error: `, e);
             } 
         }
     }
 
-    dealOnePeople = async(id, task, item) => {
+    dealOnePeople = async(id, httpUrl, task, item) => {
         let needDeal = await this.needDealPeople(item, id, task);
         if(needDeal)
             return;
 
         try {
-            await this.profile.deal(id, task); 
+            await this.profile.deal(id, httpUrl, task); 
         } catch (e) {
                 logger.error(`linkedin ${this.userInfo.name} id: ${id} 处理简历异常: `, e);
         }

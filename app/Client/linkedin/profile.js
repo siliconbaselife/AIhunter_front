@@ -3,26 +3,54 @@ const logger = require('../../Logger');
 const { sleep } = require('../../utils');
 const { BIZ_DOMAIN } = require("../../Config/index");
 const Request = require('../../utils/Request');
+const TabHelper = require("../../Extension/Tab");
 
 const ExecuteHelper = require("../../Extension/execute");
 
 class Profile extends Base {
     keywordDelay = 40;
     profile;
+    tab;
 
     constructor(options) {
         super(options)
     }
 
-    deal = async (id, task) => {
-        logger.info(`linkedin ${this.userInfo.name} id: ${id} 开始处理简历`);
-        let url = "https://www." + id;
-        await this.fetchResume(url);
+    deal = async (id, httpUrl, task) => {
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} 开始处理简历: ${httpUrl}`);
+        await this.dealBefore(httpUrl);
+        try {
+            let resume = await this.fetchResume();
+        } catch (e) {
+            logger.error(e);
+            await sleep(120 * 1000);
+        }
+        // let filterFlag = await this.filterItem(resume, task, id);
+        // if (!filterFlag)
+        //     await this.touchPeople(task, id, resume);
+
+        await sleep(30 * 1000);
+        await this.dealEnd();
     }
 
-    fetchResume = async (url) => {
-        const { status, result } = await ExecuteHelper.Linkedin.resume(url);
-        logger.info(`linkedin ${this.userInfo.name} url: ${url} status: ${status} result: ${result}`);
+    dealBefore = async (httpUrl) => {
+        const tab = await TabHelper.createATab({
+            url: httpUrl,
+            active: false,
+            selected: false,
+        })
+        this.tab = tab;
+        await sleep(3 * 1000);
+    }
+
+    dealEnd = async () => {
+        await TabHelper.closeTab(this.tab.id);
+    }
+
+    fetchResume = async (id) => {
+        let resume = await TabHelper.sendMessageToTab(this.tab.id, "fetchResume", "");
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} resume: ${JSON.stringify(resume)}`);
+        return resume;
     }
 
     filterItem = async (resume, task, id) => {

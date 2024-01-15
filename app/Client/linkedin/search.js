@@ -26,6 +26,7 @@ class Search extends Base {
 
     dealTaskBefore = async(task) => {
         await this.refresh();
+        await this.closeAllMsgDivs();
         await this.setSearchTxt(task);
         await this.setLocation(task);
         await this.setCurrentCompany(task);
@@ -266,10 +267,10 @@ class Search extends Base {
         let [hrefDiv] = await item.$x(`//div[contains(@class, "entity-result__universal-image")]//a`);
         let httpUrl = await this.page.evaluate(node => node.href, hrefDiv);
 
-        httpUrl = httpUrl.split("?")[0];
-        let id = httpUrl.replace("https://www.", "");
+        let httpUrltmp = httpUrl.split("?")[0];
+        let id = httpUrltmp.replace("https://www.", "");
 
-        return id;
+        return {id, httpUrl};
     }
 }
 

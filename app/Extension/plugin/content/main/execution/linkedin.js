@@ -14,11 +14,13 @@ class LinkedinExecutor {
     // linkedinEnterprise = LinkedinEnterprise.getInstance();
     linkedinPerson = LinkedinPerson.getInstance();
     linkedinChat = LinkedinChat.getInstance();
+    resume = Resume.getInstance();
 
     initialize() {
         this.linkedinPerson.initialize();
         // this.linkedinEnterprise.initialize();
         this.linkedinChat.initialize();
+        this.resume.initialize();
     }
 }
 

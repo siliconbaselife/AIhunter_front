@@ -50,10 +50,10 @@ class Client {
 
         let chat = new Chat(this.options);
         logger.info(`linkedin ${this.userInfo.name} 初步沟通`);
-        await chat.chatList();
+        // await chat.chatList();
 
         let resume = new Resume(this.options);
-        // await resume.run();
+        await resume.run();
         logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
 
         let recall = new Recall(this.options);
