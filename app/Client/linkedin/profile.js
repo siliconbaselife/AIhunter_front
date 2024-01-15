@@ -19,7 +19,7 @@ class Profile extends Base {
     deal = async (id, httpUrl, task) => {
         logger.info(`linkedin ${this.userInfo.name} id: ${id} 开始处理简历: ${httpUrl}`);
         await this.dealBefore(httpUrl);
-        let resume = await this.fetchResume();
+        let resume = await this.fetchResume(id);
         let filterFlag = await this.filterItem(resume, task, id);
         if (!filterFlag) {
             let touchFlag = await this.touchPeople(task, id, resume);

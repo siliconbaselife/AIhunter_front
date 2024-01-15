@@ -171,13 +171,17 @@ class Resume extends Search {
                 method: 'POST'
             });
   
-            logger.info(`linkedin ${this.userInfo.name} 数据库check ${id} ${status} ${data.touch} ` );
+            logger.info(`linkedin ${this.userInfo.name} 数据库check ${id} ${status} ${JSON.stringify(data)} ` );
   
-            if (status === 0 && data.touch) {
+            if (status === 0 && data.hasOwnProperty("candidate_in_db") && !data.candidate_in_db) {
+                return true;
+            }
+
+            if (status === 0 && data.hasOwnProperty("touch") && data.touch) {
                 return true;
             }
         } catch (e) {
-            Logger.error(`linkedin ${this.userInfo.name}  数据库check 错误: `, e);
+            logger.error(`linkedin ${this.userInfo.name}  数据库check 错误: `, e);
         }
 
         return false;

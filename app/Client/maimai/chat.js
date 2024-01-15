@@ -616,7 +616,7 @@ class Chat extends Base {
         }
 
         try {
-            const { status, data } = await Request({
+            let raw_data = await Request({
               url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
               data: {
                 accountID: this.userInfo.accountID,
@@ -626,6 +626,9 @@ class Chat extends Base {
               headers: {"Connection": "keep-alive"},
               method: 'POST'
             });
+
+            logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} raw_data: ${JSON.stringify(raw_data)}`);
+            const { status, data } = raw_data;
             logger.info(`脉脉 ${this.userInfo.name} name: ${peopleInfo.name} recall status: ${status} data: ${JSON.stringify(data)}`);
 
             if (status == 0) {
