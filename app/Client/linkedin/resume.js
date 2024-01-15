@@ -163,7 +163,7 @@ class Resume extends Search {
             const { status, data } = await Request({
                 url: `${BIZ_DOMAIN}/recruit/candidate/preFilter/v2`,
                 data: {
-                    accountID: this.userInfo.id,
+                    accountID: this.userInfo.accountID,
                     jobID: task.jobID,
                     candidate_id: id
                 },

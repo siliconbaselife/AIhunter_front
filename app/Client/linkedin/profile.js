@@ -21,20 +21,21 @@ class Profile extends Base {
         await this.dealBefore(httpUrl);
         let resume = await this.fetchResume();
         let filterFlag = await this.filterItem(resume, task, id);
+        filterFlag = false;
         if (!filterFlag) {
             let touchFlag = await this.touchPeople(task, id, resume);
             if (touchFlag) {
                 await this.reportPeople(id, task);
                 task.helloSum -= 1;
-                await sleep(60 * 1000);
             }
+            await sleep(60 * 1000);
         }
 
         await this.dealEnd();
     }
 
     reportPeople = async (task, id) => {
-        const { status, data } = await Request({
+        await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/report/v2`,
             data: {
               accountID: this.userInfo.accountID,
@@ -73,7 +74,7 @@ class Profile extends Base {
     filterItem = async (resume, task, id) => {
         try {
             const { status, data } = await Request({
-                url: `${BIZ_DOMAIN}/recruit/candidate/filter`,
+                url: `${BIZ_DOMAIN}/recruit/candidate/filter/v2`,
                 data: {
                     accountID: this.userInfo.accountID,
                     jobID: task.jobID,
@@ -97,7 +98,7 @@ class Profile extends Base {
 
     touchPeople = async (task, id) => {
         let r = await TabHelper.sendMessageToTab(this.tab.id, "linkedin_profile_chat", task.touch_msg);
-        logger.info(`linkedin ${this.userInfo.name} id: ${id} touch r: ${r}`);
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} touch: ${r}`);
         return r;
     }
 }
