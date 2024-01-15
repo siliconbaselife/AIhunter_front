@@ -27,7 +27,6 @@ class Profile extends Base {
                 await this.reportPeople(id, task);
                 task.helloSum -= 1;
             }
-            await sleep(60 * 1000);
         }
 
         await this.dealEnd();

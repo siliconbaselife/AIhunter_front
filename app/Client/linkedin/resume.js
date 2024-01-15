@@ -106,7 +106,7 @@ class Resume extends Search {
 
     dealOnePeople = async(id, httpUrl, task, item) => {
         let needDeal = await this.needDealPeople(item, id, task);
-        if(needDeal)
+        if(!needDeal)
             return;
 
         try {
