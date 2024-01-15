@@ -84,7 +84,7 @@ class ExtensionHelper {
                     "js": [
                         "${this.CONTENT_JS_NAME}"
                     ],
-                    "run_at": "document_idle"
+                    "run_at": "document_start"
                 },
                 {
                     "matches": [
@@ -93,7 +93,7 @@ class ExtensionHelper {
                     "js": [
                         "${this.CONTENT_JS_NAME}"
                     ],
-                    "run_at": "document_idle"
+                    "run_at": "document_start"
                 }
               ],
               "host_permissions": [
