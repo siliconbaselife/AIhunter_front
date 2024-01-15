@@ -21,7 +21,6 @@ class Profile extends Base {
         await this.dealBefore(httpUrl);
         let resume = await this.fetchResume();
         let filterFlag = await this.filterItem(resume, task, id);
-        filterFlag = false;
         if (!filterFlag) {
             let touchFlag = await this.touchPeople(task, id, resume);
             if (touchFlag) {
