@@ -30,6 +30,7 @@ class Resume extends Search {
 
             if (task.helloSum <= 0) {
                 logger.info(`linkedin ${this.userInfo.name} 任务 ${parseInt(index) + 1} 已经完成`);
+                continue;
             }
 
             logger.info(`linkedin ${this.userInfo.name} 开始第 ${parseInt(index) + 1} 个任务`);
@@ -59,7 +60,7 @@ class Resume extends Search {
                 break;
             }
 
-            logger.info(`linkedin ${this.userInfo.name} 当前任务处理到第 ${page} 页`);
+            logger.info(`linkedin ${this.userInfo.name} 当前任务处理到第 ${page} 页 还剩 ${task.helloSum} 个打招呼`);
             await this.dealPeople(task);
     
             await this.closeAllMsgDivs();

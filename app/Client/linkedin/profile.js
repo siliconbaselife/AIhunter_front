@@ -24,7 +24,7 @@ class Profile extends Base {
         if (!filterFlag) {
             let touchFlag = await this.touchPeople(task, id, resume);
             if (touchFlag) {
-                await this.reportPeople(id, task);
+                await this.reportPeople(task, id);
                 task.helloSum -= 1;
             }
         }
@@ -96,7 +96,7 @@ class Profile extends Base {
 
     touchPeople = async (task, id) => {
         let r = await TabHelper.sendMessageToTab(this.tab.id, "linkedin_profile_chat", task.touch_msg);
-        logger.info(`linkedin ${this.userInfo.name} id: ${id} touch: ${r}`);
+        logger.info(`linkedin ${this.userInfo.name} id: ${id} 打招呼是否成功: ${r}`);
         return r;
     }
 }

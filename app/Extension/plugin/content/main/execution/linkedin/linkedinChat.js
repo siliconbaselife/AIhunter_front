@@ -73,12 +73,12 @@ class LinkedinChat extends Base {
             const sendBtnEl = await waitElement(this.DIALOG_SEND_BTN_SELECTOR, 5);
             await sendBtnEl.click();
             // 标记已成功
-            TabHelper.getInstance().markExecuteStatus("success");
+            return true;
         } catch (error) {
             // 标记失败，带去错误信息
             console.log("给当前人员打招呼失败", error);
-            TabHelper.getInstance().markExecuteStatus("fail", error);
             // 叫background上传记录 // 暂时不用报告失败情况
+            return false;
         }
     }
 
@@ -87,11 +87,11 @@ class LinkedinChat extends Base {
      * @returns {Promise<HTMLButtonElement | HTMLDivElement>} Connect按钮元素
      */
     async findConnectBtnEl() {
-        let el = await waitElement(this.OUTSIDE_CONNECT_BTN_SELECTOR, 4);
+        let el = await waitElement(this.OUTSIDE_CONNECT_BTN_SELECTOR, 3);
         console.log("el:", el);
         if (!el) {
             console.log("找不到外层Connect按钮");
-            let moreBtnEl = await waitElement(this.MORE_BTN_SELECTOR, 10);
+            let moreBtnEl = await waitElement(this.MORE_BTN_SELECTOR, 3);
             if (!moreBtnEl) {
                 return Promise.reject("找不到更多按钮");
             } else {
@@ -99,7 +99,7 @@ class LinkedinChat extends Base {
             }
         }
         if (!el) {
-            await waitElement(".artdeco-dropdown__content--is-open", 10);
+            await waitElement(".artdeco-dropdown__content--is-open", 3);
             el = await document.querySelector(this.INSIDE_CONNECT_BTN_SELECTOR);
         }
         return el;
