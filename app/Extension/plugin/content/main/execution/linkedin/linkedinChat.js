@@ -42,6 +42,7 @@ class LinkedinChat extends Base {
         console.log(type, chatTemplate);
         this.chatTemplate = chatTemplate;
         if (type === this.LINKEDIN_PROFILE_CHAT_TYPE) { // 是自动打招呼类型
+            console.log("chatTemplate: ", chatTemplate);
             try {
                 // 先寻找一下候选人名称
                 const candidateNameH1 = await waitElement(this.CANDIDATE_NAME_EL_SELECTOR, 10);
