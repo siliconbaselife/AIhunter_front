@@ -26,7 +26,7 @@ class Base extends Common {
 
         while(msgDivs.length > 0) {
             for (let msgDiv of msgDivs) {
-                let closeBtn = msgDiv.$x(`//button[contains(@class, "msg-overlay-bubble-header__control") and not(contains(@class, "msg-overlay-conversation-bubble__expand-btn"))]`);
+                let [closeBtn] = msgDiv.$x(`//button[contains(@class, "msg-overlay-bubble-header__control") and not(contains(@class, "msg-overlay-conversation-bubble__expand-btn"))]`);
                 await closeBtn.click();
                 await sleep(200);
             }
