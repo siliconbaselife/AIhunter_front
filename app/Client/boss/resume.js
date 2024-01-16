@@ -53,7 +53,7 @@ class Resume extends Base {
         await this.dealTaskBefore();
         try {
             await this.setFilter(task);
-            // await this.noopTask(task);
+            await this.noopTask(task);
         } catch (e) {
             logger.error(`boss ${this.userInfo.name} 打招呼异常: `, e);
         }
@@ -216,13 +216,13 @@ class Resume extends Base {
     }
 
     setIntention = async(task) => {
-        if (!task.intentions || task.intentions.length == 0)
+        if (!task.filter.status || task.filter.status.length == 0)
             return 
 
         let [intentionSpan] = await this.frame.$x(`//div[contains(@class, "intention")]`);
-        await this.page.evaluate((item)=>item.scrollIntoView(), intentionSpan);
-        for (let intention of task.intentions) {
-            let [intentionBtn] = await experienceSpan.$x(`//span[text() = "${intention}"] | //div[text() = "${intention}"]`);
+        await this.frame.evaluate((item)=>item.scrollIntoView(), intentionSpan);
+        for (let intention of task.filter.status) {
+            let [intentionBtn] = await intentionSpan.$x(`//span[text() = "${intention}"] | //div[text() = "${intention}"]`);
             await intentionBtn.click();
             await sleep(300);
         }
@@ -233,16 +233,14 @@ class Resume extends Base {
     }
 
     setSalary = async(task) => {
-        if (!task.salarys || task.salarys.length == 0)
+        if (!task.filter.pay || task.filter.pay.length == 0)
             return 
 
         let [salarySpan] = await this.frame.$x(`//div[contains(@class, "salary")]`);
-        await this.page.evaluate((item)=>item.scrollIntoView(), salarySpan);
-        for (let salary of task.salarys) {
-            let [salaryBtn] = await experienceSpan.$x(`//span[text() = "${salary}"] | //div[text() = "${salary}"]`);
-            await salaryBtn.click();
-            await sleep(300);
-        }
+        await this.frame.evaluate((item)=>item.scrollIntoView(), salarySpan);
+        let [salaryBtn] = await salarySpan.$x(`//span[text() = "${task.filter.pay}"] | //div[text() = "${task.filter.pay}"]`);
+        await salaryBtn.click();
+        await sleep(300);
 
         await sleep(1000);
 
@@ -250,13 +248,13 @@ class Resume extends Base {
     }
 
     setEducation = async(task) => {
-        if (!task.educations || task.educations.length == 0)
+        if (!task.filter.education || task.filter.education.length == 0)
             return 
 
         let [educationSpan] = await this.frame.$x(`//div[contains(@class, "degree")]`);
-        await this.page.evaluate((item)=>item.scrollIntoView(), educationSpan);
-        for (let education of task.educations) {
-            let [educationBtn] = await experienceSpan.$x(`//span[text() = "${education}"] | //div[text() = "${education}"]`);
+        await this.frame.evaluate((item)=>item.scrollIntoView(), educationSpan);
+        for (let education of task.filter.education) {
+            let [educationBtn] = await educationSpan.$x(`//span[text() = "${education}"] | //div[text() = "${education}"]`);
             await educationBtn.click();
             await sleep(300);
         }
@@ -267,12 +265,14 @@ class Resume extends Base {
     }
 
     setExperience = async(task) => {
-        if(!task.work_times || task.work_times.length == 0)
+        if(!task.filter.work_time || task.filter.work_time.length == 0) {
+            logger.info(`boss ${this.userInfo.name} no work_time`);
             return;
+        }
 
         let [experienceSpan] = await this.frame.$x(`//div[contains(@class, "experience")]`);
-        await this.page.evaluate((item)=>item.scrollIntoView(), experienceSpan);
-        for (let work_time of task.work_times) {
+        await this.frame.evaluate((item)=>item.scrollIntoView(), experienceSpan);
+        for (let work_time of task.filter.work_time) {
             let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
             await workTimeBtn.click();
             await sleep(300);
@@ -328,7 +328,6 @@ class Resume extends Base {
         }
 
         await this.page.keyboard.type(task.filter.boss_job_name, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
-        await sleep(5 * 1000);
         let li = await this.waitElement(`//li[contains(@class, "job-item")]`, this.frame);
         if (!li) {
             logger.error(`boss ${this.userInfo.name} 任务名获取异常`);

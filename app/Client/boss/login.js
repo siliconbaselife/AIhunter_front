@@ -14,7 +14,6 @@ class Login extends Base {
 
                 if ("/wapi/zpuser/wap/getUserInfo.json" in data.zpData) {
                     let userData = data.zpData["/wapi/zpuser/wap/getUserInfo.json"];
-                    console.log("userData: ", JSON.stringify(userData));
                     let id = userData.zpData.userId;
                     let name = userData.zpData.name;
                     logger.info(`boss 获取到 id: ${id} name: ${name}`);
