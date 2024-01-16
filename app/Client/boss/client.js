@@ -48,11 +48,22 @@ class Client {
         await sleep(2 * 1000);
 
         let resume = new Resume(this.options);
-        await resume.run();
-        logger.info(`boss ${this.userInfo.name} 打招呼任务执行完成`);
-
         let chat = new Chat(this.options);
-        await chat.run();
+        
+
+        let num = 0;
+        while(true) {
+            // await chat.run();
+
+            if (num % 50 == 0) {
+                await resume.run();
+                logger.info(`boss ${this.userInfo.name} 打招呼任务执行完成`);
+            }
+
+            num += 1;
+            await sleep(10 * 1000);
+        }
+
         logger.info(`boss ${this.userInfo.name} 要退出了`);
     }
 }

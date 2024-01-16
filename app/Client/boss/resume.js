@@ -14,17 +14,32 @@ class Resume extends Base {
         super(options)
     }
 
+    queryTasks = async() => {
+        const {status, data, msg} = await Request({
+            url: `${BIZ_DOMAIN}/recruit/account/task/fetch/v2`,
+            data: {
+                accountID: this.userInfo.accountID,
+            },
+            method: 'POST'
+          });
+        logger.info(`linkedin ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
+
+        return data["task"];
+    }
+
     run = async() => { 
         logger.info(`boss ${this.userInfo.name} 打招呼，开始执行打招呼任务`);
         let tasks = await this.queryTasks();
         logger.info(`boss ${this.userInfo.name} 获取到 ${tasks.length} 个打招呼任务, 任务如下: ${JSON.stringify(tasks)}`);
         for (let index in tasks) {
+            let task = tasks[index];
             this.peopleCache = {};
             if (task.helloSum <= 0) {
                 logger.info(`boss ${this.userInfo.name} 任务 ${parseInt(index) + 1} 已经完成`);
             }
 
             logger.info(`boss ${this.userInfo.name} 开始第 ${parseInt(index) + 1} 个任务`);
+            logger.info(`boss ${this.userInfo.name} 任务如下: ${JSON.stringify(task)}`);
 
             try {
                 await this.dealTask(task);
@@ -36,16 +51,20 @@ class Resume extends Base {
 
     dealTask = async(task) => {
         await this.dealTaskBefore();
-        await this.setFilter(task);
-        await this.noopTask(task);
-        await this.refresh();
+        try {
+            await this.setFilter(task);
+            // await this.noopTask(task);
+        } catch (e) {
+            logger.error(`boss ${this.userInfo.name} 打招呼异常: `, e);
+        }
+        await this.closeSearch();
     }
 
     noopTask = async(task) => {
         let index = 0;
         while(global.running) {
             logger.info(`boss ${this.userInfo.name} 打招呼处理第 ${parseInt(index) + 1} 个item`);
-            let geekItems = await this.frame.$x(`//li[contain(@class, "card-item")]`);
+            let geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
 
             if (index >= geekItems.length || task.helloSum <= 0) {
                 logger.info(`boss ${this.userInfo.name} 本次搜索操作完成`);
@@ -64,12 +83,13 @@ class Resume extends Base {
 
             await this.setOnlineInfo(peopleInfo, geekItem);
 
+            logger.info(`boss ${this.userInfo.name} 获取到简历: ${JSON.stringify(peopleInfo)}`);
             let f = await this.filterPeople(peopleInfo, task);
             if (f)
                 continue;
 
-            await this.touchPeople(item, task);
-            await this.reportTouch(task, peopleInfo.geekCard.geekId);
+            // await this.touchPeople(item, task);
+            // await this.reportTouch(task, peopleInfo.geekCard.geekId);
         }
     }
 
@@ -120,13 +140,13 @@ class Resume extends Base {
                 method: 'POST'
             });
   
-            logger.info(`脉脉 ${this.userInfo.name} 筛选结果 ${status} ${data.touch} ` );
+            logger.info(`boss ${this.userInfo.name} 筛选结果 ${status} ${data.touch} ` );
   
             if (status == 0 && data.touch) {
                 return false;
             }
         } catch (e) {
-            logger.error(`脉脉 ${this.userInfo.name} 筛选错误为##`, e);
+            logger.error(`boss ${this.userInfo.name} 筛选错误为##`, e);
         }
 
         return true;
@@ -142,10 +162,10 @@ class Resume extends Base {
     }
 
     fetchItemIdAndName = async(geekItem) => {
-        let cardInner = await this.frame.$x(`//div[contains(@class, "card-inner")]`);
+        let [cardInner] = await geekItem.$x(`//div[contains(@class, "card-inner")]`);
         let geekId = await this.frame.evaluate(node => node.dataset.geek, cardInner);
 
-        let nameSpan = await this.frame.$x(`//span[contains(@class, "name")]`);
+        let [nameSpan] = await geekItem.$x(`//span[contains(@class, "name")]`);
         let name = await this.frame.evaluate(node => node.innerText, nameSpan);
         return {geekId, name};
     }
@@ -206,6 +226,10 @@ class Resume extends Base {
             await intentionBtn.click();
             await sleep(300);
         }
+
+        await sleep(1000);
+
+        logger.info(`boss ${this.userInfo.name} setIntention end`);
     }
 
     setSalary = async(task) => {
@@ -219,6 +243,10 @@ class Resume extends Base {
             await salaryBtn.click();
             await sleep(300);
         }
+
+        await sleep(1000);
+
+        logger.info(`boss ${this.userInfo.name} setSalary end`);
     }
 
     setEducation = async(task) => {
@@ -232,6 +260,10 @@ class Resume extends Base {
             await educationBtn.click();
             await sleep(300);
         }
+
+        await sleep(1000);
+
+        logger.info(`boss ${this.userInfo.name} setEducation end`);
     }
 
     setExperience = async(task) => {
@@ -245,6 +277,9 @@ class Resume extends Base {
             await workTimeBtn.click();
             await sleep(300);
         }
+        await sleep(1000);
+
+        logger.info(`boss ${this.userInfo.name} setExperience end`);
     }
 
     setFilterSureBtn = async() => {
@@ -254,17 +289,24 @@ class Resume extends Base {
     }
 
     setFilterSpan = async() => {
-        let filterBtn = await this.frame.$x(`//div[contains(@class, "filter-label")]`);
+        let [filterBtn] = await this.frame.$x(`//div[contains(@class, "filter-label")]`);
         await filterBtn.click();
+        await sleep(1000);
         await this.waitElement(`//div[contains(@class, "filter-panel")]`, this.frame);
+
+        logger.info(`boss ${this.userInfo.name} setFilterSpan end`);
+    }
+
+    closeSearch = async() => {
+        let [jobManageBtn] = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
+        await jobManageBtn.click();
+        await sleep(500);
     }
 
     refresh = async() => {
-        let jobManageBtn = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
-        await jobManageBtn.click();
-        await sleep(500);
+        await this.closeSearch();
 
-        let recommendBtn = await this.page.$x(`//a[contains(@ka, "menu-geek-recommend")]`);
+        let [recommendBtn] = await this.page.$x(`//a[contains(@ka, "menu-geek-recommend")]`);
         await recommendBtn.click();
         await sleep(500);
 
@@ -272,11 +314,11 @@ class Resume extends Base {
         this.frame = await recommendFrame.contentFrame();
     }
 
-    setSearchTxt = async() => {
+    setSearchTxt = async(task) => {
         let dropmenu = await this.waitElement(`//div[contains(@class, "ui-dropmenu-label")]`, this.frame);
         await dropmenu.click();
 
-        let input = await this.waitElement(`//input[contains(@class, "chat-job-search") and contains(@placeholder, "请输入职位名称")]`);
+        let input = await this.waitElement(`//input[contains(@class, "chat-job-search") and contains(@placeholder, "请输入职位名称")]`, this.frame);
         await input.click();
 
         let [clearBtn] = await this.frame.$x(`//div[contains(@class, "top-chat-search")]/i[contains(@class, "iboss-guanbi")]`);
@@ -285,15 +327,16 @@ class Resume extends Base {
             await sleep(500);
         }
 
-        await this.page.keyboard.type(task.filter.search_text, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
-        await sleep(500);
-        let li = await this.waitElement(`//li[contains(@class, "job-item")]`);
+        await this.page.keyboard.type(task.filter.boss_job_name, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
+        await sleep(5 * 1000);
+        let li = await this.waitElement(`//li[contains(@class, "job-item")]`, this.frame);
         if (!li) {
             logger.error(`boss ${this.userInfo.name} 任务名获取异常`);
             throw new Error("任务名获取异常");
         }
         await li.click();
         await sleep(500);
+        logger.info(`boss ${this.userInfo.name} setSearchTxt end`);
     }
 }
 
