@@ -1,4 +1,4 @@
-const Base = require('./Base');
+const Base = require('./base');
 const { sleep } = require('../../utils');
 const logger = require('../../Logger');
 const AccountManager = require("../../Account/index");

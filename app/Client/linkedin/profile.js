@@ -1,4 +1,4 @@
-const Base = require('./Base');
+const Base = require('./base');
 const logger = require('../../Logger');
 const { sleep } = require('../../utils');
 const { BIZ_DOMAIN } = require("../../Config/index");
