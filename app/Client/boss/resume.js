@@ -9,6 +9,7 @@ class Resume extends Base {
     peopleCache;
     getList;
     frame;
+    creditsFinished = false;
 
     constructor(options) {
         super(options)
@@ -22,7 +23,7 @@ class Resume extends Base {
             },
             method: 'POST'
           });
-        logger.info(`linkedin ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
+        logger.info(`boss ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
 
         return data["task"];
     }
@@ -31,7 +32,15 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} 打招呼，开始执行打招呼任务`);
         let tasks = await this.queryTasks();
         logger.info(`boss ${this.userInfo.name} 获取到 ${tasks.length} 个打招呼任务, 任务如下: ${JSON.stringify(tasks)}`);
+        if (this.creditsFinished) {
+            logger.info(`boss ${this.userInfo.name} 点数已经用完`);
+            return;
+        }
+
         for (let index in tasks) {
+            if (this.creditsFinished)
+                break;
+
             let task = tasks[index];
             this.peopleCache = {};
             if (task.helloSum <= 0) {
@@ -63,6 +72,9 @@ class Resume extends Base {
     noopTask = async(task) => {
         let index = 0;
         while(global.running) {
+            if (this.creditsFinished)
+                break;
+
             logger.info(`boss ${this.userInfo.name} 打招呼处理第 ${parseInt(index) + 1} 个item`);
             await this.scrollToPosition(index);
             await sleep(1000);
@@ -84,9 +96,18 @@ class Resume extends Base {
 
             if (index > 150)
                 break;
-            
+
             let geekItem = geekItems[index];
             index += 1;
+
+            let is_candidate = await this.isCandidate(geekItem);
+            if (!is_candidate) {
+                logger.info(`boss ${this.userInfo.name} 发现一个不是candidate的item`);
+                continue;
+            }
+
+            await this.frame.evaluate((item) => item.scrollIntoView({ block: "center" }), geekItem);
+
             let {geekId, name} = await this.fetchItemIdAndName(geekItem);
             logger.info(`boss ${this.userInfo.name} 当前处理候选人 id: ${geekId} name: ${name}`);
 
@@ -101,9 +122,29 @@ class Resume extends Base {
             if (f)
                 continue;
 
-            await this.touchPeople(item);
-            await this.reportTouch(task, peopleInfo.geekCard.geekId);
+            await this.touchPeople(geekItem);
+            f = await this.isCreditsOver();
+            
+            if (!f)
+                await this.reportTouch(task, peopleInfo.geekCard.geekId);
         }
+    }
+
+    isCreditsOver = async() => {
+        let [dialog] = await this.page.$x(`//div[contains(@class, "boss-dialog__body")]`);
+        if (!dialog)
+            return false;
+        logger.info(`boss ${this.userInfo.name} 打招呼点数已经用完`);
+        let [closeBtn] = await this.page.$x(`//div[contains(@class, "boss-popup__close")]`);
+        await closeBtn.click();
+        this.creditsFinished = true;
+
+        return true;
+    }
+
+    isCandidate = async(geekItem) => {
+        let [candidateCard] = await geekItem.$x(`//div[contains(@class, "candidate-card-wrap")]`);
+        return !!candidateCard;
     }
 
     setOnlineInfo = async(peopleInfo, geekItem) => {
@@ -135,7 +176,7 @@ class Resume extends Base {
     }
 
     touchPeople = async(item) => {
-        let [sayHiBtn] = await item.$x(`//button[@class, "btn-greet"]`);
+        let [sayHiBtn] = await item.$x(`//button[contains(@class, "btn-greet")]`);
         await sayHiBtn.click();
         await sleep(300);
     }
