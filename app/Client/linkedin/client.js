@@ -1,7 +1,7 @@
-const Resume = require('./Resume');
+const Resume = require('./resume');
 const Login = require('./login');
 const { sleep } = require('../../utils');
-const Chat = require('./Chat');
+const Chat = require('./chat');
 const Recall = require('./recall');
 const logger = require('../../Logger');
 const Common = require('../common');
@@ -50,7 +50,7 @@ class Client {
 
         let chat = new Chat(this.options);
         logger.info(`linkedin ${this.userInfo.name} 初步沟通`);
-        // await chat.chatList();
+        await chat.chatList();
 
         let resume = new Resume(this.options);
         await resume.run();
@@ -60,7 +60,7 @@ class Client {
         await recall.run();
         logger.info(`linkedin ${this.userInfo.name} 二次召回任务执行完成`);
 
-        // await chat.run();
+        await chat.run();
         logger.info(`linkedin ${this.userInfo.name} 要退出了`);
     }
 }

@@ -19,8 +19,10 @@ class Client {
         this.options = this.options || {};
         this.options.page = this.page;
         this.login = new Login(this.options);
+
         await this.login.dologin(account_id);
         this.userInfo = this.login.userInfo;
+        
         this.options.userInfo = this.userInfo;
         return this.userInfo;
     }

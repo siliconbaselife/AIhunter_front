@@ -13,7 +13,8 @@ class Login extends Base {
                     return;
 
                 if ("/wapi/zpuser/wap/getUserInfo.json" in data.zpData) {
-                    let userData = data["/wapi/zpuser/wap/getUserInfo.json"];
+                    let userData = data.zpData["/wapi/zpuser/wap/getUserInfo.json"];
+                    console.log("userData: ", JSON.stringify(userData));
                     let id = userData.zpData.userId;
                     let name = userData.zpData.name;
                     logger.info(`boss 获取到 id: ${id} name: ${name}`);
@@ -52,12 +53,12 @@ class Login extends Base {
         if (accountID)
             await this.injectCookies(accountID, this.loginUrl);
 
-        while (!this.maimaiUserInfo) {
+        while (!this.userInfo) {
             await sleep(2000);
             logger.info("boss等待登陆");
         }
 
-        let generateAccountID = await this.queryAccountId("boss", this.userInfo.id);
+        let generateAccountID = await this.queryAccountId("Boss", this.userInfo.id);
         if (accountID && accountID != generateAccountID)
             throw new Error(`boss 登陆异常 accountID不匹配 accountID: ${accountID} generateAccountID: ${generateAccountID}`);
 
@@ -67,7 +68,7 @@ class Login extends Base {
 
         this.userInfo.accountID = accountID;
 
-        await AccountManager.setAccountInfo(this.userInfo.accountID, this.user, this.page);
+        await AccountManager.setAccountInfo(this.userInfo.accountID, this.userInfo, this.page);
         logger.info(`boss登陆成功 accountID: ${this.userInfo.accountID} id: ${this.userInfo.id} name: ${this.userInfo.name}`);
     }
 }

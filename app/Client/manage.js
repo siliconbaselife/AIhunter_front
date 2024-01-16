@@ -15,8 +15,8 @@ class Manage {
             return client;
         }
 
-        if (platformType == "boss") {
-            let Client = require(`./${platformType}/client`);
+        if (platformType == "Boss") {
+            let Client = require(`./boss/client`);
             let client = new Client();
             return client;
         }
