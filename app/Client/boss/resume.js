@@ -64,14 +64,27 @@ class Resume extends Base {
         let index = 0;
         while(global.running) {
             logger.info(`boss ${this.userInfo.name} 打招呼处理第 ${parseInt(index) + 1} 个item`);
+            await this.scrollToPosition(index);
+            await sleep(1000);
             let geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
 
-            if (index >= geekItems.length || task.helloSum <= 0) {
-                logger.info(`boss ${this.userInfo.name} 本次搜索操作完成`);
-                break;
+            if (task.helloSum <= 0) {
+                logger.info(`boss ${this.userInfo.name} 打招呼次数用完了`);
             }
 
-            await this.scrollToPosition(index);
+            if (index >= geekItems.length) {
+                logger.info(`boss ${this.userInfo.name} 搜索不到新的候选人`);
+                await this.scrollToPosition(index + 10);
+                await sleep(3000);
+                geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
+
+                if (index >= geekItems.length)
+                    break;
+            }
+
+            if (index > 150)
+                break;
+            
             let geekItem = geekItems[index];
             index += 1;
             let {geekId, name} = await this.fetchItemIdAndName(geekItem);
@@ -88,8 +101,8 @@ class Resume extends Base {
             if (f)
                 continue;
 
-            // await this.touchPeople(item, task);
-            // await this.reportTouch(task, peopleInfo.geekCard.geekId);
+            await this.touchPeople(item);
+            await this.reportTouch(task, peopleInfo.geekCard.geekId);
         }
     }
 
@@ -103,7 +116,7 @@ class Resume extends Base {
     }
 
     reportTouch = async(task, id) => {
-        const { status, data } = await Request({
+        await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/report/v2`,
             data: {
               accountID: this.userInfo.accountID,
@@ -121,7 +134,7 @@ class Resume extends Base {
         task.helloSum -= 1;
     }
 
-    touchPeople = async(item, task) => {
+    touchPeople = async(item) => {
         let [sayHiBtn] = await item.$x(`//button[@class, "btn-greet"]`);
         await sayHiBtn.click();
         await sleep(300);
