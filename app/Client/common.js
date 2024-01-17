@@ -264,6 +264,13 @@ class Common {
     }
   }
 
+  /**
+   * 寻找一个元素
+   * @param {string} xpath xpath语句
+   * @param {puppeteer.Page | puppeteer.ElementHandle} document 页面实例或节点handle
+   * @param {?number} num 最大寻找次数-间隔500毫秒
+   * @returns {Promise<puppeteer.ElementHandle<Node>>}
+   */
   waitElement = async (xpath, document, num = 10) => {
     let [element] = await document.$x(xpath);
     let time = 0;
@@ -279,6 +286,13 @@ class Common {
     return element;
   }
 
+  /**
+   * 寻找返回多个元素
+   * @param {string} xpath xpath语句
+   * @param {puppeteer.Page | puppeteer.ElementHandle} document 页面实例或节点handle
+   * @param {?number} num 最大寻找次数-间隔500毫秒
+   * @returns {Promise<(puppeteer.ElementHandle<Node>)[]>}
+   */
   waitElements = async (xpath, document, num = 10) => {
     let elements = await document.$x(xpath);
     let time = 0;
