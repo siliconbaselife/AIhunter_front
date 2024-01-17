@@ -213,6 +213,7 @@ class Chat extends Base {
         await sleep(2 * 1000);
 
         let messages = await this.fetchPeopleMsgsByCache(id);
+        logger.info(`boss ${this.userInfo.name} id: ${id} http请求处理后的消息: ${JSON.stringify(messages)}`);
         if (!messages) {
             logger.info(`boss ${this.userInfo.name} 当前处理 ${name} 异常,获取不到消息`);
             return;
@@ -222,7 +223,7 @@ class Chat extends Base {
     }
 
     chatOnePeopleNoop = async (id, name, messages) => {
-        while(!messages) {
+        while(messages && messages.length > 0) {
             await this.dealSystemView(id, name);
             await this.chatWithRobot(id, name, messages);
 
@@ -237,32 +238,40 @@ class Chat extends Base {
         for (let msgItem of msgItems) {
             let {speaker, txt} = await this.fetchItemMsg(msgItem, name);
             if (!txt || txt.length == 0)
-                break;
+                continue;
 
             messages.push({
                 speaker: speaker,
                 msg: txt
             });
         }
+        logger.info(`boss ${this.userInfo.name} name: ${name} html处理后的消息: ${JSON.stringify(messages)}`);
 
         return messages;
     }
 
     fetchItemMsg = async (msgItem, name) => {
-        let [txtSpan] = await msgItem.$x(`//div[contains(@class, "text")]`);
+        let [txtSpan] = await msgItem.$x(`//div[contains(@class, "text")]/span`);
+        if (!txtSpan)
+            return {speaker: "system", txt: ""};
+
         let txt = await this.page.evaluate(node => node.innerText, txtSpan);
 
         let speaker = "system";
         let [friendSpan] = await msgItem.$x(`/div[contains(@class, "item-friend")]`);
+        console.log("friendSpan: ", friendSpan);
         if (friendSpan)
             speaker = "user";
         let [robotSpan] = await msgItem.$x(`/div[contains(@class, "item-myself")]`);
+        console.log("robotSpan: ", robotSpan);
         if (robotSpan)
             speaker = "robot";
 
         let systemTxt= await this.isSystemSpeakerTxt(txt, name);
+        console.log("systemTxt: ", systemTxt);
         if (systemTxt)
             speaker = "system";
+        console.log(`speaker: ${speaker} txt: ${txt}`);
         return {speaker, txt};
     }
 
