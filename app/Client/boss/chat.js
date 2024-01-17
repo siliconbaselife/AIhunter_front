@@ -31,15 +31,15 @@ class Chat extends Base {
     }
 
     setChatPage = async() => {
-        let jobManageBtn = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
-        await jobManageBtn.click();
-        await sleep(500);
+        // let [jobManageBtn] = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
+        // await jobManageBtn.click();
+        // await sleep(500);
 
-        let chatBtn = await this.page.$x(`//a[contains(@ka, "menu-im")]`);
+        let [chatBtn] = await this.page.$x(`//a[contains(@ka, "menu-im")]`);
         await chatBtn.click();
         await sleep(500);
 
-        await this.waitElement(`//div[contains(@class, "chat-box")]`);
+        await this.waitElement(`//div[contains(@class, "chat-box")]`, this.page);
     }
 
     setMsgReceive = async() => {
@@ -47,10 +47,14 @@ class Chat extends Base {
             const url = response.url();
             if (url.startsWith('https://www.zhipin.com/wapi/zpchat/boss/historyMsg')) {
 
-              const itemRes = await response.json();
+              try {
+                const itemRes = await response.json();
     
-              let { zpData: { hasMore, messages } = {} } = itemRes || {};
-              await this.dealPeopleMessage(messages);
+                let messages = itemRes.zpData.messages;
+                await this.dealPeopleMessage(messages);
+              } catch (e) {
+                logger.error(`boss ${this.userInfo.name} 获取消息error: `, e);
+              }
             }
         }
 
@@ -58,32 +62,32 @@ class Chat extends Base {
     }
 
     dealPeopleMessage = async(messages) => {
-        let uid = messages.from.uid;
-        let name = messages.from.name;
-        logger.info(`脉脉 ${this.userInfo.name} 获取到 ${name} 的消息`);
+        let uid = messages[0].from.uid;
+        let name = messages[0].from.name;
+        logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的消息`);
         this.messageCache[uid] = messages;
     }
 
     noop = async() => {
         this.recallIndex = 0;
-        while(global.running) {
+
+        let unreadNum = await this.hasUnread();
+        while (unreadNum > 0) {
             try {
                 await this.doUnread();
             } catch (e) {
                 logger.error(`boss ${this.userInfo.name} 处理未读消息异常: `, e);
                 await sleep(5 * 1000);
             }
+            await sleep(5 * 1000);
+            unreadNum = await this.hasUnread();
+        }
 
-            let unreadNum = await this.hasUnread();
-            if (unreadNum > 0)
-                continue;
-
-            try {
-                await this.doRecall();
-            } catch (e) {
-                logger.error(`boss ${this.userInfo.name} 处理召回异常: `, e);
-                await sleep(5 * 1000);
-            }
+        try {
+            await this.doRecall();
+        } catch (e) {
+            logger.error(`boss ${this.userInfo.name} 处理召回异常: `, e);
+            await sleep(5 * 1000);
         }
     }
 
@@ -91,7 +95,7 @@ class Chat extends Base {
         await this.putAllMessageBtn();
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
-        await this.frame.evaluate((item)=>item.scrollIntoView(), item);
+        await this.page.evaluate((item)=>item.scrollIntoView(), item);
         let {id, name} = await this.fetchItemNameAndId();
 
         let recallInfo = await this.needRecall(id);
@@ -113,12 +117,12 @@ class Chat extends Base {
     }
 
     fetchRecallItem = async() => {
-        let items = this.page.$x(`//div[contains(@class, "listitem")]`);
+        let items = await this.page.$x(`//div[contains(@class, "listitem")]`);
         return items[this.recallIndex];
     }
 
     dealRecallEnd = async() => {
-        let items = this.page.$x(`//div[contains(@class, "listitem")]`);
+        let items = await this.page.$x(`//div[contains(@class, "listitem")]`);
         if (this.recallIndex >= items.length) {
             this.recallIndex = 0;
         }
@@ -183,10 +187,11 @@ class Chat extends Base {
     }
 
     dealUnreadMsg = async () => {
-        let items = this.page.$x(`//div[contains(@class, "role")]`);
+        let items = await this.page.$x(`//div[contains(@role, "listitem")]`);
+        logger.info(`boss ${this.userInfo.name} 获取到 ${items.length} 个未读item`);
         let index = 0;
         while (index < items.length) {
-            items = this.page.$x(`//div[contains(@class, "role")]`);
+            items = await this.page.$x(`//div[contains(@role, "listitem")]`);
             let item = items[index];
             await this.scrollChatToPosition(index);
 
@@ -245,7 +250,7 @@ class Chat extends Base {
 
     fetchItemMsg = async (msgItem, name) => {
         let [txtSpan] = await msgItem.$x(`//div[contains(@class, "text")]`);
-        let txt = await this.frame.evaluate(node => node.innerText, txtSpan);
+        let txt = await this.page.evaluate(node => node.innerText, txtSpan);
 
         let speaker = "system";
         let [friendSpan] = await msgItem.$x(`/div[contains(@class, "item-friend")]`);
@@ -265,10 +270,14 @@ class Chat extends Base {
         let messagesRaw = this.messageCache[id];
         if (!messagesRaw)
             return;
+        delete this.messageCache[id];
 
         let messages = [];
         for (let messageRaw of messagesRaw) {
             let txt = await this.fetchTxt(messageRaw);
+            if (!txt)
+                continue;
+
             let speaker = await this.fetchSpeaker(messageRaw, txt);
             let noUse = await this.isNoUserMsg(messageRaw, txt);
             if (noUse)
@@ -285,6 +294,9 @@ class Chat extends Base {
 
     fetchTxt = async(message) => {
         const pushText = message.pushText;
+        if (!pushText)
+            return;
+
         let ts = pushText.split(":");
         return ts[1];
     }
@@ -293,7 +305,7 @@ class Chat extends Base {
         const pushText = message.pushText;
         let ts = pushText.split(":");
         let userName = ts[0];
-        system = await this.isSystemSpeakerTxt(txt, userName);
+        let system = await this.isSystemSpeakerTxt(txt, userName);
         if (system)
             return "system";
 
@@ -361,17 +373,17 @@ class Chat extends Base {
     }
 
     sendContact = async () => {
-        let resumeBtn = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
+        let [resumeBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
         await resumeBtn.click();
         await sleep(500);
 
-        let wxBtn = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
+        let [wxBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
         if (wxBtn) {
             await wxBtn.click();
             await sleep(500);
         }
 
-        let phoneBtn = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换手机"]/parent::*/span[contains(@class, "operate-btn")]`);
+        let [phoneBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换手机"]/parent::*/span[contains(@class, "operate-btn")]`);
         if (phoneBtn) {
             await phoneBtn.click();
             await sleep(500);
@@ -379,11 +391,11 @@ class Chat extends Base {
     }
 
     sendEmoji = async () => {
-        let emojiBtn = await this.page.$x(`//div[contains(@class, "biaoqing")]`);
+        let [emojiBtn] = await this.page.$x(`//div[contains(@class, "biaoqing")]`);
         await emojiBtn.click();
-        let emotionDiv = await this.waitElement(`//div[contains(@class, "emotion")]`);
+        let emotionDiv = await this.waitElement(`//div[contains(@class, "emotion")]`, this.page);
 
-        let emoji2Btn = await emotionDiv.$x(`//button[contains(@class, "emoji-2")]`);
+        let [emoji2Btn] = await emotionDiv.$x(`//button[contains(@class, "emoji-2")]`);
         await emoji2Btn.click();
         await sleep(500);
     }
@@ -392,7 +404,7 @@ class Chat extends Base {
         const msgList = msg.split('\n');
         logger.info(`boss ${this.userInfo.name} sendMessage: ${msgList}`);
 
-        let [input] = await this.frame.$x('//div[contains(@id, "boss-chat-editor-input")]');
+        let [input] = await this.page.$x('//div[contains(@id, "boss-chat-editor-input")]');
 
         await input.focus();
         await sleep(500);
@@ -463,11 +475,11 @@ class Chat extends Base {
         let items = await this.page.$x(`//div[contains(@class, "message-item")]`);
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
-            let robotSpan = await item.$x(`/div[contains(@class, "item-myself")]`);
+            let [robotSpan] = await item.$x(`/div[contains(@class, "item-myself")]`);
             if (robotSpan)
                 break;
 
-            let cardBtn = await item.$x(`//span[contains(@class, "card-btn")]`);
+            let [cardBtn] = await item.$x(`//span[contains(@class, "card-btn")]`);
             if (!cardBtn)
                 continue;
 
@@ -487,7 +499,7 @@ class Chat extends Base {
 
     downloadResume = async(item) => {
         await this.page.evaluate((item)=>item.scrollIntoView(), item);
-        let [showBtn] = item.$x(`//span[text() = "点击预览附件简历"]`);
+        let [showBtn] = await item.$x(`//span[text() = "点击预览附件简历"]`);
         await showBtn.click();
         await sleep(1 * 1000);
 
@@ -561,8 +573,8 @@ class Chat extends Base {
         }
         await wxBtn.click();
         let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
-        let textExchangeDiv = exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
-        let wx = await this.frame.evaluate(node => node.innerText, textExchangeDiv);
+        let [textExchangeDiv] = await exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let wx = await this.page.evaluate(node => node.innerText, textExchangeDiv);
 
         const form = new FormData();  
 
@@ -586,7 +598,7 @@ class Chat extends Base {
         });
         await sleep(500);
 
-        let closeBtn = await textExchangeDiv.$x(`//span[text() = "取消"]`);
+        let [closeBtn] = await textExchangeDiv.$x(`//span[text() = "取消"]`);
         await closeBtn.click();
     }
 
@@ -597,8 +609,8 @@ class Chat extends Base {
         }
         await phoneBtn.click();
         let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
-        let textExchangeDiv = exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
-        let phone = await this.frame.evaluate(node => node.innerText, textExchangeDiv);
+        let [textExchangeDiv] = await exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let phone = await this.page.evaluate(node => node.innerText, textExchangeDiv);
 
         const form = new FormData();  
 
@@ -627,18 +639,21 @@ class Chat extends Base {
     }
 
     fetchItemNameAndId = async(item) => {
-        let nameSpan = await item.$x(`//span[contains(@class, "geek-name")]`);
-        let name = await this.frame.evaluate(node => node.innerText, nameSpan);
-        let idSpan = await item.$x(`//div[contains(@class, "geek-item")]`);
-        let isStr = await this.frame.evaluate(node => node.dataset.id, idSpan);
+        let [nameSpan] = await item.$x(`//span[contains(@class, "geek-name")]`);
+        let name = await this.page.evaluate(node => node.innerText, nameSpan);
+        // let [idSpan] = await item.$x(`//div[contains(@class, "geek-item")]`);
+        const isStr = await this.page.evaluate((el) => el.getAttribute('key'), item);
+        // let isStr = await this.page.evaluate(node => node.key, item);
         let id = isStr.split("-")[0];
+
+        logger.info(`boss ${this.userInfo.name} 获取到 id: ${id} name: ${name}`);
         return {id, name};
     }
 
     putUnreadBtn = async () => {
         let [unreadBtn] = await this.page.$x(`//span[text() = "未读"]`);
-        let [checkedBtn] = await this.frame.$x(`//span[text() = "未读"] and contains(@class, "active")]`);
-        checked = !!checkedBtn;
+        let [checkedBtn] = await this.page.$x(`//span[text() = "未读" and contains(@class, "active")]`);
+        let checked = !!checkedBtn;
         if (!checked) {
             await unreadBtn.click();
         }
@@ -646,8 +661,8 @@ class Chat extends Base {
 
     putAllMessageBtn = async () => {
         let [allBtn] = await this.page.$x(`//span[text() = "全部"]`);
-        let [checkedBtn] = await this.frame.$x(`//span[text() = "全部"] and contains(@class, "active")]`);
-        checked = !!checkedBtn;
+        let [checkedBtn] = await this.page.$x(`//span[text() = "全部" and contains(@class, "active")]`);
+        let checked = !!checkedBtn;
         if (!checked) {
             await allBtn.click();
         }
@@ -655,10 +670,12 @@ class Chat extends Base {
 
     setUnreadPage = async() => {
         await this.putUnreadBtn();
+        await sleep(1000);
     }
 
     setUnreadEnd = async() => {
         await this.putAllMessageBtn();
+        await sleep(1000);
     }
 }
 
