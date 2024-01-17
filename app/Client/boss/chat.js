@@ -8,7 +8,7 @@ const FormData = require('form-data');
 class Chat extends Base {
     keywordDelay = 40;
     messageCache = {};
-    recallIndex;
+    recallIndex = 0;
     itemHeight = 78;
 
     run = async() => {
@@ -69,8 +69,6 @@ class Chat extends Base {
     }
 
     noop = async() => {
-        this.recallIndex = 0;
-
         let unreadNum = await this.hasUnread();
         while (unreadNum > 0) {
             try {
@@ -93,18 +91,19 @@ class Chat extends Base {
 
     doRecall = async() => {
         await this.putAllMessageBtn();
+        await this.dealRecallEnd();
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
-        await this.page.evaluate((item)=>item.scrollIntoView(), item);
-        let {id, name} = await this.fetchItemNameAndId();
+        await this.page.evaluate((item)=>item.scrollIntoView({ block: "center" }), item);
+        let {id, name} = await this.fetchItemNameAndId(item);
 
-        let recallInfo = await this.needRecall(id);
+        let recallInfo = await this.needRecall(id, name);
+        this.recallIndex += 1;
         if (!recallInfo)
             return;
 
         await this.sendMessage(recallInfo.recall_msg);
         await this.recallResult(id);
-        this.recallIndex += 1;
 
         await this.dealRecallEnd();
     }
@@ -117,18 +116,18 @@ class Chat extends Base {
     }
 
     fetchRecallItem = async() => {
-        let items = await this.page.$x(`//div[contains(@class, "listitem")]`);
+        let items = await this.page.$x(`//div[contains(@role, "listitem")]`);
         return items[this.recallIndex];
     }
 
     dealRecallEnd = async() => {
-        let items = await this.page.$x(`//div[contains(@class, "listitem")]`);
+        let items = await this.page.$x(`//div[contains(@role, "listitem")]`);
         if (this.recallIndex >= items.length) {
             this.recallIndex = 0;
         }
     }
 
-    needRecall = async(id) => {
+    needRecall = async(id, name) => {
         try {
             const { status, data } = await Request({
               url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
@@ -140,7 +139,7 @@ class Chat extends Base {
               headers: {"Connection": "keep-alive"},
               method: 'POST'
             });
-            logger.info(`boss ${this.userInfo.name} name: ${peopleInfo.name} recall status: ${status} data: ${JSON.stringify(data)}`);
+            logger.info(`boss ${this.userInfo.name} name: ${name} recall status: ${status} data: ${JSON.stringify(data)}`);
 
             if (status == 0) {
                 let recallList = data;
@@ -148,7 +147,7 @@ class Chat extends Base {
                     return recallList[0];
             }
         } catch (e) {
-            logger.error(`boss ${this.userInfo.name} name: ${peopleInfo.name} recallList request error: `, e);
+            logger.error(`boss ${this.userInfo.name} name: ${name} recallList request error: `, e);
         }
     }
 
@@ -225,11 +224,26 @@ class Chat extends Base {
     chatOnePeopleNoop = async (id, name, messages) => {
         while(messages && messages.length > 0) {
             await this.dealSystemView(id, name);
-            await this.chatWithRobot(id, name, messages);
 
+            let needTalk = await this.needTalk(messages);
+            if (!needTalk)
+                break;
+
+            await this.chatWithRobot(id, name, messages);
+            
             await sleep(10 * 1000);
             messages = await this.fetchMsgsByHtml(name);
         }
+    }
+
+    needTalk = async (messages) => {
+        if (messages.length == 0)
+            return false;
+
+        if (messages[messages.length - 1].speaker == "robot")
+            return false;
+
+        return true;
     }
 
     fetchMsgsByHtml = async (name) => {
@@ -258,20 +272,16 @@ class Chat extends Base {
         let txt = await this.page.evaluate(node => node.innerText, txtSpan);
 
         let speaker = "system";
-        let [friendSpan] = await msgItem.$x(`/div[contains(@class, "item-friend")]`);
-        console.log("friendSpan: ", friendSpan);
+        let [friendSpan] = await msgItem.$x(`//div[contains(@class, "item-friend")]`);
         if (friendSpan)
             speaker = "user";
-        let [robotSpan] = await msgItem.$x(`/div[contains(@class, "item-myself")]`);
-        console.log("robotSpan: ", robotSpan);
+        let [robotSpan] = await msgItem.$x(`//div[contains(@class, "item-myself")]`);
         if (robotSpan)
             speaker = "robot";        
 
         let systemTxt= await this.isSystemSpeakerTxt(txt, name);
-        console.log("systemTxt: ", systemTxt);
         if (systemTxt)
             speaker = "system";
-        console.log(`speaker: ${speaker} txt: ${txt}`);
         return {speaker, txt};
     }
 
