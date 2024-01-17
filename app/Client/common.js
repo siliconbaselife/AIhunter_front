@@ -352,7 +352,7 @@ class Common {
    * 设定浏览器下载路径
    */
   setDownloadPath = async () => {
-    const downloadPath = path.join(process.cwd(), this.userInfo.id.toString());
+    const downloadPath = path.join(process.cwd(), this.userInfo.accountID.toString());
     try {
       const client = await this.page.target().createCDPSession();
       await client.send('Page.setDownloadBehavior', {

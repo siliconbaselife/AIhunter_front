@@ -225,16 +225,16 @@ class Chat extends Base {
     }
 
     chatOnePeopleNoop = async (id, name, messages) => {
+        await this.dealSystemView(id, name);
         while(messages && messages.length > 0) {
-            await this.dealSystemView(id, name);
-
             let needTalk = await this.needTalk(messages);
             if (!needTalk)
                 break;
-
+            
             await this.chatWithRobot(id, name, messages);
             
             await sleep(10 * 1000);
+            await this.dealSystemView(id, name);
             messages = await this.fetchMsgsByHtml(name);
         }
     }
@@ -547,18 +547,12 @@ class Chat extends Base {
         const form = new FormData();  
         form.append('cv', crs);
         form.append('jobID', '');
-
-        const reqParam = {
-            accountID: this.userInfo.accountID,
-            candidateID: id,
-            candidateName: name,
-            filename: filename
-        }
+        form.append('accountID', this.userInfo.accountID);
+        form.append('candidateID', id);
+        form.append('candidateName', name);
+        form.append('filename', filename);
 
         console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
-        Object.keys(reqParam).map((key) => {
-            form.append(key, reqParam[key]);
-        })
   
         await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
             if (err) {
@@ -584,7 +578,7 @@ class Chat extends Base {
     }
 
     clearDownloadDir = async() => {
-        let dirPath = path.join(this.downloadDir, this.userInfo.accountID.toString());
+        let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
         try {
             await rmDir(dirPath);
         } catch(e) {
