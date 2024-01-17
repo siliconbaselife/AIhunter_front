@@ -339,11 +339,16 @@ class Common {
     }
   }
 
+  /**
+   * 向当前页面注入cookies，并跳转到指定页面
+   * @param {number | string} accountID 账号id 
+   * @param {?string} url 指定页面url(如果没有，则跳转到登录页) 
+   */
   injectCookies = async (accountID, url) => {
     if (accountID) {
       logger.info(`${accountID} 准备注入cookie`);
       await this.setCookies(this.page, accountID).catch(err => { console.log(err) });
-      await this.toPage(this.loginUrl);
+      await this.toPage(url || this.loginUrl);
       await sleep(2000);
     }
   }

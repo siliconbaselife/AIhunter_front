@@ -48,11 +48,10 @@ class Login extends Base {
     }
 
     dologin = async (accountID) => {
-        this.getUserInfo();
         await this.toPage(this.loginUrl);
-
-        if (accountID)
-            await this.injectCookies(accountID, this.loginUrl);
+        this.getUserInfo();
+        // 因为进入猎聘登录页，猎聘会自动清登录信息，所以当注入cookies成功后，跳转到猎头首页（猎聘会判断是否已登录，如果未登录，会自动跳转会登录页）;
+        if (accountID) await this.injectCookies(accountID, this.indexUrl); 
 
         while (!this.userInfo) {
             await sleep(2000);

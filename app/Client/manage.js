@@ -27,7 +27,7 @@ class Manage {
             return client;
         }
 
-        if (platformType === "LiePin") {
+        if (platformType === "liepin") {
             let Client = require(`./liepin/client`);
             let client = new Client();
             return client;

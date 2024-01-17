@@ -45,7 +45,6 @@ class Client {
         logger.info("liepin 登陆完成");
         await sleep(2 * 1000);
 
-        await chat.run();
         logger.info(`liepin ${this.userInfo.name} 要退出了`);
     }
 }
