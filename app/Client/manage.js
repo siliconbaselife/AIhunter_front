@@ -26,6 +26,12 @@ class Manage {
             let client = new Client();
             return client;
         }
+
+        if (platformType === "LiePin") {
+            let Client = require(`./liepin/client`);
+            let client = new Client();
+            return client;
+        }
     }
 
     register = async (platformType, account_name, rs, rj) => {
