@@ -4,6 +4,9 @@ const Request = require('../../utils/Request');
 const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
 const FormData = require('form-data');
+const path = require('path');
+const {rmDir} = require('../../utils/FileSystem');
+const fs = require('fs');
 
 class Chat extends Base {
     keywordDelay = 40;
@@ -520,20 +523,23 @@ class Chat extends Base {
         await this.page.evaluate((item)=>item.scrollIntoView(), item);
         let [showBtn] = await item.$x(`//span[text() = "点击预览附件简历"]`);
         await showBtn.click();
-        await sleep(1 * 1000);
+        await sleep(3 * 1000);
 
-        const pageFrame = await this.page.$('#imIframe');
-        let resumeFrame = await pageFrame.contentFrame();
+        let resumeFrame = await this.waitElement(`//div[contains(@class, "resume-common-dialog")]`, this.page);
+
+        // const pageFrame = await this.page.$('#imIframe');
+        // let resumeFrame = await pageFrame.contentFrame();
         let btns = await resumeFrame.$x(`//div[contains(@class, "attachment-resume-btns")]/span`);
         await btns[btns.length - 1].click();
         await sleep(1 * 1000);
-        let [closeBtn] = await this.page.$x(`//div[contains(@class, "boss-popup__close")]`);
+        let [closeBtn] = await resumeFrame.$x(`//div[contains(@class, "boss-popup__close")]`);
         await closeBtn.click();
-        await sleep(500);
+        await sleep(1 * 1000);
     }
 
     uploadResume = async(id, name) => {
         let filedir = path.join(process.cwd(), this.userInfo.accountID.toString());
+        console.log("filedir: ", filedir);
         let files = fs.readdirSync(filedir);
         let filename = files[0];
         const crs = fs.createReadStream(filedir + "/" + filename);
@@ -549,6 +555,7 @@ class Chat extends Base {
             filename: filename
         }
 
+        console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
         Object.keys(reqParam).map((key) => {
             form.append(key, reqParam[key]);
         })
