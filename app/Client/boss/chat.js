@@ -215,8 +215,8 @@ class Chat extends Base {
         let messages = await this.fetchPeopleMsgsByCache(id);
         logger.info(`boss ${this.userInfo.name} id: ${id} http请求处理后的消息: ${JSON.stringify(messages)}`);
         if (!messages) {
-            logger.info(`boss ${this.userInfo.name} 当前处理 ${name} 异常,获取不到消息`);
-            return;
+            logger.info(`boss ${this.userInfo.name} 当前处理 ${name} 异常, http获取不到消息`);
+            messages = await this.fetchMsgsByHtml(name);
         }
 
         await this.chatOnePeopleNoop(id, name, messages);
@@ -265,7 +265,7 @@ class Chat extends Base {
         let [robotSpan] = await msgItem.$x(`/div[contains(@class, "item-myself")]`);
         console.log("robotSpan: ", robotSpan);
         if (robotSpan)
-            speaker = "robot";
+            speaker = "robot";        
 
         let systemTxt= await this.isSystemSpeakerTxt(txt, name);
         console.log("systemTxt: ", systemTxt);
