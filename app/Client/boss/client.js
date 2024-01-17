@@ -61,7 +61,7 @@ class Client {
             // }
 
             num += 1;
-            await sleep(10 * 1000);
+            await sleep(1 * 1000);
         }
 
         logger.info(`boss ${this.userInfo.name} 要退出了`);
