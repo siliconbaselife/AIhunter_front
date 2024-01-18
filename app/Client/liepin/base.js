@@ -8,6 +8,7 @@ class Base extends Common {
     page;
 
     indexUrl = "https://h.liepin.com/";
+    findPeopleUrl = "https://h.liepin.com/search/getConditionItem";
     loginUrl = "https://h.liepin.com/account/login";
 
 

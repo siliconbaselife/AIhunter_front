@@ -48,7 +48,7 @@ class Client {
 
         let search = new Search(this.options);
         await search.run();
-        logger.info(`linkedin ${this.userInfo.name} 打招呼任务执行完成`);
+        logger.info(`liepin ${this.userInfo.name} 打招呼任务执行完成`);
 
         logger.info(`liepin ${this.userInfo.name} 要退出了`);
     }
