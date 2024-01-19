@@ -13,11 +13,15 @@ class Login extends Base {
                     return;
 
                 if ("/wapi/zpuser/wap/getUserInfo.json" in data.zpData) {
-                    let userData = data.zpData["/wapi/zpuser/wap/getUserInfo.json"];
-                    let id = userData.zpData.userId;
-                    let name = userData.zpData.name;
-                    logger.info(`boss 获取到 id: ${id} name: ${name}`);
-                    this.userInfo = {id: id, name: name};
+                    try{
+                        let userData = data.zpData["/wapi/zpuser/wap/getUserInfo.json"];
+                        let id = userData.zpData.userId;
+                        let name = userData.zpData.name;
+                        logger.info(`boss 获取到 id: ${id} name: ${name}`);
+                        this.userInfo = {id: id, name: name};
+                    } catch (e) {
+                        logger.error(`getUserInfo request error: `, e);
+                    }
                 }
             }
         }

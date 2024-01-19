@@ -55,10 +55,10 @@ class Client {
         while(true) {
             await chat.run();
 
-            // if (num % 50 == 0) {
-            //     await resume.run();
-            //     logger.info(`boss ${this.userInfo.name} 打招呼任务执行完成`);
-            // }
+            if (num % 50 == 0) {
+                await resume.run();
+                logger.info(`boss ${this.userInfo.name} 打招呼任务执行完成`);
+            }
 
             num += 1;
             await sleep(1 * 1000);

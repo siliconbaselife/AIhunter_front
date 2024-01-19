@@ -384,13 +384,13 @@ class Chat extends Base {
                 await sleep(1000);
                 try {
                     logger.info(`boss ${this.userInfo.name} ${name} 获取手机号`);
-                    await this.sendContact(peopleInfo.name);
+                    await this.sendContact(name);
                 } catch (e) {
-                    logger.error(`boss ${this.userInfo.name} ${name} 申请手机号异常: ${e}`);
+                    logger.error(`boss ${this.userInfo.name} ${name} 申请手机号异常: `, e);
                 }
             }
         } catch (e) {
-            logger.error(`boss ${this.userInfo.name} ${peopleInfo.name} 聊天发生异常: `, e);
+            logger.error(`boss ${this.userInfo.name} ${name} 聊天发生异常: `, e);
         }
     }
 
@@ -497,7 +497,7 @@ class Chat extends Base {
         let items = await this.page.$x(`//div[contains(@class, "message-item")]`);
         for (let i = items.length - 1; i >= 0; i--) {
             let item = items[i];
-            let [robotSpan] = await item.$x(`/div[contains(@class, "item-myself")]`);
+            let [robotSpan] = await item.$x(`//div[contains(@class, "item-myself")]`);
             if (robotSpan)
                 break;
 
@@ -593,8 +593,9 @@ class Chat extends Base {
         }
         await wxBtn.click();
         let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
-        let [textExchangeDiv] = await exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let [textExchangeDiv] = await exchangeDiv.$x(`//span[contains(@class, "text exchanged")]/span`);
         let wx = await this.page.evaluate(node => node.innerText, textExchangeDiv);
+        logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的微信: ${wx}`);
 
         const form = new FormData();  
 
@@ -618,7 +619,7 @@ class Chat extends Base {
         });
         await sleep(500);
 
-        let [closeBtn] = await textExchangeDiv.$x(`//span[text() = "取消"]`);
+        let [closeBtn] = await exchangeDiv.$x(`//span[text() = "取消"]`);
         await closeBtn.click();
     }
 
@@ -629,8 +630,9 @@ class Chat extends Base {
         }
         await phoneBtn.click();
         let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
-        let [textExchangeDiv] = await exchangeDiv.$x(`/span[contains(@class, "text exchanged")]/span`);
+        let [textExchangeDiv] = await exchangeDiv.$x(`//span[contains(@class, "text exchanged")]/span`);
         let phone = await this.page.evaluate(node => node.innerText, textExchangeDiv);
+        logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的电话: ${phone}`);
 
         const form = new FormData();  
 
@@ -654,7 +656,7 @@ class Chat extends Base {
         });
         await sleep(500);
 
-        let closeBtn = await textExchangeDiv.$x(`//span[text() = "取消"]`);
+        let [closeBtn] = await exchangeDiv.$x(`//span[text() = "取消"]`);
         await closeBtn.click();
     }
 
@@ -694,6 +696,10 @@ class Chat extends Base {
     }
 
     setUnreadEnd = async() => {
+        let [allBtn] = await this.page.$x(`//div[contains(@title, "全部")]`);
+        await allBtn.click();
+        await sleep(500);
+
         await this.putAllMessageBtn();
         await sleep(1000);
     }
