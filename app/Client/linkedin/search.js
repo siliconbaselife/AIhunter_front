@@ -269,6 +269,7 @@ class Search extends Base {
 
         let httpUrltmp = httpUrl.split("?")[0];
         let id = httpUrltmp.replace("https://www.", "");
+        id = await this.transferId(id);
 
         return {id, httpUrl};
     }

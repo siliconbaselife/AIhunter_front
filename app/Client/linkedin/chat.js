@@ -275,6 +275,7 @@ class Chat extends Base {
 
         let url = await this.page.url();
         let id = url.replace("https://www.", "");
+        id = await this.transferId(id);
 
         await this.page.goBack();
         await this.waitElement(`//main[contains(@class, "scaffold-layout__main scaffold-layout__list-detail")]`, this.page);

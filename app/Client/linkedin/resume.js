@@ -95,6 +95,7 @@ class Resume extends Search {
             logger.info(`linkedin ${this.userInfo.name} 还剩 ${task.helloSum} 个招呼`);
 
             let {id, httpUrl} = await this.fetchPeopleId(peopleItem);
+
             logger.info(`linkedin ${this.userInfo.name} 当前处理people: ${id}`);
 
             try {

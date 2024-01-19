@@ -47,6 +47,15 @@ class Base extends Common {
         await openBtn.click();
         await sleep(1000);
     }
+
+    transferId = async(id) => {
+        let lastChar = id.slice(-1);
+        if (lastChar != "/")
+            return id;
+
+        id = id.slice(0, -1);
+        return id;
+    }
 }
 
 module.exports = Base;
