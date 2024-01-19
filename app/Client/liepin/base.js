@@ -7,7 +7,11 @@ class Base extends Common {
     /** @type {import("puppeteer").Page;} */
     page;
 
+    indexUrl = "https://h.liepin.com/";
+    findPeopleUrl = "https://h.liepin.com/search/getConditionItem";
     loginUrl = "https://h.liepin.com/account/login";
+
+
 
     constructor(options) {
         super();

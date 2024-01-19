@@ -4,6 +4,7 @@ const Login = require('./login');
 const Common = require('../common');
 
 const ProcessControl = require("../../ProcessControl/index");
+const Search = require('./search');
 
 class Client {
     userInfo;
@@ -45,7 +46,10 @@ class Client {
         logger.info("liepin 登陆完成");
         await sleep(2 * 1000);
 
-        await chat.run();
+        let search = new Search(this.options);
+        await search.run();
+        logger.info(`liepin ${this.userInfo.name} 打招呼任务执行完成`);
+
         logger.info(`liepin ${this.userInfo.name} 要退出了`);
     }
 }
