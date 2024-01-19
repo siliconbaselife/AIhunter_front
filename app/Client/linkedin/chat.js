@@ -167,7 +167,7 @@ class Chat extends Base {
           });
   
         const data = await Request({
-            url: `${BIZ_DOMAIN}/recruit/candidate/chat`,
+            url: `${BIZ_DOMAIN}/recruit/candidate/chat/v2`,
             data: {
               accountID: this.userInfo.accountID,
               candidateID: id,

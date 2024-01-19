@@ -122,7 +122,7 @@ class Resume extends Search {
 
     reportPeople = async(id, task) => {
         const { status, data } = await Request({
-            url: `${BIZ_DOMAIN}/recruit/account/task/report`,
+            url: `${BIZ_DOMAIN}/recruit/account/task/report/v2`,
             data: {
               accountID: this.userInfo.id,
               jobID: task.jobID,
