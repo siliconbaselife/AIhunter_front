@@ -94,7 +94,7 @@ class Recall extends Search {
             }
 
             try {
-                await this.dealOnePeople(peopleItem, recallInfo);
+                await this.dealOnePeople(peopleItem, recallInfo, id);
             } catch(e) {
                 logger.error(`linkedin ${this.userInfo.name} ${name} 发二次召回消息异常:`, e);
             }
@@ -127,7 +127,7 @@ class Recall extends Search {
         }
     }
 
-    dealOnePeople = async(peopleItem, recallInfo) => {
+    dealOnePeople = async(peopleItem, recallInfo, id) => {
         let [msgBtn] = await peopleItem.$x(`//span[text() = "Message"]`);
         await msgBtn.click();
 
@@ -138,6 +138,21 @@ class Recall extends Search {
         let [sendBtn] = await this.page.$x(`//button[contains(@class, "msg-form__send-button") and text() = "Send"]`);
         await sendBtn.click();
         await sleep(300);
+
+        await this.recallResult(id);
+    }
+
+    recallResult = async (friendId) => {
+        const { status, data } = await Request({
+            url: `${BIZ_DOMAIN}/recruit/candidate/recallResult`,
+            data: {
+              accountID: this.accountID,
+              candidateID: friendId
+            },
+            headers: {"Connection": "keep-alive"},
+            method: 'POST'
+        });
+        logger.info(`linkedin ${this.userInfo.name} recallResult ${friendId} data: ${JSON.stringify(data)}`);
     }
 }
 
