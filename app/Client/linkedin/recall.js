@@ -77,7 +77,7 @@ class Recall extends Search {
 
         for (let peopleItem of peopleItems) {
             let msgBtn = await this.waitElement(`//span[text() = "Message"]`, peopleItem);
-            let nameSpan = await peopleItem.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
+            let [nameSpan] = await peopleItem.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
             let name = await this.page.evaluate(node => node.innerText, nameSpan);
             await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
             await sleep(300);
@@ -86,7 +86,7 @@ class Recall extends Search {
                 continue;
             }
 
-            let id = await this.fetchPeopleId(peopleItem);
+            let {id, httpUrl} = await this.fetchPeopleId(peopleItem);
             let recallInfo = await this.filterItem(id);
             if (!recallInfo) {
                 logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要召回`);
@@ -115,7 +115,7 @@ class Recall extends Search {
               headers: {"Connection": "keep-alive"},
               method: 'POST'
             });
-            logger.info(`linkedin ${this.userInfo.name} recallList request status: ${status} data: ${data}`);
+            logger.info(`linkedin ${this.userInfo.name} recallList request status: ${status} data: ${JSON.stringify(data)}`);
 
             if (status == 0) {
                 let recallList = data;
@@ -128,7 +128,7 @@ class Recall extends Search {
     }
 
     dealOnePeople = async(peopleItem, recallInfo) => {
-        let msgBtn = await peopleItem.$x(`//span[text() = "Message"]`);
+        let [msgBtn] = await peopleItem.$x(`//span[text() = "Message"]`);
         await msgBtn.click();
 
         let msgDiv = await this.waitElement(`//div[contains(@class, "msg-form__contenteditable") and contains(@aria-label, "Write a message…")]`);
