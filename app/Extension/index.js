@@ -3,13 +3,17 @@ const fs = require("fs");
 
 
 const pluginUtils = require("./plugin/utils/index");
-const contentMessageHelper = require("./plugin/helper/message-helper/content"); 
+
+const contentMessageHelper = require("./plugin/helper/message-helper/content");
 const contentUtils = require("./plugin/content/main/utils");
 const contentTabHelper = require("./plugin/helper/tab-helper/content");
 const contentLinkedinBase = require("./plugin/content/main/execution/linkedin/base");
 const contentLinkedinChat = require("./plugin/content/main/execution/linkedin/linkedinChat");
 const contentLinkedinPerson = require("./plugin/content/main/execution/linkedin/linkedinPerson");
 const contentLinkedin = require("./plugin/content/main/execution/linkedin");
+
+const contentLiePinProfile = require("./plugin/content/main/execution/liepin/liepinProfile");
+const contentLiePin = require("./plugin/content/main/execution/liepin");
 
 const backgroundMessageHelper = require("./plugin/helper/message-helper/background");
 
@@ -52,6 +56,8 @@ class ExtensionHelper {
         ${contentLinkedinPerson}
         ${resume}
         ${contentLinkedin}
+        ${contentLiePinProfile}
+        ${contentLiePin}
         ${testMission}
     `;
     /** @readonly background文件名 */
@@ -64,6 +70,7 @@ class ExtensionHelper {
     /** @readonly 扩展程序json配置文件 */
     MANIFEST_JSON_NAME = "manifest.json";
     /** @readonly 扩展程序json内容 */
+
     MANIFEST_JSON = `
             {
               "manifest_version": 3,
@@ -79,7 +86,8 @@ class ExtensionHelper {
                 {
                     "matches": [
                         "https://*.maimai.cn/*",
-                        "https://*.linkedin.com/*"
+                        "https://*.linkedin.com/*",
+                        "https://*.liepin.com/*"
                     ],
                     "js": [
                         "${this.CONTENT_JS_NAME}"

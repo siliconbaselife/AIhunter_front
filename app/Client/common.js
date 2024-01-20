@@ -55,8 +55,8 @@ class Common {
         `--window-size=${width},${height}`,
         `--disable-gpu`,
         `--disable-dev-shm-usage`,
-        `--disable-extensions-except=${ExtensionHelper.EXTENSION_PATH}`, // 扩展程序
-        `--load-extension=${ExtensionHelper.EXTENSION_PATH}`, // 扩展程序
+        `--disable-extensions-except=${ExtensionHelper.EXTENSION_PATH},${path.join(process.cwd(), "xpath")}`, // 扩展程序
+        `--load-extension=${ExtensionHelper.EXTENSION_PATH},${path.join(process.cwd(), "xpath")}`, // 扩展程序
       ];
 
       let chromeInfo = await findChrome({});
