@@ -82,7 +82,7 @@ class Resume extends Search {
     dealPeople = async (task) => {
         const peopleList = await this.waitElements(`//table[contains(@class, "new-resume-card")]//tbody//tr`, this.page);
         const itemsNum = peopleList.length;
-        logger.info(`liepin ${this.userInfo.name} 搜索到 ${itemsNum} 个people item`);
+        logger.info(`liepin ${this.userInfo.name} 搜索到 ${itemsNum} 个候选人 item`);
 
         if (peopleList.length) {
             /** @todo 猎聘有做埋点，每次点击事件会上报 */
@@ -92,13 +92,13 @@ class Resume extends Search {
                 let peopleItem = peopleList[i];
                 await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem); // 页面滚动到元素
                 if (this.hiEnd) break;
-                // if (task.helloSum <= 0) {
-                //     logger.info(`liepin ${this.userInfo.name} 今天的指标已经用完`);
-                //     break;
-                // }
+                if (task.helloSum <= 0) {
+                    logger.info(`liepin ${this.userInfo.name} 今天的指标已经用完`);
+                    break;
+                }
 
                 // await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
-                // logger.info(`liepin ${this.userInfo.name} 还剩 ${task.helloSum} 个招呼`);
+                logger.info(`liepin ${this.userInfo.name} 还剩 ${task.helloSum} 个招呼`);
                 await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
                 try {
                     let { httpUrl } = await this.fetchPeopleUrl(peopleItem);
@@ -120,11 +120,16 @@ class Resume extends Search {
      * @param {import("puppeteer").ElementHandle<Node>} peopleItem 
      */
     dealOnePeople = async (httpUrl, task, peopleItem) => {
-        const { status, tab, getResumeDetailData, getWorkExpsResData } = await ExecuteHelper.liepin.resume(this.browser, httpUrl);
-        logger.info(JSON.stringify(status), JSON.stringify(getResumeDetailData), JSON.stringify(getWorkExpsResData));
-        const id = getResumeDetailData.usercIdEncode || 0;
-        const f = await this.filterPeople({ ...getResumeDetailData, ...getWorkExpsResData }, task);
+        const { status, tab, peopleInfo } = await ExecuteHelper.liepin.resume(httpUrl);
+        if (status === "fail") {
+            logger.info(`liepin ${this.userInfo.name} 获取候选人信息失败, 链接: ${httpUrl}`);
+            return;
+        }
+        const id = peopleInfo.usercIdEncode || 0;
+        logger.info(`liepin ${this.userInfo.name} 获取到简历: ${JSON.stringify(peopleInfo)}`);
+        const f = await this.filterPeople(peopleInfo, task);
         if (f) return;
+
         const touchFlag = await this.touchPeople(tab, task);
         if (touchFlag) {
             await this.reportPeople(task, id);
@@ -171,9 +176,10 @@ class Resume extends Search {
      * @returns {Promise<boolean>} 打招呼是否已成功
      */
     async touchPeople(tab, task) {
-        let res = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_chat", task.touch_msg);
-        logger.info(`liepin ${this.userInfo.name} 打招呼是否成功: ${res}`);
-        return res;
+        let { status, error = "" } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_chat", "电商仓库管理员"); // 测试代码
+        // let { status, error = "" } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_chat", task.job_name);
+        logger.info(`liepin ${this.userInfo.name} 打招呼是否成功: ${status}, ${error ? error : ''}`);
+        return status === "success";
     }
 
     reportPeople = async (id, task) => {

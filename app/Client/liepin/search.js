@@ -178,7 +178,8 @@ class Search extends Base {
             for (let edu of education) {
                 const eduBtn = await this.waitElement(`${eduXpath}//div[contains(@class, 'tag-label-group')]//label[text() = "${edu}"]`, this.page, 4);
                 if (!eduBtn) {
-                    logger.info(`liepin ${this.userInfo.name} education : ${edu} 没有找到对应的按钮`)
+                    logger.info(`liepin ${this.userInfo.name} education : ${edu} 没有找到对应的按钮`);
+                    continue;
                 }
                 await eduBtn.click();
                 await sleep(2 * 1000);
@@ -326,13 +327,13 @@ class Search extends Base {
         await this.page.evaluate(() => {
             window.scrollTo({ top: 10000, left: 0, behavior: 'smooth' });
         });
-        let nextBtn = await this.waitElement(`//button[contains(@aria-label, "Next") and not(contains(@class, "artdeco-button--disabled"))]`, this.page, 5);
+        let nextBtn = await this.waitElement(`//table[contains(@class, "new-resume-card")]//tfoot//li[contains(@class, "ant-pagination-next") and not (contains(@class, "disabled"))]`, this.page, 5);
         if (!nextBtn) {
             return false;
         }
 
         await nextBtn.click();
-        await this.waitPeopleNum();
+        await sleep(5 * 1000);
 
         return true;
     }

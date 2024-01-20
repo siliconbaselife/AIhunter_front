@@ -20,11 +20,12 @@ class ExecuteHelper {
      * @param {?number} maxTimeout 最大等待时间
      * @returns {Promise<Record<string, any>>}
      */
-    waitForResponse(page, urls, maxTimeout = 5 * 1000) {
+    waitForResponse(page, urls, maxTimeout = 10 * 1000) {
         let resultObj = {};
         const getResponses = async (response) => {
             const responseUrl = response.url();
             const method = response.request().method().toUpperCase();
+            console.log("responseUrl", responseUrl);
 
             for (let url of urls) {
                 if (responseUrl.indexOf(url) !== -1 && method !== "OPTION") resultObj[url] = await response.json()
@@ -34,13 +35,9 @@ class ExecuteHelper {
         return new Promise((resolve, reject) => {
             let waitTime = 0;
             const check = async () => {
-                if (waitTime >= maxTimeout) return reject();
+                if (waitTime >= maxTimeout) return reject(`等待请求超时 ${waitTime} ${maxTimeout}`);
                 await sleep(1000);
                 waitTime += 1000;
-                if (page.isClosed()) {
-                    return reject();
-                }
-
                 if (Object.keys(resultObj).length === urls.length) {
                     page.removeListener('response', getResponses);
                     return resolve(resultObj);
@@ -98,28 +95,24 @@ class ExecuteHelper {
     liepin = {
         /**
          * 获取候选人信息
-         * @param {import("puppeteer").Browser} browser 浏览器实例
          * @param {string} url 跳转链接
-         * @returns {Promise<{status: "success" | "fail", tab: import("./Tab").Tab, getResumeDetailData: any, getWorkExpsResData: any}>}
+         * @returns {Promise<{status: "success" | "fail", tab: import("./Tab").Tab, peopleInfo: any}>}
          */
-        async resume(browser, url) {
+        async resume(url) {
             const tab = await TabHelper.createATab({
                 url,
                 active: false,
                 selected: false,
             })
 
-            const pageTarget = await browser.waitForTarget(target => target.url().includes(url));
-            const page = await pageTarget.page();
+            await sleep(1000);
             try {
-                const resultObj = await ExecuteHelper.getInstance().waitForResponse(page, ['userh.pc.old.get-resume-detail', "userh.pc.old.get-work-exps"])
-                console.log("resultObj", resultObj);
-                const getResumeDetailData = resultObj["userh.pc.old.get-resume-detail"] && resultObj["userh.pc.old.get-resume-detail"].data;
-                const getWorkExpsResData = resultObj["userh.pc.old.get-work-exps"] && resultObj["userh.pc.old.get-work-exps"].data;
-                return { status: "success", tab, getResumeDetailData, getWorkExpsResData }
+                const { status, error, peopleInfo } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_search");
+                if (error) Logger.error(`liepin_profile_search 任务失败, ${url}, error: ${error}`);
+                return { status, tab, peopleInfo }
             } catch (error) {
-                Logger.error(`liepin resume等待请求结果报错: ${url} ${error}`);
-                return { status: "fail", tab, getResumeDetailData: null, getWorkExpsResData: null }
+                Logger.error(`liepin 等待liepin_profile_search任务结果报错: ${url} ${error}`);
+                return { status: "fail", tab, peopleInfo: null }
             }
         },
 
