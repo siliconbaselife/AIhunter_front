@@ -1,6 +1,6 @@
 
 module.exports =
-
+`
     class LiePinProfile extends Base {
         static instance = new LiePinProfile();
         static getInstance() {
