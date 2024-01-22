@@ -1,3 +1,5 @@
+/** @typedef {{index: number,openerTabId?: number | undefined,title?: string | undefined,url?: string | undefined,pendingUrl?: string | undefined,pinned: boolean,highlighted: boolean,windowId: number,active: boolean,favIconUrl?: string | undefined,id?: number | undefined,incognito: boolean,selected: boolean,audible?: boolean | undefined,discarded: boolean,autoDiscardable: boolean,mutedInfo?: MutedInfo | undefined,width?: number | undefined,height?: number | undefined,sessionId?: string | undefined, groupId: number}} Tab */
+
 class TabHelper {
     /** @private */
     static instance = new TabHelper();
@@ -83,7 +85,7 @@ class TabHelper {
     /**
      * 创建一个标签页
      * @param { {index?: number , openerTabId?: number ,url?: string ,pinned?: boolean ,windowId?: number ,active?: boolean ,selected?: boolean }} options
-     * @returns { Promise<{index: number,openerTabId?: number | undefined,title?: string | undefined,url?: string | undefined,pendingUrl?: string | undefined,pinned: boolean,highlighted: boolean,windowId: number,active: boolean,favIconUrl?: string | undefined,id?: number | undefined,incognito: boolean,selected: boolean,audible?: boolean | undefined,discarded: boolean,autoDiscardable: boolean,mutedInfo?: MutedInfo | undefined,width?: number | undefined,height?: number | undefined,sessionId?: string | undefined, groupId: number}> }
+     * @returns { Promise<Tab> }
      */
     async createATab(options) {
         return this.extension.evaluate((insideOptions) => {

@@ -1,4 +1,4 @@
-/** @typedef {{jobID: string, taskType: string, helloSum: number, filter: {search_text: string, hello_sum: number, education: string[], location: string[], industry: string[], ex_company: string[], sex: string, min_work_year: string, max_work_year: string, min_age: string | number, max_age: string | number}, touch_msg: string}} Task 单个任务 */
+
 
 const Base = require('./base');
 const { sleep } = require('../../utils');
@@ -13,26 +13,9 @@ class Search extends Base {
         super(options)
     }
 
-    run = async () => {
-        logger.info(`liepin ${this.userInfo.name} 收集简历，开始执行任务`);
-        let tasks = await this.queryTasks();
-        logger.info(`liepin ${this.userInfo.name} 获取到 ${tasks.length} 个收集简历任务, 任务如下: ${JSON.stringify(tasks)}`);
-
-        for (let index in tasks) {
-            let task = tasks[index];
-            try {
-                logger.info(`liepin ${this.userInfo.name} 开始第 ${parseInt(index) + 1} 个收集简历任务`);
-                await this.dealTaskBefore(task);
-                await new Promise(rs => {});
-            } catch (e) {
-                logger.error(`liepin ${this.userInfo.name} 收集简历任务 ${parseInt(index) + 1} 出现异常失败: `, e)
-            }
-        }
-    }
-
     /**
      * 获取任务列表
-     * @returns {Task[]} 任务列表
+     * @returns {import('./base').Task[]} 任务列表
      */
     queryTasks = async () => {
         const { status, data, msg } = await Request({
@@ -68,7 +51,7 @@ class Search extends Base {
      * 切换到"找人"tab
      */
     async switchSearchTab() {
-        await this.page.goto(this.findPeopleUrl, { waitUntil: "domcontentloaded"});
+        await this.page.goto(this.findPeopleUrl, { waitUntil: "domcontentloaded" });
     }
 
     /**
@@ -105,7 +88,7 @@ class Search extends Base {
         for (let loc of location) {
             await cityFilterInput.click();
             await cityFilterInput.type(loc);
-            await sleep(2000);
+            await sleep(3000);
 
             const optionList = await this.waitElements(`${cityDialogXpath}//div[contains(@class, "filter-box")]//div[contains(@class, "suggest-list")]//li`, this.page, 4)
             console.log("optionList", optionList);
@@ -115,7 +98,7 @@ class Search extends Base {
             }
 
             await optionList[0].click();
-            await sleep(500);
+            await sleep(1000);
         }
 
         const confirmBtn = await this.waitElement(`${cityDialogXpath}//div[contains(@class, "antd-lp-city-data-result")]//div[contains(@class, "result-btn")]//button[not(@disabled)]`, this.page);
@@ -132,8 +115,10 @@ class Search extends Base {
      * @param {Task} task 
      */
     async setWorkYear(task) {
-        const { min_work_year = 0, max_work_year = 0 } = task.filter;
-        if (max_work_year < 0 || min_work_year < 0 || max_work_year <= min_work_year) {
+        let { min_work_year = 0, max_work_year = 0 } = task.filter;
+        min_work_year = Number(min_work_year);
+        max_work_year = Number(max_work_year);
+        if ((max_work_year < 0) || (min_work_year < 0) || (max_work_year <= min_work_year)) {
             logger.info(`liepin 工作年限设置有误, ${this.userInfo.name} 最大年限: ${max_work_year}, 最小年限: ${min_work_year}`);
             return;
         }
@@ -172,7 +157,7 @@ class Search extends Base {
         })
         if (!clickResult) logger.info(`liepin ${this.userInfo.name} 设置工作年限失败: 没有找到确认按钮`);
 
-        await sleep(1000);
+        await sleep(2000);
     }
 
     /**
@@ -193,7 +178,8 @@ class Search extends Base {
             for (let edu of education) {
                 const eduBtn = await this.waitElement(`${eduXpath}//div[contains(@class, 'tag-label-group')]//label[text() = "${edu}"]`, this.page, 4);
                 if (!eduBtn) {
-                    logger.info(`liepin ${this.userInfo.name} education : ${edu} 没有找到对应的按钮`)
+                    logger.info(`liepin ${this.userInfo.name} education : ${edu} 没有找到对应的按钮`);
+                    continue;
                 }
                 await eduBtn.click();
                 await sleep(2 * 1000);
@@ -263,12 +249,12 @@ class Search extends Base {
 
         // 点击性别框
         await this.page.tap(`.sfilter-other-condition .search-item:nth-of-type(3) .search-item-cont`);
-        
+
         // ant选择框
         const antSeleteXpath = `//div[contains(@class, "ant-select-dropdown")]`;
         // ant选择item
         const antSeleteItemXpath = `//div[contains(@class, "ant-select-item")]`;
-        
+
         // 对应的选择item
         const sexSeleteItem = await this.waitElement(`${antSeleteXpath}${antSeleteItemXpath}//div[text() = "${sex}"]`, this.page, 4);
 
@@ -333,7 +319,7 @@ class Search extends Base {
 
         const hideAlreadyChatBtn = await this.waitElement(`${resultListBarXpath}${leftSideXpath}//label//span[text() = "隐藏已沟通"]`, this.page, 4);
         hideAlreadyChatBtn ? await hideAlreadyChatBtn.click() : logger.info(`liepin 隐藏已沟通 失败, ${this.userInfo.name} 没有找到按钮`);
-        
+
 
     }
 
@@ -341,25 +327,51 @@ class Search extends Base {
         await this.page.evaluate(() => {
             window.scrollTo({ top: 10000, left: 0, behavior: 'smooth' });
         });
-        let nextBtn = await this.waitElement(`//button[contains(@aria-label, "Next") and not(contains(@class, "artdeco-button--disabled"))]`, this.page, 5);
+        let nextBtn = await this.waitElement(`//table[contains(@class, "new-resume-card")]//tfoot//li[contains(@class, "ant-pagination-next") and not (contains(@class, "disabled"))]`, this.page, 5);
         if (!nextBtn) {
             return false;
         }
 
         await nextBtn.click();
-        await this.waitPeopleNum();
+        await sleep(5 * 1000);
 
         return true;
     }
 
-    fetchPeopleId = async (item) => {
-        let [hrefDiv] = await item.$x(`//div[contains(@class, "entity-result__universal-image")]//a`);
-        let httpUrl = await this.page.evaluate(node => node.href, hrefDiv);
 
-        let httpUrltmp = httpUrl.split("?")[0];
-        let id = httpUrltmp.replace("https://www.", "");
+    /**
+     * 获取候选人链接
+     * @param {import("puppeteer").ElementHandle} peopleItem
+     * @param {?number} maxTime 最大等待时间 
+     * @returns {Promise<{httpUrl: string}>}
+     */
+    fetchPeopleUrl = async (peopleItem, maxTime = 2000) => {
+        sleep(1500).then(() => { peopleItem.click() });
+        let httpUrl = await this.page.evaluate(async () => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
+            return new Promise((rs) => {
+                window.__origin_open = window.open;
+                window.open = (url) => {
+                    window.open = window.__origin_open;
+                    rs(url)
+                }
+            })
+        }).catch(err => {
+            logger.error(`liepin fetchPeopleUrl ${this.userInfo.name} err ${err}`);
+        })
+        let waitTime = 0;
+        while (!httpUrl && waitTime < maxTime) {
+            await sleep(500);
+            waitTime += 500;
+        }
 
-        return { id, httpUrl };
+        logger.info(`liepin fetchPeopleUrl, ${this.userInfo.name}, url: ${httpUrl}`);
+
+        if (httpUrl) { // 对链接处理一下
+            httpUrl = httpUrl.replace("JSHandle:", "");
+            if (httpUrl.indexOf("https://h.liepin.com") === -1) httpUrl = "https://h.liepin.com" + httpUrl;
+        }
+
+        return { httpUrl };
     }
 }
 
