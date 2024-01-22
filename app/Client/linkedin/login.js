@@ -8,16 +8,20 @@ class Login extends Base {
         const getUser = async (response) => {
             const url = response.url();
             if (url.startsWith('https://www.linkedin.com/litms/api/metadata/user')) {
-              const data = await response.json();
-              logger.info("linkedin getUser data:", data);
-              if (!data.id)
-                return
+                try { 
+                   const data = await response.json();
+                   logger.info("linkedin getUser data:", data);
+                   if (!data.id)
+                      return
 
-              if (data.id.dmp) {
-                  this.userInfo = {
-                    id: data.id.dmp
-                  };
-              }
+                   if (data.id.dmp) {
+                      this.userInfo = {
+                      id: data.id.dmp
+                      };
+                   }
+                } catch (e) {
+                    logger.error(`linkedin 获取user info异常: `, e);
+                }
             }
         }
         this.page.on('response', getUser);

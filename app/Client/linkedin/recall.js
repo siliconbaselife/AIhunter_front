@@ -131,7 +131,7 @@ class Recall extends Search {
         let [msgBtn] = await peopleItem.$x(`//span[text() = "Message"]`);
         await msgBtn.click();
 
-        let msgDiv = await this.waitElement(`//div[contains(@class, "msg-form__contenteditable") and contains(@aria-label, "Write a message…")]`);
+        let msgDiv = await this.waitElement(`//div[contains(@class, "msg-form__contenteditable") and contains(@aria-label, "Write a message…")]`, this.page);
         await msgDiv.click();
         await this.page.keyboard.type(recallInfo.recall_msg);
         await sleep(200);

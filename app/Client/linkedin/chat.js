@@ -95,7 +95,9 @@ class Chat extends Base {
                 logger.info(`linkedin ${this.userInfo.name} id: ${id} 聊天结束`);
                 break;
             }
-            await this.chatToPeople(messages, id);
+            let noTalk = await this.chatToPeople(messages, id);
+            if (noTalk)
+                break;
 
             await sleep(10 * 1000);
             await this.closeAllMsgDivs();
@@ -119,10 +121,15 @@ class Chat extends Base {
 
             if (nextStepContent.length === 0 && nextStep != "noTalk" && nextStep.length != 0)
                 await this.sendEmoji();
+
+            if (nextStep == "noTalk")
+                return true;
         } catch (e) {
             logger.error(`linkedin ${this.userInfo.name} ${id} 聊天发生异常:`, e);
             await sleep(5 * 1000);
         }
+
+        return false;
     }
 
     sendEmoji = async () => {

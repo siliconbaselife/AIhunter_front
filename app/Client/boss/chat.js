@@ -104,6 +104,8 @@ class Chat extends Base {
         this.recallIndex += 1;
         if (!recallInfo)
             return;
+        await item.click();
+        await sleep(500);
 
         await this.sendMessage(recallInfo.recall_msg);
         await this.recallResult(id);
@@ -383,7 +385,7 @@ class Chat extends Base {
             if (nextStep === "need_contact") {
                 await sleep(1000);
                 try {
-                    logger.info(`boss ${this.userInfo.name} ${name} 获取手机号`);
+                    logger.info(`boss ${this.userInfo.name} ${name} 获取联系方式`);
                     await this.sendContact(name);
                 } catch (e) {
                     logger.error(`boss ${this.userInfo.name} ${name} 申请手机号异常: `, e);
@@ -396,16 +398,19 @@ class Chat extends Base {
 
     sendContact = async () => {
         let [resumeBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
+        logger.info(`boss ${this.userInfo.name} 简历按钮: `, resumeBtn);
         await resumeBtn.click();
         await sleep(500);
 
         let [wxBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
+        logger.info(`boss ${this.userInfo.name} wx按钮: `, wxBtn);
         if (wxBtn) {
             await wxBtn.click();
             await sleep(500);
         }
 
         let [phoneBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换手机"]/parent::*/span[contains(@class, "operate-btn")]`);
+        logger.info(`boss ${this.userInfo.name} 电话按钮: `, phoneBtn);
         if (phoneBtn) {
             await phoneBtn.click();
             await sleep(500);
