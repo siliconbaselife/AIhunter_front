@@ -78,7 +78,6 @@ class Search extends Base {
             await sleep(2000);
             
             let optionlist = await this.waitElements('//div[contains(@class, "basic-typeahead__selectable")]', this.page, 4);
-            console.log("optionlist: ", optionlist.length);
             if (optionlist.length == 0) {
                 logger.info(`linkedin ${this.userInfo.name} location: ${location} 没有推荐list`);
                 continue;

@@ -54,6 +54,7 @@ class Recall extends Search {
 
 
     noopTask = async(task) => {
+        await this.closeAllMsgDivs();
         let page = 1;
         while(true) {
             logger.info(`linkedin ${this.userInfo.name} 当前二次召回任务处理到第 ${page} 页`);
@@ -146,7 +147,7 @@ class Recall extends Search {
         const { status, data } = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/recallResult`,
             data: {
-              accountID: this.accountID,
+              accountID: this.userInfo.accountID,
               candidateID: friendId
             },
             headers: {"Connection": "keep-alive"},

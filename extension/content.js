@@ -121,6 +121,23 @@ class ContentMessageHelper {
         return ContentMessageHelper.instance;
     }
     constructor() {
+        // 监听来自inject的消息
+        window.addEventListener("message", (e) => {
+            // 处理来自Inject的消息
+            const data = e.data || {};
+            const { type, message } = data;
+            const cbObj = this.injectMap[type] || {};
+            Object.keys(cbObj).forEach(key => {
+                let cb = cbObj[key];
+                if (typeof cb === "function") {
+                    asyncCall(() => cb(message));
+                }
+            })
+
+            // 另外也通知下 扩展页面（options_page,bakcground,popup
+            this.callFromContent(type, message).catch(() => { })
+        })
+
         // 监听来自others的消息
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             // 处理来自others的消息
@@ -136,9 +153,6 @@ class ContentMessageHelper {
             } else {
                 sendResponse(responseMessage);
             }
-
-            // 另外也通知下injtect
-            asyncCall(() => window.postMessage({ type: eventName, message: responseMessage }), true);
 
             return isAsync;
         })
@@ -193,6 +207,55 @@ class ContentMessageHelper {
     }
 
     /** 内容脚本(content_scripts) 和 扩张页面options_page,bakcground,popup）通信 end ---------------------------------------------------------------- */
+
+    /** 内容脚本(content_scripts) 和 扩张页面options_page,bakcground,popup）通信 end ---------------------------------------------------------------- */
+
+
+
+
+    /** 内容脚本(content_scripts) 和 被注入页面 通信 ----------------------------------------------------------------------------------------------- */
+    injectMap = {};
+
+    /**
+     * 监听从Inject发送的消息
+     * @param {string} eventName
+     * @param {({request: {url: string, method: string, headers: {[{key: string}] : string}, body: any }, response: any}) => void} handler
+     * @returns { string | undefined }
+     */
+    listenFromInject(eventName, handler) {
+        if (eventName && handler) {
+            const id = uuid(8, 16);
+            this.injectMap[eventName] = this.injectMap[eventName] || {};
+            this.injectMap[eventName][id] = handler;
+            return id;
+        }
+    }
+
+    /**
+     * 卸载对Inject的监听
+     * @param {string} eventName 
+     * @param {string | undefined | null} id 
+     * @returns 
+     */
+    unlistenFromInject(eventName, id) {
+        const cbObj = this.injectMap[eventName];
+        if (!cbObj) return;
+        if (!id) {
+            delete this.injectMap[eventName];
+        } else if (cbObj[id]) {
+            delete cbObj[id]
+        }
+    }
+
+    /**
+     * 卸载所有Inject的监听
+     */
+    unListenAllFromInject() {
+        this.injectMap = {};
+    }
+
+    /** 内容脚本(content_scripts) 和 被注入页面 通信 end ----------------------------------------------------------------------------------------------- */
+
 }
 
 ContentMessageHelper.getInstance();
@@ -1197,6 +1260,140 @@ class LinkedinExecutor {
         // this.linkedinEnterprise.initialize();
         this.linkedinChat.initialize();
         this.resume.initialize();
+    }
+}
+
+/** 总控制器 end ------------------------------------------------------------------------------------------------------------------ */
+
+        
+    class LiePinProfile extends Base {
+        static instance = new LiePinProfile();
+        static getInstance() {
+            if (!LiePinProfile.instance) LiePinProfile.instance = new LiePinProfile();
+            return LiePinProfile.instance;
+        }
+
+        LIEPIN_PROFILE_CHAT = "liepin_profile_chat";
+
+        LIEPIN_PROFILE_SEARCH = "liepin_profile_search";
+
+        /**
+         * 初始化
+         */
+        initialize() {
+            console.log("LiePinProfile inited");
+            // 监听打招呼事件，帮忙收集简历
+            ContentMessageHelper.getInstance().listenFromOthers(this.LIEPIN_PROFILE_SEARCH, this.handleLiePinProfileSearch.bind(this));
+            // 监听打招呼事件，帮忙打招呼
+            ContentMessageHelper.getInstance().listenFromOthers(this.LIEPIN_PROFILE_CHAT, this.handleLiePinProfileChat.bind(this));
+        }
+
+        /**
+         * 打招呼
+         * @param {string} job_name 岗位名称
+         * @returns {Promise<{status: "success" | "fail", error: any}>} 打招呼消息
+         */
+        async handleLiePinProfileChat(job_name) {
+            try {
+                console.log("liepin_profile_chat");
+
+                /** @todo 这里进行打招呼操作 */
+                /** @todo 完成后返回true */
+
+                // 立即沟通按钮
+                const chatBtn = await waitElement(".resume-detail-operation-wrap .chat-btn");
+                chatBtn.click();
+
+                await sleep(1000);
+
+                const dialogEl = await waitElement(".hpublic-message-select-box-auto", document, 4).catch(err => {
+                    console.log("点击立即沟通按钮后没有弹出弹窗，认为是打招呼成功了", err);
+                    return true;
+                })
+                if (dialogEl === true) return { status: "success", error: null };
+
+                // 打招呼语第一个选项按钮
+                const firstChatTemaplteBtn = await waitElement(".hpublic-message-select-box-auto .li-item:nth-of-type(1)");
+
+                firstChatTemaplteBtn.click();
+
+                // 打开岗位选择
+                const jobSelectInput = await waitElement(".hpublic-job-select input#jobId");
+                const mouseDownEvent = new Event("mousedown", {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    button: 2
+                });
+                jobSelectInput.dispatchEvent(mouseDownEvent);
+
+                await sleep(1000);
+
+                // 选择岗位
+                const jobOptions = await waitElements(".hpublic-job-and-msg-modal-cont-new .ant-form-item-control .ant-select-item-option");
+                let targetOptionEl;
+                if (jobOptions && jobOptions.length) {
+                    for (let optionEl of jobOptions) {
+                        const textEl = optionEl.querySelector("strong");
+                        if (textEl && textEl.innerText && textEl.innerText.indexOf(job_name) !== -1) { // 匹配岗位名
+                            targetOptionEl = optionEl;
+                            break;
+                        }
+                    }
+                }
+
+                if (!targetOptionEl) return { status: "fail", error: "打招呼失败, 没有匹配到对应的岗位:" + job_name }
+                targetOptionEl.click();
+
+                await sleep(1000);
+
+                // 点击立即开聊按钮
+                const submitBtn = await waitElement(".hpublic-job-and-msg-modal-cont-new .btn-bar .btn-ok");
+                submitBtn.click();
+
+                await sleep(1000);
+
+                // 标记已成功
+                return { status: "success" };
+            } catch (error) {
+                // 标记失败，带去错误信息
+                console.log("给当前人员打招呼失败", error);
+                // 叫background上传记录 // 暂时不用报告失败情况
+                return { status: "fail", error }
+            }
+        }
+
+        /**
+         * 收集简历
+         * @returns {Promise<{status: "success" | "fail", peopleInfo: any, error: any}>} 收集简历结果
+         */
+        async handleLiePinProfileSearch() {
+
+            console.log("liepin_profile_search start")
+
+            await sleep(8000 * 1000); // 测试代码
+        }
+    }
+
+        
+/** 总控制器 ------------------------------------------------------------------------------------------------------------------ */
+class LiePinExecutor {
+    static instance = new LiePinExecutor();
+    static getInstance() {
+        if (!LiePinExecutor.instance) LiePinExecutor.instance = new LiePinExecutor();
+        return LiePinExecutor.instance;
+    }
+    constructor() {
+        this.initialize();
+    };
+
+    CMH = ContentMessageHelper.getInstance();
+
+
+    liePinProfile = LiePinProfile.getInstance(); 
+
+    initialize() {
+        this.liePinProfile.initialize();
     }
 }
 

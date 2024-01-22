@@ -13,7 +13,8 @@
                 {
                     "matches": [
                         "https://*.maimai.cn/*",
-                        "https://*.linkedin.com/*"
+                        "https://*.linkedin.com/*",
+                        "https://*.liepin.com/*"
                     ],
                     "js": [
                         "content.js"
