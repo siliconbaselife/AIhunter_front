@@ -55,10 +55,16 @@ class Recall extends Search {
 
     noopTask = async(task) => {
         await this.closeAllMsgDivs();
+        await sleep(1000);
         let page = 1;
         while(true) {
             logger.info(`linkedin ${this.userInfo.name} 当前二次召回任务处理到第 ${page} 页`);
-            await this.dealPeople();
+
+            try {
+                await this.dealPeople();
+            } catch (e) {
+                logger.error(`linkedin ${this.userInfo.name} 二次召回 异常: `, e);
+            }
     
             await this.closeAllMsgDivs();
 

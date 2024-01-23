@@ -233,7 +233,9 @@ class Chat extends Base {
             if (!needTalk)
                 break;
             
-            await this.chatWithRobot(id, name, messages);
+            let noTalk = await this.chatWithRobot(id, name, messages);
+            if (noTalk)
+                break;
             
             await sleep(10 * 1000);
             await this.dealSystemView(id, name);
@@ -391,9 +393,13 @@ class Chat extends Base {
                     logger.error(`boss ${this.userInfo.name} ${name} 申请手机号异常: `, e);
                 }
             }
+
+            if (nextStep == "noTalk")
+                return true;
         } catch (e) {
             logger.error(`boss ${this.userInfo.name} ${name} 聊天发生异常: `, e);
         }
+        return false;
     }
 
     sendContact = async () => {
