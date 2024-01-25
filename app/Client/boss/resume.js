@@ -353,7 +353,8 @@ class Resume extends Base {
 
     closeSearch = async() => {
         let [jobManageBtn] = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
-        await jobManageBtn.click();
+        if (jobManageBtn)
+            await jobManageBtn.click();
         await sleep(500);
     }
 
