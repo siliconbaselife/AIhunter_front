@@ -394,6 +394,7 @@ class Resume extends Base {
         let peopleItems = await this.page.$x(`//div[contains(@class, "mainContent___nwb6Q")]`);
         logger.info(`脉脉 ${this.userInfo.name} 搜索到 ${peopleItems.length} 个people item`);
         for (let index in this.peopleCache) {
+            logger.info(`脉脉 ${this.userInfo.name} helloSum: ${task.helloSum}`);
             if (this.hiEnd && this.friendEnd)
                 break;
 
@@ -415,10 +416,10 @@ class Resume extends Base {
                 await this.touchPeople(task, peopleItem, peopleInfo, index);
                 await this.reportTouch(task, peopleInfo);
                 task.helloSum -= 1;
+                await this.checkdialog();
             } catch (e) {
                 logger.error(`脉脉 ${this.userInfo.name} 给一个人打招呼 ${peopleInfo.name} 出现异常: `, e);
             }
-            await this.checkdialog();
         }
     }
 
@@ -447,8 +448,6 @@ class Resume extends Base {
             },
             method: 'POST'
         });
-
-        task.helloSum -= 1;
     }
 
     addFriend = async(peopleItem, index, peopleInfo) => {
@@ -474,6 +473,8 @@ class Resume extends Base {
         await sleep(300);
         // await this.checkFriendEnd();
         await this.closeProfile(peopleInfo.name);
+
+        await sleep(300);
         await this.checkdialog();
     }
 
@@ -536,6 +537,12 @@ class Resume extends Base {
        let textarea = await this.waitElement('//textarea[contains(@class, "templateInput___19bTd")]', this.page);
        await sleep(300);
        let text = await this.page.evaluate(node => node.textContent, textarea);
+       
+       if (text.length == 0) {
+          await sleep(1000);
+          text = await this.page.evaluate(node => node.textContent, textarea);
+       }
+
        if (sayMsg != text) {
           logger.info(`脉脉 ${this.userInfo.name} name: ${name} 打招呼需要切换话术 text: ${text} sayMsg: ${sayMsg}`);
           while(text.length > 0) {
