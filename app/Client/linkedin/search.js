@@ -27,6 +27,7 @@ class Search extends Base {
     dealTaskBefore = async(task) => {
         await this.refresh();
         await this.closeAllMsgDivs();
+        await sleep(3 * 1000);
         await this.setSearchTxt(task);
         await this.setLocation(task);
         await this.setCurrentCompany(task);
