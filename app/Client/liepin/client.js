@@ -50,8 +50,8 @@ class Client {
         
         // await sleep(100000 * 1000); // 测试代码，先暂停
 
-        // let resume = new Resume(this.options);
-        // await resume.run() 
+        let resume = new Resume(this.options);
+        await resume.run() 
 
         logger.info(`liepin ${this.userInfo.name} 打招呼任务执行完成`);
 
