@@ -6,6 +6,7 @@ const Common = require('../common');
 const ProcessControl = require("../../ProcessControl/index");
 const Search = require('./search');
 const Resume = require('./resume');
+const Chat = require('./chat');
 
 class Client {
     userInfo;
@@ -46,10 +47,18 @@ class Client {
         await this.loginPage(account_id);
         logger.info("liepin 登陆完成");
         await sleep(2 * 1000);
+        
+        // await sleep(100000 * 1000); // 测试代码，先暂停
 
         let resume = new Resume(this.options);
         await resume.run() 
+
         logger.info(`liepin ${this.userInfo.name} 打招呼任务执行完成`);
+
+        let chat = new Chat(this.options);
+        await chat.run();
+
+
 
         logger.info(`liepin ${this.userInfo.name} 要退出了`);
     }

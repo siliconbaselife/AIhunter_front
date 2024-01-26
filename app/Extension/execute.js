@@ -96,7 +96,7 @@ class ExecuteHelper {
         /**
          * 获取候选人信息
          * @param {string} url 跳转链接
-         * @returns {Promise<{status: "success" | "fail", tab: import("./Tab").Tab, peopleInfo: any}>}
+         * @returns {Promise<{status: "success" | "fail", tab: import("./Tab").Tab, peopleInfo: any, error: string, peopleInfo: any}>}
          */
         async resume(url) {
             const tab = await TabHelper.createATab({
@@ -105,11 +105,11 @@ class ExecuteHelper {
                 selected: false,
             })
 
-            await sleep(1000);
+            await sleep(2000);
             try {
                 const { status, error, peopleInfo } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_search");
-                if (error) Logger.error(`liepin_profile_search 任务失败, ${url}, error: ${error}`);
-                return { status, tab, peopleInfo }
+                if (error) Logger.error(`liepin_profile_search 任务有报错, ${url}, error: ${error && error.message || error}`);
+                return { status, tab, peopleInfo, error }
             } catch (error) {
                 Logger.error(`liepin 等待liepin_profile_search任务结果报错: ${url} ${error}`);
                 return { status: "fail", tab, peopleInfo: null }

@@ -10,7 +10,8 @@ class Base extends Common {
     page;
 
     indexUrl = "https://h.liepin.com/";
-    findPeopleUrl = "https://h.liepin.com/search/getConditionItem";
+    findPeopleUrl = "https://h.liepin.com/search/getConditionItem"; // 找人页面
+    chatUrl = "https://h.liepin.com/im/showmsgnewpage?tab=message"; // 沟通页面
     loginUrl = "https://h.liepin.com/account/login";
 
 
