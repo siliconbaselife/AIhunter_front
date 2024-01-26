@@ -366,7 +366,7 @@ class Search extends Base {
         }
 
         if (!httpUrl) { // 如果通过以上方法还不能拿到链接，则手动拼接链接
-            httpUrl = `https://h.liepin.com/resume/showresumedetail/?showsearchfeedback=1&res_id_encode=${peopleId}&index=3&position=3&cur_page=0&pageSize=30&sfrom=RES_SEARCH&res_source=1&type=normal`
+            httpUrl = `https://h.liepin.com/resume/showresumedetail/?showsearchfeedback=1&res_id_encode=${peopleId}&position=3&cur_page=0&pageSize=30&sfrom=RES_SEARCH&res_source=1&type=normal`
         }
 
         logger.info(`liepin ${this.userInfo.name} fetchPeopleUrl, ${this.userInfo.name}, url: ${httpUrl}`);
