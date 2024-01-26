@@ -68,6 +68,7 @@ class Common {
         ignoreHTTPSErrors: true,
         waitForInitialPage: false,
         args,
+        // protocolTimeout: 60 * 60 * 1000, // 一小时超时时间, 防止操作超时直接关浏览器  测试时可以打开
       });
 
       return this.saveExtensionTarget()
