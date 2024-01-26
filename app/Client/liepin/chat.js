@@ -53,8 +53,14 @@ class Chat extends Base {
                 try {
                     const res = await response.json();
                     if (res.flag == 1 && res.data) {
+                        const { totalCount, list = [] } = res.data;
+                        const messages = list || [];
+                        if (totalCount > 0 && totalCount == messages.length) { // 说明还有下一页, 滚动一下
+                            await this.chatWindowScrollToTop();
+                            await sleep(500);
+                        }
+                        console.log("messages", messages);
 
-                        const messages = res.data.list;
                         await this.dealPeopleMessage(messages);
                     }
 
@@ -71,7 +77,7 @@ class Chat extends Base {
      * 处理一个人的消息列表并保存起来
      * @param {*} messages 
      */
-    dealPeopleMessage = async (messages) => {
+    dealPeopleMessage = async (messages = []) => {
         const inclueOppsitePeopleMessageItem = messages.find(item => item.oppositeUserId);
         if (!inclueOppsitePeopleMessageItem) {
             logger.error(`liepin ${this.userInfo.name} 获取含有对方的消息记录失败 messages: ${JSON.stringify(messages || 'none')}`);
@@ -79,12 +85,16 @@ class Chat extends Base {
         }
         const id = inclueOppsitePeopleMessageItem.oppositeUserId;
         logger.info(`liepin ${this.userInfo.name} 获取到 候选人id: ${id} 的消息`);
-        this.messageCache[id] = inclueOppsitePeopleMessageItem;
+        if (Array.isArray(this.messageCache[id])) {
+            this.messageCache[id].push(...messages)
+        } else {
+            this.messageCache[id] = messages;
+        }
     }
 
     noop = async () => {
         let unreadNum = await this.hasUnread();
-        while (unreadNum > 0) {
+        while (unreadNum > 0 && !this.retryDealUnreadMsg) {
             try {
                 await this.doUnread();
             } catch (e) {
@@ -209,14 +219,15 @@ class Chat extends Base {
         logger.info(`liepin ${this.userInfo.name} 有 ${unreadNum} 个未读消息`);
 
         await this.setUnreadPage();
-        await this.dealUnreadMsg();
+        await this.dealUnreadMsg(unreadNum);
         await this.setUnreadEnd();
     }
 
     /**
      * 处理所有未读消息
+     * @param {number} unreadNum 通过小红点判断的未读消息数量
      */
-    dealUnreadMsg = async () => {
+    dealUnreadMsg = async (unreadNum) => {
         let items = await this.waitElements(`//div[contains(@id, "im-search")]//div[contains(@class, "__im_pro__list-item")]`, this.page);
         logger.info(`liepin ${this.userInfo.name} 获取到 ${items.length} 个未读item`);
         let index = 0;
@@ -231,6 +242,32 @@ class Chat extends Base {
             }
 
             index += 1;
+        }
+
+        if (items.length != unreadNum && !this.retryDealUnreadMsg) { // 猎聘未读列表貌似有bug, 有时有些未读消息不会展示在未读列表
+            this.retryDealUnreadMsg = true; // 尝试一次，后面如果判断 未读数 和 在未读消息列表 数量还是不一样的话，就不卡在这里了
+
+            await this.putAllMessageBtn();
+            let items = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item")]`);
+            for (let item of items) {
+                const [numberDiv] = await item.$$(`div.__im_basic__avatar:nth-of-type(1)`);
+                if (numberDiv) {
+                    const number = await this.page.evaluate(node => Number(node.innerText), numberDiv);
+
+                    // 跟上面一样的处理
+                    if (number > 0) {
+                        await this.scrollChatToPosition(item);
+
+                        try {
+                            await this.dealOnePeople(item);
+                        } catch (e) {
+                            logger.error(`liepin ${this.userInfo.name} 处理未读消息出现异常: `, e);
+                        }
+
+                        index += 1;
+                    }
+                }
+            }
         }
     }
 
@@ -452,7 +489,7 @@ class Chat extends Base {
         logger.info(`liepin ${this.userInfo.name} 简历按钮: `, resumeBtn);
         if (resumeBtn) {
             await resumeBtn.click();
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]//`, this.page, 5);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
             let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
             if (confirmBtn) {
                 await confirmBtn.click();
@@ -465,6 +502,12 @@ class Chat extends Base {
         if (wxBtn) {
             await wxBtn.click();
             await sleep(500);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
+            let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
+            if (confirmBtn) {
+                await confirmBtn.click();
+                await sleep(500);
+            }
         }
 
         let [phoneBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-phone")]`);
@@ -472,6 +515,12 @@ class Chat extends Base {
         if (phoneBtn) {
             await phoneBtn.click();
             await sleep(500);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
+            let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
+            if (confirmBtn) {
+                await confirmBtn.click();
+                await sleep(500);
+            }
         }
     }
 
@@ -733,6 +782,20 @@ class Chat extends Base {
     }
 
     /**
+     * 聊天窗口滚动到最高(为了获取以往消息)
+     */
+    async chatWindowScrollToTop() {
+        try {
+            await this.page.evaluate(() => {
+                const scrollContainer = document.querySelector(".__im_pro__chat-list div[data-overlayscrollbars-viewport]");
+                scrollContainer.scrollTo(0, 0);
+            })
+        } catch (error) {
+            logger.error(`liepin ${this.userInfo.name} 移动到顶部失败`);
+        }
+    }
+
+    /**
      * 点击未读按钮，切换到未读tab
      */
     putUnreadBtn = async () => {
@@ -743,16 +806,15 @@ class Chat extends Base {
         }
     }
 
+    /**
+     * 点击全部按钮，却换到全部消息tab
+     */
     putAllMessageBtn = async () => {
         let allBtn = await this.waitElement(`//div[contains(@class, "ant-space-item")]//span[text() = "全部"]/parent::button[not(contains(@class, "active"))]`, this.page, 5);
         if (allBtn) {
             await allBtn.click();
             await sleep(2 * 1000);
-        } else {
-            logger.error(`liepin ${this.userInfo.name} 找不到切换全部消息按钮`);
         }
-
-
     }
 
     setUnreadPage = async () => {

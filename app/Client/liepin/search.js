@@ -341,12 +341,13 @@ class Search extends Base {
 
     /**
      * 获取候选人链接
+     * @param {string | number} peopleId
      * @param {import("puppeteer").ElementHandle} peopleItem
      * @param {?number} maxTime 最大等待时间 
      * @returns {Promise<{httpUrl: string}>}
      */
-    fetchPeopleUrl = async (peopleItem, maxTime = 2000) => {
-        sleep(1500).then(() => { peopleItem.click() });
+    fetchPeopleUrl = async (peopleId, peopleItem, maxTime = 2000) => {
+        sleep(2000).then(() => { peopleItem.click() });
         let httpUrl = await this.page.evaluate(async () => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
             return new Promise((rs) => {
                 window.__origin_open = window.open;
@@ -356,7 +357,7 @@ class Search extends Base {
                 }
             })
         }).catch(err => {
-            logger.error(`liepin fetchPeopleUrl ${this.userInfo.name} err ${err}`);
+            logger.error(`liepin ${this.userInfo.name} fetchPeopleUrl ${this.userInfo.name} err ${err}`);
         })
         let waitTime = 0;
         while (!httpUrl && waitTime < maxTime) {
@@ -364,7 +365,11 @@ class Search extends Base {
             waitTime += 500;
         }
 
-        logger.info(`liepin fetchPeopleUrl, ${this.userInfo.name}, url: ${httpUrl}`);
+        if (!httpUrl) { // 如果通过以上方法还不能拿到链接，则手动拼接链接
+            httpUrl = `https://h.liepin.com/resume/showresumedetail/?showsearchfeedback=1&res_id_encode=${peopleId}&index=3&position=3&cur_page=0&pageSize=30&sfrom=RES_SEARCH&res_source=1&type=normal`
+        }
+
+        logger.info(`liepin ${this.userInfo.name} fetchPeopleUrl, ${this.userInfo.name}, url: ${httpUrl}`);
 
         if (httpUrl) { // 对链接处理一下
             httpUrl = httpUrl.replace("JSHandle:", "");
