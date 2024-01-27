@@ -1306,7 +1306,7 @@ class LinkedinExecutor {
 
                 await sleep(1000);
 
-                const dialogEl = await waitElement(".hpublic-message-select-box-auto", document, 4).catch(err => {
+                const dialogEl = await waitElement(".hpublic-message-select-box-auto", 2, document).catch(err => {
                     console.log("点击立即沟通按钮后没有弹出弹窗，认为是打招呼成功了", err);
                     return true;
                 })
@@ -1368,10 +1368,527 @@ class LinkedinExecutor {
          * @returns {Promise<{status: "success" | "fail", peopleInfo: any, error: any}>} 收集简历结果
          */
         async handleLiePinProfileSearch() {
+            try {
+                console.log("liepin_profile_search start")
 
-            console.log("liepin_profile_search start")
+                let errorMsg = "";
 
-            await sleep(8000 * 1000); // 测试代码
+                const basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
+                const jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const projectExperiences = await this.getProjectExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const eduExperiences = await this.getEduExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const languages = await this.getlanguages().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const skills = await this.getSkills().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                const selfEvaInfo = await this.getSelfEvaInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
+                const additionalInfo = await this.getAdditionalInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
+
+                const peopleInfo = this.gatherAllInfo({
+                    basicInfo,
+                    jobExpectancies,
+                    workExperiences,
+                    projectExperiences,
+                    eduExperiences,
+                    languages,
+                    skills,
+                    selfEvaInfo,
+                    additionalInfo
+                })
+                return { status: "success", peopleInfo, error: errorMsg }
+            } catch (error) {
+                console.log("error", error);
+                return { status: "fail", error }
+            }
+        }
+
+
+        async getBasicInfo() {
+            const baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
+
+            if (baseInfoEl) {
+                const nameEl = await waitElement(".name-box .name", 5, baseInfoEl);
+                const name = nameEl && nameEl.innerText;
+                const statusEl = await waitElement(".user-status-tag", 5, baseInfoEl);
+                const status = statusEl && statusEl.innerText;
+                const baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
+                const [baseRowEl1, baseRowEl2] = baseRowEls;
+                const [sex, age, district, degree, workyear, salary] = baseRowEl1.innerHTML.split("<i></i>");
+                const [current_job_name, current_company_name] = baseRowEl2.innerHTML.split("<i></i>");
+                return {
+                    name,
+                    status,
+                    sex,
+                    age,
+                    district,
+                    degree,
+                    workyear,
+                    salary,
+                    current_job_name,
+                    current_company_name
+                }
+            } else {
+                return null;
+            }
+        }
+
+        async getJobExpectancy() {
+            const jobExpectancyEl = await waitElement("#resume-detail-job-exp-info", 2);
+            const result = [];
+            if (jobExpectancyEl) {
+                const viewAllBtn = await waitElement(".want-job .job-card-right", 2, jobExpectancyEl);
+                if (!viewAllBtn) { // 没有查看全部按钮
+                    const oneRow = await waitElement(".left-wrap", 5, jobExpectancyEl);
+                    const jobExpectancyNameEl = await waitElement(".title", 5, oneRow);
+                    const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                    const jobExpectancySalaryEl = await waitElement(".salary", 5, oneRow);
+                    const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                    const jobExpectancyDistrictEl = await waitElement(".dqname", 5, oneRow);
+                    const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                    const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 5, oneRow);
+                    const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                    const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+
+                    result.push({
+                        jobExpectancyName,
+                        jobExpectancySalary,
+                        jobExpectancyDistrict,
+                        jobExpectancyLabels
+                    })
+                } else { // 有查看全部按钮
+                    viewAllBtn.click();
+                    await sleep(500);
+                    const dialogEl = await waitElement(".want-job-list-modal", 5);
+                    const wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
+                    for (let wantJobEl of wantJobEls) {
+                        const jobExpectancyNameEl = await waitElement(".job-name", 5, wantJobEl);
+                        const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                        const jobExpectancySalaryEl = await waitElement(".salary", 5, wantJobEl);
+                        const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                        const jobExpectancyDistrictEl = await waitElement(".address", 5, wantJobEl);
+                        const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                        const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 5, wantJobEl);
+                        const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                        const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+                        result.push({
+                            jobExpectancyName,
+                            jobExpectancySalary,
+                            jobExpectancyDistrict,
+                            jobExpectancyLabels
+                        })
+                    }
+                    const closeBtnEl = await waitElement(".ant-modal-close", 5, dialogEl);
+                    if (closeBtnEl) closeBtnEl.click();
+                }
+            }
+
+            return result;
+        }
+
+        async getWorkExperiences() {
+            const workExperiencesEl = await waitElement("#resume-detail-work-info", 2);
+            const result = [];
+            if (workExperiencesEl) {
+                const workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl)) || [];
+
+
+                for (let workExperienceEl of workExperienceEls) {
+                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 5, workExperienceEl);
+                    const workInCompany = workInCompanyEl && workInCompanyEl.innerText;
+                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 5, workExperienceEl);
+                    const workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
+
+                    const workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
+                    const workInCompanyTags = [...(workInCompanyTagEls || [])].map(item => item.innerText);
+                    const workInCompanyJobNameEl = await waitElement(".rd-info-tpl-item-cont .job-name");
+                    const workInCompanyJobName = workInCompanyJobNameEl && workInCompanyJobNameEl.innerText;
+
+                    const workInCompanyJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", workExperienceEl)) || [];
+                    const workInCompanyJobContents = [];
+                    for (let WICJCRE of workInCompanyJobContentRowEls) {
+                        const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        for (let colEl of colEls) {
+                            const keyNameEl = await waitElement(".rd-info-col-title", 5, colEl);
+                            const keyName = keyNameEl && keyNameEl.innerText;
+                            const valueNameEl = await waitElement(".rd-info-col-cont", 5, colEl);
+                            const valueName = valueNameEl && valueNameEl.innerText;
+                            workInCompanyJobContents.push({
+                                key: keyName,
+                                value: valueName
+                            })
+                        }
+                    }
+
+                    result.push({
+                        workInCompany,
+                        workInCompanyTime,
+                        workInCompanyTags,
+                        workInCompanyJobName,
+                        workInCompanyJobContents
+                    })
+                }
+            }
+
+            return result;
+        }
+
+        async getProjectExperiences() {
+            const projectExperiencesEl = await waitElement("#resume-detail-project-info", 2);
+            const result = [];
+            if (projectExperiencesEl) {
+                const showMoreBtn = await waitElement(".rd-info-other-box", 2, projectExperiencesEl);
+                if (showMoreBtn) {
+                    showMoreBtn.click();
+                    await sleep(500);
+                }
+
+                const projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl)) || [];
+                for (let projectExperienceEl of projectExperienceEls) {
+                    const ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, projectExperienceEl);
+                    const ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
+                    const ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, projectExperienceEl);
+                    const ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
+
+                    const ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl)) || [];
+                    const ProjectExpJobContents = [];
+                    for (let WICJCRE of ProjectExpJobContentRowEls) {
+                        const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        for (let colEl of colEls) {
+                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
+                            const keyName = keyNameEl && keyNameEl.innerText;
+                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
+                            const valueName = valueNameEl && valueNameEl.innerText;
+                            ProjectExpJobContents.push({
+                                key: keyName,
+                                value: valueName
+                            })
+                        }
+                    }
+
+                    result.push({
+                        ProjectExpName,
+                        ProjectExpTime,
+                        ProjectExpJobContents
+                    })
+                }
+            }
+
+            return result;
+        }
+
+        async getEduExperiences() {
+            const educationsEl = await waitElement("#resume-detail-edu-info", 2);
+            const result = [];
+            if (educationsEl) {
+                const educationEls = await waitElements(".rd-edu-info-item", educationsEl, 2);
+                if (educationEls && educationEls.length) {
+                    for (let educationEl of educationEls) {
+                        const schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 2, educationEl);
+                        const schoolNameEl = await waitElement(".school-name", 5, schoolBasicInfoEl);
+                        const schoolName = schoolNameEl && schoolNameEl.innerText;
+                        const schoolSpecialEl = await waitElement(".school-special", 5, schoolBasicInfoEl);
+                        const schoolSpecial = schoolSpecialEl && schoolSpecialEl.innerText;
+                        const schoolDegreeEl = await waitElement(".school-degree", 5, schoolBasicInfoEl);
+                        const schoolDegree = schoolDegreeEl && schoolDegreeEl.innerText;
+                        const schoolTimeEl = await waitElement(".school-time", 5, schoolBasicInfoEl);
+                        const schoolTime = schoolTimeEl && schoolTimeEl.innerText;
+
+                        const schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
+                        const schoolTags = [...(schoolTagEls || [])].map(item => item.innerText);
+                        result.push({
+                            schoolName,
+                            schoolSpecial,
+                            schoolDegree,
+                            schoolTime,
+                            schoolTags
+                        })
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        async getlanguages() {
+            const languagesEl = await waitElement("#resume-detail-lang-info", 2);
+            const result = [];
+            if (languagesEl) {
+                const languageItemEls = await waitElements(".rd-lang-item", languagesEl);
+                if (languageItemEls && languageItemEls.length) {
+                    for (let languageItemEl of languageItemEls) {
+                        const languageNameEl = await waitElement(".lang-name", 5, languageItemEl);
+                        const languageName = languageNameEl && languageNameEl.innerText;
+                        const languageLevelEls = await waitElement(".lang-level", 5, languageItemEl);
+                        const languageLevels = [...(languageLevelEls || [])].map(item => item.innerText);
+
+                        result.push({
+                            languageName,
+                            languageLevels
+                        })
+                    }
+                }
+            }
+            return result;
+        }
+
+        async getSkills() {
+            const skillsEl = await waitElement("#resume-detail-skill-info", 2);
+            const result = [];
+            if (skillsEl) {
+                const skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl)) || [];
+
+
+                if (skillTagEls && skillTagEls.length) {
+                    result = [...skillTagEls].map(item => item.innerText)
+                }
+            }
+
+            return result;
+        }
+
+        async getSelfEvaInfo() {
+            const selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 2);
+            let result = "";
+            if (selfEvaInfoEl) {
+                const detailEl = await waitElement(".resume-detail-template-cont", 5, selfEvaInfoEl);
+                if (detailEl) {
+                    result = detailEl && detailEl.innerText;
+                }
+            }
+
+            return result;
+        }
+
+        async getAdditionalInfo() {
+            const additionalInfoEl = await waitElement("#resume-detail-addition-info", 2);
+            let result = "";
+            if (additionalInfoEl) {
+                const detailEl = await waitElement(".resume-detail-template-cont", 5, additionalInfoEl);
+                if (detailEl) {
+                    result = detailEl && detailEl.innerText;
+                }
+            }
+            return result;
+        }
+
+        /**
+         * ReturnType<LiePinProfile["getAdditionalInfo"]
+         * @param {{basicInfo: ReturnType<LiePinProfile["getBasicInfo"]>,jobExpectancies: ReturnType<LiePinProfile["getJobExpectancy"]>,workExperiences:ReturnType<LiePinProfile["getWorkExperiences"]>,projectExperiences: ReturnType<LiePinProfile["getProjectExperiences"]>,eduExperiences: ReturnType<LiePinProfile["getEduExperiences"]>,languages: ReturnType<LiePinProfile["getlanguages"]>,skills: ReturnType<LiePinProfile["getSkills"]>,selfEvaInfo: ReturnType<LiePinProfile["getSelfEvaInfo"]>,additionalInfo: ReturnType<LiePinProfile["getAdditionalInfo"]>}} info 
+         */
+        gatherAllInfo(info) {
+            const { basicInfo, jobExpectancies, workExperiences, projectExperiences, eduExperiences, languages, skills, selfEvaInfo, additionalInfo } = info;
+            const finalResult = {
+                showName: null,
+                skillLables: null,
+                eduExpFormList: null,
+                resSelfassess: null,
+                professionInfo: null,
+                basicInfoForm: null,
+                resExpectInfoDtos: null,
+                projectExpFormList: null,
+                languageFormList: null,
+                workExps: null,
+                resAddition: null,
+            };
+            if (basicInfo) {
+                const { name, status, sex, age, district, degree, workyear, salary, current_job_name, current_company_name } = basicInfo;
+                finalResult.showName = name;
+                finalResult.basicInfoForm = {
+                    birthYearAge: age && this.parseNumber(age),
+                    resHopeName: status,
+                    resCompany: current_company_name,
+                    resTitle: current_job_name,
+                    workYearsDescr: workyear,
+                    workStartYearAge: workyear && this.parseNumber(workyear),
+                    sex,
+                    eduLevelName: degree,
+                    dqName: district,
+                    salary,
+                }
+            }
+            if (jobExpectancies) {
+                finalResult.resExpectInfoDtos = jobExpectancies.map(item => {
+                    const { jobExpectancyName, jobExpectancySalary, jobExpectancyDistrict, jobExpectancyLabels } = item;
+                    return {
+                        labels: jobExpectancyLabels,
+                        wantJobtitleName: jobExpectancyName,
+                        wantIndustryName: jobExpectancyLabels && jobExpectancyLabels.join('/') || "",
+                        wantSalaryShow: jobExpectancySalary,
+                        wantSalaryUpper: jobExpectancySalary && (Number((jobExpectancySalary.split('k')[0]).split('-')[1]) * 1000) || null,
+                        wantSalaryLower: jobExpectancySalary && (Number(jobExpectancySalary.split('-')[0]) * 1000) || null,
+                        wantSalMonths: jobExpectancySalary && this.parseNumber(jobExpectancySalary.split('×')[1]) || null,
+                        wantDqName: jobExpectancyDistrict,
+                    }
+                })
+            }
+            if (workExperiences) {
+                finalResult.workExps = workExperiences.map(item => {
+                    const {
+                        workInCompany,
+                        workInCompanyTime,
+                        workInCompanyTags,
+                        workInCompanyJobName,
+                        workInCompanyJobContents
+                    } = item;
+                    const { startYear, startMonth, endYear, endMonth, yearNum, monthNum } = this.parseTime(workInCompanyTime);
+                    const salaryItem = workInCompanyJobContents.find(item => item.key.indexOf("薪") !== -1);
+                    const dutyItem = workInCompanyJobContents.find(item => item.key.indexOf("职责") !== -1);
+                    const dqItem = workInCompanyJobContents.find(item => item.key.indexOf("工作地点") !== -1);
+                    const jobTitleItem = workInCompanyJobContents.find(item => item.key.indexOf("职位类别") !== -1);
+                    const reportToItem = workInCompanyJobContents.find(item => item.key.indexOf("汇报对象") !== -1);
+                    const rwDeptItem = workInCompanyJobContents.find(item => item.key.indexOf("所在部门") !== -1);
+                    return {
+                        startYear,
+                        startMonth,
+                        endYear,
+                        endMonth,
+                        workYearNum: yearNum,
+                        workMonthNum: monthNum,
+                        rwCompname: workInCompany,
+                        rwSalary: salaryItem ? salaryItem.value.split('k')[0] : null,
+                        rwSalmonths: salaryItem ? this.parseNumber(salaryItem.value.split('·')[1] || "") : null,
+                        rwDuty: dutyItem ? dutyItem.value : "",
+                        rwDqName: dqItem ? dqItem.value : "",
+                        rwJobTitleName: jobTitleItem ? jobTitleItem.value : "",
+                        rwReport2: reportToItem ? reportToItem.value : "",
+                        rwDept: rwDeptItem ? rwDeptItem.value : "",
+                        compTagList: workInCompanyTags.map(item => ({ tagName: item })),
+                        rwTitle: workInCompanyJobName,
+                    }
+                })
+            }
+            if (projectExperiences) {
+                finalResult.projectExpFormList =
+                    projectExperiences.map(item => {
+                        const { ProjectExpName,
+                            ProjectExpTime,
+                            ProjectExpJobContents } = item;
+                        const rpdTitleItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职务") !== -1);
+                        const rpdDescItem = ProjectExpJobContents.find(item => item.key.indexOf("项目描述") !== -1);
+                        const rpdDutyItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职责") !== -1);
+                        const rpdCompnameItem = ProjectExpJobContents.find(item => item.key.indexOf("所在公司") !== -1);
+                        const rpdAchievementItem = ProjectExpJobContents.find(item => item.key.indexOf("项目业绩") !== -1);
+                        const { startYear, startMonth, endYear, endMonth } = this.parseTime2(ProjectExpTime);
+                        return {
+                            startYear,
+                            endYear,
+                            startMonth,
+                            endMonth,
+                            rpdName: ProjectExpName,
+                            rpdDesc: rpdDescItem ? rpdDescItem.value : "",
+                            rpdDuty: rpdDutyItem ? rpdDutyItem.value : "",
+                            rpdCompname: rpdCompnameItem ? rpdCompnameItem.value : "",
+                            rpdTitle: rpdTitleItem ? rpdTitleItem.value : "",
+                            rpdAchievement: rpdAchievementItem ? rpdAchievementItem.value : "",
+                        }
+                    })
+            }
+
+            if (eduExperiences) {
+                finalResult.eduExpFormList =
+                    eduExperiences.map(item => {
+                        const { schoolName,
+                            schoolSpecial,
+                            schoolDegree,
+                            schoolTime,
+                            schoolTags } = item;
+                        const { startYear, startMonth, endYear, endMonth } = this.parseTime2(schoolTime)
+                        return {
+                            startYear,
+                            startMonth,
+                            endYear,
+                            endMonth,
+                            redDegreeName: schoolDegree,
+                            redSchool: schoolName,
+                            redSpecial: schoolSpecial,
+                            schoolGradeNames: schoolTags
+                        }
+                    })
+            }
+            if (languages) {
+                finalResult.languageFormList =
+                    languages.map(item => {
+                        const { languageName,
+                            languageLevels } = item
+                        return {
+                            languageTypeName: languageName,
+                            otherTypeContent: languageName,
+                            languageLevelFormList: languageLevels && languageLevels.map(item => ({
+                                languageLevelName: item
+                            })) || [],
+                        }
+                    })
+            }
+
+            if (skills) {
+                finalResult.skillLables = skills
+            }
+
+            if (selfEvaInfo) {
+                finalResult.resSelfassess = selfEvaInfo;
+            }
+            if (additionalInfo) {
+                finalResult.resAddition = additionalInfo;
+            }
+
+            return finalResult;
+        }
+
+
+        parseTime(str = "") {
+            try {
+                let [range, text] = str.split(",");
+                let [start, end] = range.split("-");
+                let [startYear, startMonth] = start.split(".");
+                let [endYear, endMonth] = end.split(".");
+                let yearNum = text.split('年')[0];
+                let monthNum = text.split('年')[1] || "";
+                monthNum = this.parseNumber(monthNum)
+                if (endYear.indexOf("至今") !== -1) endYear = "9999";
+                else if (endMonth.indexOf("至今") !== -1) endMonth = "99";
+                startYear = this.parseNumber(startYear);
+                startMonth = this.parseNumber(startMonth);
+                endYear = this.parseNumber(endYear);
+                endMonth = this.parseNumber(endMonth);
+                yearNum = this.parseNumber(yearNum);
+                monthNum = this.parseNumber(monthNum);
+
+                console.log({ startYear, startMonth, endYear, endMonth, yearNum, monthNum });
+                return { startYear, startMonth, endYear, endMonth, yearNum, monthNum }
+            } catch (error) {
+                console.log("error", error);
+                return { startYear: 0, startMonth: 0, endYear: 0, endMonth: 0, yearNum: 0, monthNum: 0 }
+            }
+
+
+
+        }
+
+        parseTime2(str = "") {
+            try {
+                let [range, text] = str.split(",");
+                let [start, end] = range.split("-");
+                let [startYear, startMonth] = start.split(".");
+                let [endYear, endMonth] = end.split(".");
+                if (endYear.indexOf("至今") !== -1) endYear = "9999";
+                else if (endMonth.indexOf("至今") !== -1) endMonth = "99";
+
+                startYear = this.parseNumber(startYear);
+                startMonth = this.parseNumber(startMonth);
+                endYear = this.parseNumber(endYear);
+                endMonth = this.parseNumber(endMonth);
+                console.log({ startYear, startMonth, endYear, endMonth });
+                return { startYear, startMonth, endYear, endMonth }
+            } catch (error) {
+                console.log("error", error);
+                return { startYear: 0, startMonth: 0, endYear: 0, endMonth: 0 }
+            }
+        }
+
+        parseNumber(str) {
+            str = String(str || "");
+            console.log("str", str, typeof str);
+            console.log("str result", Number(str.replace(/[^\d]/g, " ")));
+            return Number(str.replace(/[^\d]/g, " "));
         }
     }
 

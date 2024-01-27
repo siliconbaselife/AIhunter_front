@@ -516,6 +516,8 @@ class Chat extends Base {
             if (!cardBtn)
                 continue;
 
+            logger.info(`boss ${this.userInfo.name} 需要获取 ${name} 的简历`);
+
             let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
 
             if (btnTxt == "点击预览附件简历")
