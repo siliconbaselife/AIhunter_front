@@ -139,7 +139,7 @@ class Resume extends Search {
                         logger.info(`liepin ${this.userInfo.name} 搜索第${i}个候选人，获取id失败, lastSearchResponse: ${JSON.stringify(this.lastSearchResponse || "none")}, peopleItem: ${JSON.stringify(peopleItem || 'none')}`);
                         continue;
                     }
-                    let { httpUrl } = await this.fetchPeopleUrl(peopleItem);
+                    let { httpUrl } = await this.fetchPeopleUrl(peopleId, peopleItem);
                     logger.info(`liepin ${this.userInfo.name} 当前处理people: ${httpUrl}`);
                     await this.dealOnePeople(httpUrl, task, peopleId, responseItem);
                 } catch (e) {
