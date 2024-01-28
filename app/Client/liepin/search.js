@@ -91,7 +91,7 @@ class Search extends Base {
             await sleep(3000);
 
             const optionList = await this.waitElements(`${cityDialogXpath}//div[contains(@class, "filter-box")]//div[contains(@class, "suggest-list")]//li`, this.page, 4)
-            console.log("optionList", optionList);
+            // console.log("optionList", optionList);
             if (optionList.length <= 0) {
                 logger.info(`liepin ${this.userInfo.name} location: ${loc} 没有推荐list`);
                 continue;
@@ -142,11 +142,6 @@ class Search extends Base {
         const maxWorkYearInput = await this.waitElement(`${workYearXpath}//div[contains(@class, 'year-custom-box')]//input[contains(@id, "workYearsHigh")]`, this.page);
         await maxWorkYearInput.click();
         await this.page.keyboard.type(String(max_work_year), { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
-
-
-        console.log("minWorkYearInput", minWorkYearInput);
-        console.log("maxWorkYearInput", maxWorkYearInput);
-
 
         // 点击确定
         const clickResult = await this.page.evaluate(() => {

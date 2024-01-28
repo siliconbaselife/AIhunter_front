@@ -59,7 +59,7 @@ class Chat extends Base {
                             await this.chatWindowScrollToTop();
                             await sleep(500);
                         }
-                        console.log("messages", messages);
+                        // console.log("messages", messages);
 
                         await this.dealPeopleMessage(messages);
                     }

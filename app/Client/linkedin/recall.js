@@ -83,24 +83,24 @@ class Recall extends Search {
         logger.info(`linkedin ${this.userInfo.name} 二次召回搜索到 ${peopleItems.length} 个people item`);
 
         for (let peopleItem of peopleItems) {
-            let msgBtn = await this.waitElement(`//span[text() = "Message"]`, peopleItem);
-            let [nameSpan] = await peopleItem.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
-            let name = await this.page.evaluate(node => node.innerText, nameSpan);
-            await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
-            await sleep(300);
-            if (!msgBtn) {
-                logger.info(`linkedin ${this.userInfo.name} ${name} 异常,没有message按钮`);
-                continue;
-            }
-
-            let {id, httpUrl} = await this.fetchPeopleId(peopleItem);
-            let recallInfo = await this.filterItem(id);
-            if (!recallInfo) {
-                logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要召回`);
-                continue;
-            }
-
             try {
+                let msgBtn = await this.waitElement(`//span[text() = "Message"]`, peopleItem);
+                let [nameSpan] = await peopleItem.$x(`//span[contains(@class, "entity-result__title-text")]//span[contains(@dir, "ltr")]//span[1]`);
+                let name = await this.page.evaluate(node => node.innerText, nameSpan);
+                await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), peopleItem);
+                await sleep(300);
+                if (!msgBtn) {
+                    logger.info(`linkedin ${this.userInfo.name} ${name} 异常,没有message按钮`);
+                    continue;
+                }
+
+                let {id, httpUrl} = await this.fetchPeopleId(peopleItem);
+                let recallInfo = await this.filterItem(id);
+                if (!recallInfo) {
+                    logger.info(`linkedin ${this.userInfo.name} id: ${id} 不需要召回`);
+                    continue;
+                }
+
                 await this.dealOnePeople(peopleItem, recallInfo, id);
             } catch(e) {
                 logger.error(`linkedin ${this.userInfo.name} ${name} 发二次召回消息异常:`, e);
