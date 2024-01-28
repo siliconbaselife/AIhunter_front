@@ -51,7 +51,8 @@ class Search extends Base {
      * 切换到"找人"tab
      */
     async switchSearchTab() {
-        await this.page.goto(this.findPeopleUrl, { waitUntil: "domcontentloaded" });
+        await this.page.goto(this.findPeopleUrl, { waitUntil: ["domcontentloaded", "networkidle0"] });
+        await sleep(500);
     }
 
     /**
@@ -88,9 +89,9 @@ class Search extends Base {
         for (let loc of location) {
             await cityFilterInput.click();
             await cityFilterInput.type(loc);
-            await sleep(3000);
+            await sleep(2000);
 
-            const optionList = await this.waitElements(`${cityDialogXpath}//div[contains(@class, "filter-box")]//div[contains(@class, "suggest-list")]//li`, this.page, 4)
+            const optionList = await this.waitElements(`${cityDialogXpath}//div[contains(@class, "filter-box")]//div[contains(@class, "suggest-list")]//li`, this.page, 10)
             // console.log("optionList", optionList);
             if (optionList.length <= 0) {
                 logger.info(`liepin ${this.userInfo.name} location: ${loc} 没有推荐list`);
@@ -343,17 +344,23 @@ class Search extends Base {
      */
     fetchPeopleUrl = async (peopleId, peopleItem, maxTime = 2000) => {
         sleep(2000).then(() => { peopleItem.click() });
-        let httpUrl = await this.page.evaluate(async () => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
-            return new Promise((rs) => {
-                window.__origin_open = window.open;
-                window.open = (url) => {
-                    window.open = window.__origin_open;
-                    rs(url)
-                }
+        let httpUrl;
+        try {
+            httpUrl = await this.page.evaluate(async () => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
+                return new Promise((rs) => {
+                    window.__origin_open = window.open;
+                    window.open = (url) => {
+                        window.open = window.__origin_open;
+                        rs(url)
+                    }
+                })
+            }).catch(err => {
+                logger.error(`liepin ${this.userInfo.name} fetchPeopleUrl ${peopleId}  err ${err}`);
             })
-        }).catch(err => {
-            logger.error(`liepin ${this.userInfo.name} fetchPeopleUrl ${this.userInfo.name} err ${err}`);
-        })
+        } catch (error) {
+            logger.error(`liepin ${this.userInfo.name} fetchPeopleUrl ${peopleId} err ${error}`);
+        }
+
         let waitTime = 0;
         while (!httpUrl && waitTime < maxTime) {
             await sleep(500);
