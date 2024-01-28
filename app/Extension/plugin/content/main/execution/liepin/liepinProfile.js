@@ -41,7 +41,7 @@ module.exports =
 
                 await sleep(1000);
 
-                const dialogEl = await waitElement(".hpublic-message-select-box-auto", 2, document).catch(err => {
+                const dialogEl = await waitElement(".hpublic-message-select-box-auto", 1, document).catch(err => {
                     console.log("点击立即沟通按钮后没有弹出弹窗，认为是打招呼成功了", err);
                     return true;
                 })
@@ -58,7 +58,7 @@ module.exports =
                     view: window,
                     bubbles: true,
                     cancelable: true,
-                    button: 2
+                    button: 1
                 });
                 jobSelectInput.dispatchEvent(mouseDownEvent);
 
@@ -107,7 +107,7 @@ module.exports =
                 console.log("liepin_profile_search start")
 
                 let errorMsg = "";
-                await sleep(2 * 1000);
+                await sleep(1 * 1000);
                 const basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
                 const jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
                 const workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
@@ -141,9 +141,9 @@ module.exports =
             const baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
 
             if (baseInfoEl) {
-                const nameEl = await waitElement(".name-box .name", 2, baseInfoEl);
+                const nameEl = await waitElement(".name-box .name", 1, baseInfoEl);
                 const name = nameEl && nameEl.innerText;
-                const statusEl = await waitElement(".user-status-tag", 2, baseInfoEl);
+                const statusEl = await waitElement(".user-status-tag", 1, baseInfoEl);
                 const status = statusEl && statusEl.innerText;
                 const baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
                 const [baseRowEl1, baseRowEl2] = baseRowEls;
@@ -167,69 +167,88 @@ module.exports =
         }
 
         async getJobExpectancy() {
-            const jobExpectancyEl = await waitElement("#resume-detail-job-exp-info", 2);
+            const jobExpectancyEl = await waitElement("#resume-detail-job-exp-info", 1);
             const result = [];
             if (jobExpectancyEl) {
-                const viewAllBtn = await waitElement(".want-job .job-card-right", 2, jobExpectancyEl);
-                if (!viewAllBtn) { // 没有查看全部按钮
-                    const oneRow = await waitElement(".left-wrap", 2, jobExpectancyEl);
-                    const jobExpectancyNameEl = await waitElement(".title", 2, oneRow);
-                    const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                    const jobExpectancySalaryEl = await waitElement(".salary", 2, oneRow);
-                    const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                    const jobExpectancyDistrictEl = await waitElement(".dqname", 2, oneRow);
-                    const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                    const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 2, oneRow);
-                    const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
-                    const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+                const oneRow = await waitElement(".left-wrap", 1, jobExpectancyEl);
+                const jobExpectancyNameEl = await waitElement(".title", 1, oneRow);
+                const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                const jobExpectancySalaryEl = await waitElement(".salary", 1, oneRow);
+                const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                const jobExpectancyDistrictEl = await waitElement(".dqname", 1, oneRow);
+                const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 1, oneRow);
+                const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
 
-                    result.push({
-                        jobExpectancyName,
-                        jobExpectancySalary,
-                        jobExpectancyDistrict,
-                        jobExpectancyLabels
-                    })
-                } else { // 有查看全部按钮
-                    viewAllBtn.click();
-                    await sleep(500);
-                    const dialogEl = await waitElement(".want-job-list-modal", 5);
-                    const wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
-                    for (let wantJobEl of wantJobEls) {
-                        const jobExpectancyNameEl = await waitElement(".job-name", 2, wantJobEl);
-                        const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                        const jobExpectancySalaryEl = await waitElement(".salary", 2, wantJobEl);
-                        const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                        const jobExpectancyDistrictEl = await waitElement(".address", 2, wantJobEl);
-                        const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                        const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 2, wantJobEl);
-                        const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
-                        const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
-                        result.push({
-                            jobExpectancyName,
-                            jobExpectancySalary,
-                            jobExpectancyDistrict,
-                            jobExpectancyLabels
-                        })
-                    }
-                    const closeBtnEl = await waitElement(".ant-modal-close", 2, dialogEl);
-                    if (closeBtnEl) closeBtnEl.click();
-                }
+                result.push({
+                    jobExpectancyName,
+                    jobExpectancySalary,
+                    jobExpectancyDistrict,
+                    jobExpectancyLabels
+                })
+
+                // 暂不需要所有的求职期望数据
+                // const viewAllBtn = await waitElement(".want-job .job-card-right", 1, jobExpectancyEl);
+                // if (!viewAllBtn) { // 没有查看全部按钮
+                //     const oneRow = await waitElement(".left-wrap", 1, jobExpectancyEl);
+                //     const jobExpectancyNameEl = await waitElement(".title", 1, oneRow);
+                //     const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                //     const jobExpectancySalaryEl = await waitElement(".salary", 1, oneRow);
+                //     const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                //     const jobExpectancyDistrictEl = await waitElement(".dqname", 1, oneRow);
+                //     const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                //     const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 1, oneRow);
+                //     const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                //     const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+
+                //     result.push({
+                //         jobExpectancyName,
+                //         jobExpectancySalary,
+                //         jobExpectancyDistrict,
+                //         jobExpectancyLabels
+                //     })
+                // } else { // 有查看全部按钮
+                //     viewAllBtn.click();
+                //     await sleep(500);
+                //     const dialogEl = await waitElement(".want-job-list-modal", 5);
+                //     const wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
+                //     for (let wantJobEl of wantJobEls) {
+                //         const jobExpectancyNameEl = await waitElement(".job-name", 1, wantJobEl);
+                //         const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                //         const jobExpectancySalaryEl = await waitElement(".salary", 1, wantJobEl);
+                //         const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                //         const jobExpectancyDistrictEl = await waitElement(".address", 1, wantJobEl);
+                //         const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                //         const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 1, wantJobEl);
+                //         const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                //         const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+                //         result.push({
+                //             jobExpectancyName,
+                //             jobExpectancySalary,
+                //             jobExpectancyDistrict,
+                //             jobExpectancyLabels
+                //         })
+                //     }
+                //     const closeBtnEl = await waitElement(".ant-modal-close", 1, dialogEl);
+                //     if (closeBtnEl) closeBtnEl.click();
+                // }
             }
 
             return result;
         }
 
         async getWorkExperiences() {
-            const workExperiencesEl = await waitElement("#resume-detail-work-info", 2);
+            const workExperiencesEl = await waitElement("#resume-detail-work-info", 1);
             const result = [];
             if (workExperiencesEl) {
                 const workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl)) || [];
 
 
                 for (let workExperienceEl of workExperienceEls) {
-                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, workExperienceEl);
+                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, workExperienceEl);
                     const workInCompany = workInCompanyEl && workInCompanyEl.innerText;
-                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, workExperienceEl);
+                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, workExperienceEl);
                     const workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
 
                     const workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
@@ -242,9 +261,9 @@ module.exports =
                     for (let WICJCRE of workInCompanyJobContentRowEls) {
                         const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
                         for (let colEl of colEls) {
-                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
+                            const keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
                             const keyName = keyNameEl && keyNameEl.innerText;
-                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
+                            const valueNameEl = await waitElement(".rd-info-col-cont", 1, colEl);
                             const valueName = valueNameEl && valueNameEl.innerText;
                             workInCompanyJobContents.push({
                                 key: keyName,
@@ -267,10 +286,10 @@ module.exports =
         }
 
         async getProjectExperiences() {
-            const projectExperiencesEl = await waitElement("#resume-detail-project-info", 2);
+            const projectExperiencesEl = await waitElement("#resume-detail-project-info", 1);
             const result = [];
             if (projectExperiencesEl) {
-                const showMoreBtn = await waitElement(".rd-info-other-box", 2, projectExperiencesEl);
+                const showMoreBtn = await waitElement(".rd-info-other-box", 1, projectExperiencesEl);
                 if (showMoreBtn) {
                     showMoreBtn.click();
                     await sleep(500);
@@ -278,9 +297,9 @@ module.exports =
 
                 const projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl)) || [];
                 for (let projectExperienceEl of projectExperienceEls) {
-                    const ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, projectExperienceEl);
+                    const ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, projectExperienceEl);
                     const ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
-                    const ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, projectExperienceEl);
+                    const ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, projectExperienceEl);
                     const ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
 
                     const ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl)) || [];
@@ -288,9 +307,9 @@ module.exports =
                     for (let WICJCRE of ProjectExpJobContentRowEls) {
                         const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
                         for (let colEl of colEls) {
-                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
+                            const keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
                             const keyName = keyNameEl && keyNameEl.innerText;
-                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
+                            const valueNameEl = await waitElement(".rd-info-col-cont", 1, colEl);
                             const valueName = valueNameEl && valueNameEl.innerText;
                             ProjectExpJobContents.push({
                                 key: keyName,
@@ -311,20 +330,20 @@ module.exports =
         }
 
         async getEduExperiences() {
-            const educationsEl = await waitElement("#resume-detail-edu-info", 2);
+            const educationsEl = await waitElement("#resume-detail-edu-info", 1);
             const result = [];
             if (educationsEl) {
-                const educationEls = await waitElements(".rd-edu-info-item", educationsEl, 2);
+                const educationEls = await waitElements(".rd-edu-info-item", educationsEl, 1);
                 if (educationEls && educationEls.length) {
                     for (let educationEl of educationEls) {
-                        const schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 2, educationEl);
-                        const schoolNameEl = await waitElement(".school-name", 2, schoolBasicInfoEl);
+                        const schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 1, educationEl);
+                        const schoolNameEl = await waitElement(".school-name", 1, schoolBasicInfoEl);
                         const schoolName = schoolNameEl && schoolNameEl.innerText;
-                        const schoolSpecialEl = await waitElement(".school-special", 2, schoolBasicInfoEl);
+                        const schoolSpecialEl = await waitElement(".school-special", 1, schoolBasicInfoEl);
                         const schoolSpecial = schoolSpecialEl && schoolSpecialEl.innerText;
-                        const schoolDegreeEl = await waitElement(".school-degree", 2, schoolBasicInfoEl);
+                        const schoolDegreeEl = await waitElement(".school-degree", 1, schoolBasicInfoEl);
                         const schoolDegree = schoolDegreeEl && schoolDegreeEl.innerText;
-                        const schoolTimeEl = await waitElement(".school-time", 2, schoolBasicInfoEl);
+                        const schoolTimeEl = await waitElement(".school-time", 1, schoolBasicInfoEl);
                         const schoolTime = schoolTimeEl && schoolTimeEl.innerText;
 
                         const schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
@@ -344,15 +363,15 @@ module.exports =
         }
 
         async getlanguages() {
-            const languagesEl = await waitElement("#resume-detail-lang-info", 2);
+            const languagesEl = await waitElement("#resume-detail-lang-info", 1);
             const result = [];
             if (languagesEl) {
                 const languageItemEls = await waitElements(".rd-lang-item", languagesEl);
                 if (languageItemEls && languageItemEls.length) {
                     for (let languageItemEl of languageItemEls) {
-                        const languageNameEl = await waitElement(".lang-name", 2, languageItemEl);
+                        const languageNameEl = await waitElement(".lang-name", 1, languageItemEl);
                         const languageName = languageNameEl && languageNameEl.innerText;
-                        const languageLevelEls = (await waitElements(".lang-level", languageItemEl, 2)) || [];
+                        const languageLevelEls = (await waitElements(".lang-level", languageItemEl, 1)) || [];
                         const languageLevels = [...languageLevelEls].map(item => item.innerText);
 
                         result.push({
@@ -366,7 +385,7 @@ module.exports =
         }
 
         async getSkills() {
-            const skillsEl = await waitElement("#resume-detail-skill-info", 2);
+            const skillsEl = await waitElement("#resume-detail-skill-info", 1);
             const result = [];
             if (skillsEl) {
                 const skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl)) || [];
@@ -381,10 +400,10 @@ module.exports =
         }
 
         async getSelfEvaInfo() {
-            const selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 2);
+            const selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 1);
             let result = "";
             if (selfEvaInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 2, selfEvaInfoEl);
+                const detailEl = await waitElement(".resume-detail-template-cont", 1, selfEvaInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }
@@ -394,10 +413,10 @@ module.exports =
         }
 
         async getAdditionalInfo() {
-            const additionalInfoEl = await waitElement("#resume-detail-addition-info", 2);
+            const additionalInfoEl = await waitElement("#resume-detail-addition-info", 1);
             let result = "";
             if (additionalInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 2, additionalInfoEl);
+                const detailEl = await waitElement(".resume-detail-template-cont", 1, additionalInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }

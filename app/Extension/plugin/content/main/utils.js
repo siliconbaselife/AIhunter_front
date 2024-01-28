@@ -4,7 +4,6 @@ module.exports = `
  * @returns {Promise<HTMLElement>}
  */
 const waitElement = async (elementName, maxNum = 10, rootElement = document) => {
-    await sleep(200);
     let element = await rootElement.querySelector(elementName);
     let waitNum = 0;
     while (!element) {
@@ -27,7 +26,6 @@ const waitElement = async (elementName, maxNum = 10, rootElement = document) => 
  * @returns {Promise<NodeList>}
  */
 const waitElements = async (elementName, rootElement = document, maxNum = 10) => {
-    await sleep(200);
     let element = rootElement.querySelectorAll(elementName);
     let waitNum = 0;
     while (!element) {
