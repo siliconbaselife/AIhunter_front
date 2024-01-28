@@ -11,6 +11,7 @@ const fs = require('fs');
 class Chat extends Base {
     keywordDelay = 40;
     messageCache = {};
+    chatIdToPeopleIdCahche = {};
     recallIndex = 0;
 
     run = async () => {
@@ -48,7 +49,7 @@ class Chat extends Base {
             const url = response.url();
             const request = response.request();
             const method = request.method();
-            if (url.indexOf("com.liepin.im.h.chat.chat-list") !== -1  && (['GET', 'POST'].includes(method))) {
+            if (url.indexOf("com.liepin.im.h.chat.chat-list") !== -1 && (['GET', 'POST'].includes(method))) {
 
                 try {
                     const res = await response.json();
@@ -59,9 +60,9 @@ class Chat extends Base {
                         //     await this.chatWindowScrollToTop();
                         //     await sleep(500);
                         // }
-                        // // console.log("messages", messages);
+                        // console.log("messages", messages);
 
-                        await this.dealPeopleMessage(messages);
+                        await this.dealPeopleMessage(messages.sort(() => -1));
                     }
 
                 } catch (e) {
@@ -78,13 +79,15 @@ class Chat extends Base {
      * @param {*} messages 
      */
     dealPeopleMessage = async (messages = []) => {
-        const inclueOppsitePeopleMessageItem = messages.find(item => item.oppositeUserId);
+        const inclueOppsitePeopleMessageItem = messages.find(item => item.oppositeUserId && item.userId == this.userInfo.id);
         if (!inclueOppsitePeopleMessageItem) {
             logger.error(`liepin ${this.userInfo.name} 获取含有对方的消息记录失败 messages: ${JSON.stringify(messages || 'none')}`);
             return;
         }
         const id = inclueOppsitePeopleMessageItem.oppositeUserId;
-        logger.info(`liepin ${this.userInfo.name} 获取到 候选人id: ${id} 的消息`);
+        const chatid = inclueOppsitePeopleMessageItem.oppositeImId;
+        logger.info(`liepin ${this.userInfo.name} 获取到 候选人 chatid: ${chatid} id: ${id} 的消息`);
+        this.chatIdToPeopleIdCahche[chatid] = id;
         this.messageCache[id] = messages;
         // if (Array.isArray(this.messageCache[id])) {
         //     this.messageCache[id].push(...messages)
@@ -277,6 +280,10 @@ class Chat extends Base {
      * @param {import("puppeteer").ElementHandle} item 
      */
     dealOnePeople = async (item) => {
+        await this.page.evaluate((item) => item.scrollIntoView(), item);
+        await item.click();
+        await sleep(2 * 1000);
+
         let { id, name } = await this.fetchItemNameAndId(item);
 
         if (name === "小猎客服") {
@@ -285,11 +292,8 @@ class Chat extends Base {
         }
 
         logger.info(`liepin ${this.userInfo.name} 当前处理 ${id} ${name} 的消息`);
-        await this.page.evaluate((item) => item.scrollIntoView(), item);
-        await item.click();
-        await sleep(2 * 1000);
 
-        let messages = await this.fetchPeopleMsgsByCache(id, name);
+        let messages = await this.fetchPeopleMsgsByCache(id);
         logger.info(`liepin ${this.userInfo.name} id: ${id} http请求处理后的消息: ${JSON.stringify(messages)}`);
         if (!messages) {
             logger.info(`liepin ${this.userInfo.name} 当前处理 ${name} 异常, http获取不到消息`);
@@ -374,7 +378,7 @@ class Chat extends Base {
         let messagesRaw = this.messageCache[id];
         if (!messagesRaw)
             return;
-        delete this.messageCache[id];
+
 
         let messages = [];
         for (let messageRaw of messagesRaw) {
@@ -388,12 +392,13 @@ class Chat extends Base {
             if (noUse)
                 continue;
 
-            messages.unshift({
+            messages.push({
                 speaker: speaker,
                 msg: txt,
                 time: messageRaw.msgTime
             });
         }
+        delete this.messageCache[id];
         return messages;
     }
 
@@ -415,12 +420,12 @@ class Chat extends Base {
     }
 
     fetchSpeaker = async (message, txt) => {
-        const chatUserId = message.userId;
+        const direction = message.direction;
 
         let system = await this.isSystemSpeaker(message, txt);
         if (system) return "system";
 
-        if (chatUserId == this.userInfo.id)
+        if (direction == "0")
             return "robot";
 
         return "user"
@@ -703,7 +708,7 @@ class Chat extends Base {
     dealWX = async (id, name) => {
         const wxSpanEl = await this.waitElement(`//div[contains(@class, "__im_basic__universal-card-content")]//span[contains(text(), "的微信")]`, this.page, 2);
         if (!wxSpanEl) {
-            logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的微信失败`, wxSpanEl);
+            // logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的微信失败`, wxSpanEl);
             return;
         }
         let wx = await this.page.evaluate(node => node.innerText, wxSpanEl);
@@ -736,7 +741,7 @@ class Chat extends Base {
     dealPhone = async (id, name) => {
         const phoneSpanEl = await this.waitElement(`//div[contains(@class, "__im_basic__universal-card-content")]//span[contains(text(), "的手机号")]`, this.page, 2);
         if (!phoneSpanEl) {
-            logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的手机号失败`, phoneSpanEl);
+            // logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的手机号失败`, phoneSpanEl);
             return;
         }
         let phone = (await this.page.evaluate(node => node.innerText, phoneSpanEl)) || "";
@@ -772,9 +777,10 @@ class Chat extends Base {
         // let [idSpan] = await item.$x(`//div[contains(@class, "geek-item")]`);
         const isStr = await this.page.evaluate((el) => el.dataset.info, item);
         // let isStr = await this.page.evaluate(node => node.key, item);
-        let id;
+        let chatId, id;
         try {
-            id = JSON.parse(decodeURIComponent(isStr)).to_imid
+            chatId = JSON.parse(decodeURIComponent(isStr)).to_imid
+            id = this.chatIdToPeopleIdCahche[chatId];
         } catch (error) {
             logger.error(`liepin ${this.userInfo.name} 获取一个人 id 失败 isStr=${isStr} name: ${name}, error: ${error && error.message || error}`);
             return { name };
