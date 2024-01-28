@@ -48,7 +48,7 @@ class Chat extends Base {
             const url = response.url();
             const request = response.request();
             const method = request.method();
-            if ((url.indexOf("com.liepin.im.h.chat.chat-list") !== -1 || url.indexOf("com.liepin.im.h.contact.filter-contacts-v1") !== -1) && (['GET', 'POST'].includes(method))) {
+            if (url.indexOf("com.liepin.im.h.chat.chat-list") !== -1  && (['GET', 'POST'].includes(method))) {
 
                 try {
                     const res = await response.json();
