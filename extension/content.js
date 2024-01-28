@@ -1372,7 +1372,7 @@ class LinkedinExecutor {
                 console.log("liepin_profile_search start")
 
                 let errorMsg = "";
-
+                await sleep(2 * 1000);
                 const basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
                 const jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
                 const workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
@@ -1406,9 +1406,9 @@ class LinkedinExecutor {
             const baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
 
             if (baseInfoEl) {
-                const nameEl = await waitElement(".name-box .name", 5, baseInfoEl);
+                const nameEl = await waitElement(".name-box .name", 2, baseInfoEl);
                 const name = nameEl && nameEl.innerText;
-                const statusEl = await waitElement(".user-status-tag", 5, baseInfoEl);
+                const statusEl = await waitElement(".user-status-tag", 2, baseInfoEl);
                 const status = statusEl && statusEl.innerText;
                 const baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
                 const [baseRowEl1, baseRowEl2] = baseRowEls;
@@ -1437,14 +1437,14 @@ class LinkedinExecutor {
             if (jobExpectancyEl) {
                 const viewAllBtn = await waitElement(".want-job .job-card-right", 2, jobExpectancyEl);
                 if (!viewAllBtn) { // 没有查看全部按钮
-                    const oneRow = await waitElement(".left-wrap", 5, jobExpectancyEl);
-                    const jobExpectancyNameEl = await waitElement(".title", 5, oneRow);
+                    const oneRow = await waitElement(".left-wrap", 2, jobExpectancyEl);
+                    const jobExpectancyNameEl = await waitElement(".title", 2, oneRow);
                     const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                    const jobExpectancySalaryEl = await waitElement(".salary", 5, oneRow);
+                    const jobExpectancySalaryEl = await waitElement(".salary", 2, oneRow);
                     const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                    const jobExpectancyDistrictEl = await waitElement(".dqname", 5, oneRow);
+                    const jobExpectancyDistrictEl = await waitElement(".dqname", 2, oneRow);
                     const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                    const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 5, oneRow);
+                    const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 2, oneRow);
                     const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
                     const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
 
@@ -1460,13 +1460,13 @@ class LinkedinExecutor {
                     const dialogEl = await waitElement(".want-job-list-modal", 5);
                     const wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
                     for (let wantJobEl of wantJobEls) {
-                        const jobExpectancyNameEl = await waitElement(".job-name", 5, wantJobEl);
+                        const jobExpectancyNameEl = await waitElement(".job-name", 2, wantJobEl);
                         const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                        const jobExpectancySalaryEl = await waitElement(".salary", 5, wantJobEl);
+                        const jobExpectancySalaryEl = await waitElement(".salary", 2, wantJobEl);
                         const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                        const jobExpectancyDistrictEl = await waitElement(".address", 5, wantJobEl);
+                        const jobExpectancyDistrictEl = await waitElement(".address", 2, wantJobEl);
                         const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                        const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 5, wantJobEl);
+                        const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 2, wantJobEl);
                         const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
                         const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
                         result.push({
@@ -1476,7 +1476,7 @@ class LinkedinExecutor {
                             jobExpectancyLabels
                         })
                     }
-                    const closeBtnEl = await waitElement(".ant-modal-close", 5, dialogEl);
+                    const closeBtnEl = await waitElement(".ant-modal-close", 2, dialogEl);
                     if (closeBtnEl) closeBtnEl.click();
                 }
             }
@@ -1492,9 +1492,9 @@ class LinkedinExecutor {
 
 
                 for (let workExperienceEl of workExperienceEls) {
-                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 5, workExperienceEl);
+                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, workExperienceEl);
                     const workInCompany = workInCompanyEl && workInCompanyEl.innerText;
-                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 5, workExperienceEl);
+                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, workExperienceEl);
                     const workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
 
                     const workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
@@ -1507,9 +1507,9 @@ class LinkedinExecutor {
                     for (let WICJCRE of workInCompanyJobContentRowEls) {
                         const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
                         for (let colEl of colEls) {
-                            const keyNameEl = await waitElement(".rd-info-col-title", 5, colEl);
+                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
                             const keyName = keyNameEl && keyNameEl.innerText;
-                            const valueNameEl = await waitElement(".rd-info-col-cont", 5, colEl);
+                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
                             const valueName = valueNameEl && valueNameEl.innerText;
                             workInCompanyJobContents.push({
                                 key: keyName,
@@ -1583,13 +1583,13 @@ class LinkedinExecutor {
                 if (educationEls && educationEls.length) {
                     for (let educationEl of educationEls) {
                         const schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 2, educationEl);
-                        const schoolNameEl = await waitElement(".school-name", 5, schoolBasicInfoEl);
+                        const schoolNameEl = await waitElement(".school-name", 2, schoolBasicInfoEl);
                         const schoolName = schoolNameEl && schoolNameEl.innerText;
-                        const schoolSpecialEl = await waitElement(".school-special", 5, schoolBasicInfoEl);
+                        const schoolSpecialEl = await waitElement(".school-special", 2, schoolBasicInfoEl);
                         const schoolSpecial = schoolSpecialEl && schoolSpecialEl.innerText;
-                        const schoolDegreeEl = await waitElement(".school-degree", 5, schoolBasicInfoEl);
+                        const schoolDegreeEl = await waitElement(".school-degree", 2, schoolBasicInfoEl);
                         const schoolDegree = schoolDegreeEl && schoolDegreeEl.innerText;
-                        const schoolTimeEl = await waitElement(".school-time", 5, schoolBasicInfoEl);
+                        const schoolTimeEl = await waitElement(".school-time", 2, schoolBasicInfoEl);
                         const schoolTime = schoolTimeEl && schoolTimeEl.innerText;
 
                         const schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
@@ -1615,10 +1615,10 @@ class LinkedinExecutor {
                 const languageItemEls = await waitElements(".rd-lang-item", languagesEl);
                 if (languageItemEls && languageItemEls.length) {
                     for (let languageItemEl of languageItemEls) {
-                        const languageNameEl = await waitElement(".lang-name", 5, languageItemEl);
+                        const languageNameEl = await waitElement(".lang-name", 2, languageItemEl);
                         const languageName = languageNameEl && languageNameEl.innerText;
-                        const languageLevelEls = await waitElement(".lang-level", 5, languageItemEl);
-                        const languageLevels = [...(languageLevelEls || [])].map(item => item.innerText);
+                        const languageLevelEls = (await waitElements(".lang-level", languageItemEl, 2)) || [];
+                        const languageLevels = [...languageLevelEls].map(item => item.innerText);
 
                         result.push({
                             languageName,
@@ -1649,7 +1649,7 @@ class LinkedinExecutor {
             const selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 2);
             let result = "";
             if (selfEvaInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 5, selfEvaInfoEl);
+                const detailEl = await waitElement(".resume-detail-template-cont", 2, selfEvaInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }
@@ -1662,7 +1662,7 @@ class LinkedinExecutor {
             const additionalInfoEl = await waitElement("#resume-detail-addition-info", 2);
             let result = "";
             if (additionalInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 5, additionalInfoEl);
+                const detailEl = await waitElement(".resume-detail-template-cont", 2, additionalInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }
@@ -1840,8 +1840,8 @@ class LinkedinExecutor {
                 let [start, end] = range.split("-");
                 let [startYear, startMonth] = start.split(".");
                 let [endYear, endMonth] = end.split(".");
-                let yearNum = text.split('年')[0];
-                let monthNum = text.split('年')[1] || "";
+                let yearNum = text.split('年')[0] || '';
+                let monthNum = text.split('年')[1] || text.split('月')[0] || '';
                 monthNum = this.parseNumber(monthNum)
                 if (endYear.indexOf("至今") !== -1) endYear = "9999";
                 else if (endMonth.indexOf("至今") !== -1) endMonth = "99";

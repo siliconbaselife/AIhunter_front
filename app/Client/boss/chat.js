@@ -402,7 +402,7 @@ class Chat extends Base {
         return false;
     }
 
-    sendContact = async () => {
+    sendContact = async (name) => {
         let [resumeBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
         logger.info(`boss ${this.userInfo.name} 简历按钮: `, resumeBtn);
         await resumeBtn.click();
@@ -451,10 +451,6 @@ class Chat extends Base {
           await this.page.keyboard.down('Enter');
           await sleep(500);
         }
-    }
-
-    sendContact = async (name) => {
-
     }
 
     chatToGpt = async (id, name, messages) => {
