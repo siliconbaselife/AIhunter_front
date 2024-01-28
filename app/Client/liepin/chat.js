@@ -48,18 +48,18 @@ class Chat extends Base {
             const url = response.url();
             const request = response.request();
             const method = request.method();
-            if (url.indexOf("com.liepin.im.h.chat.chat-list") !== -1 && (['GET', 'POST'].includes(method))) {
+            if ((url.indexOf("com.liepin.im.h.chat.chat-list") !== -1 || url.indexOf("com.liepin.im.h.contact.filter-contacts-v1") !== -1) && (['GET', 'POST'].includes(method))) {
 
                 try {
                     const res = await response.json();
                     if (res.flag == 1 && res.data) {
                         const { totalCount, list = [] } = res.data;
                         const messages = list || [];
-                        if (totalCount > 0 && totalCount == messages.length) { // 说明还有下一页, 滚动一下
-                            await this.chatWindowScrollToTop();
-                            await sleep(500);
-                        }
-                        // console.log("messages", messages);
+                        // if (totalCount > 0 && totalCount == messages.length) { // 说明还有下一页, 滚动一下
+                        //     await this.chatWindowScrollToTop();
+                        //     await sleep(500);
+                        // }
+                        // // console.log("messages", messages);
 
                         await this.dealPeopleMessage(messages);
                     }
@@ -85,11 +85,12 @@ class Chat extends Base {
         }
         const id = inclueOppsitePeopleMessageItem.oppositeUserId;
         logger.info(`liepin ${this.userInfo.name} 获取到 候选人id: ${id} 的消息`);
-        if (Array.isArray(this.messageCache[id])) {
-            this.messageCache[id].push(...messages)
-        } else {
-            this.messageCache[id] = messages;
-        }
+        this.messageCache[id] = messages;
+        // if (Array.isArray(this.messageCache[id])) {
+        //     this.messageCache[id].push(...messages)
+        // } else {
+        //     this.messageCache[id] = messages;
+        // }
     }
 
     noop = async () => {
@@ -667,7 +668,7 @@ class Chat extends Base {
 
     //     console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
 
-    //     await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err, res) {
+    //     await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function (err, res) {
     //         if (err) {
     //             logger.error(`简历上传失败error: `, err)
     //         }
@@ -705,7 +706,8 @@ class Chat extends Base {
             logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的微信失败`, wxSpanEl);
             return;
         }
-        const wx = await this.page.evaluate(node => node.innerText, wxSpanEl);
+        let wx = await this.page.evaluate(node => node.innerText, wxSpanEl);
+        wx = wx.replace(`${name}的微信：`, "");
         logger.info(`liepin ${this.userInfo.name} 获取到 ${name} 的微信: ${wx}`);
 
         const form = new FormData();
@@ -723,7 +725,7 @@ class Chat extends Base {
         form.append("wechat", wx);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err) {
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function (err) {
             if (err) {
                 logger.error(`微信上传失败error: `, e)
             }
@@ -737,7 +739,8 @@ class Chat extends Base {
             logger.error(`liepin ${this.userInfo.name} 获取 ${name} 的手机号失败`, phoneSpanEl);
             return;
         }
-        const phone = await this.page.evaluate(node => node.innerText, phoneSpanEl);
+        let phone = (await this.page.evaluate(node => node.innerText, phoneSpanEl)) || "";
+        phone = phone.replace(`${name}的手机号：`, "");
         logger.info(`liepin ${this.userInfo.name} 获取到 ${name} 的手机号: ${phone}`);
 
         const form = new FormData();
@@ -755,7 +758,7 @@ class Chat extends Base {
         form.append("phone", phone);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err) {
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function (err) {
             if (err) {
                 logger.error(`手机号上传失败error: `, e)
             }
