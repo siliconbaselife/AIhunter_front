@@ -404,22 +404,32 @@ class Chat extends Base {
 
     sendContact = async (name) => {
         let [resumeBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
-        logger.info(`boss ${this.userInfo.name} 简历按钮: `, resumeBtn);
-        await resumeBtn.click();
-        await sleep(500);
+        logger.info(`boss ${this.userInfo.name} 候选人: ${name} 简历按钮: `, resumeBtn);
+        if (resumeBtn) {
+            await resumeBtn.click();
+            await this.putSure();
+        }
 
         let [wxBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
-        logger.info(`boss ${this.userInfo.name} wx按钮: `, wxBtn);
+        logger.info(`boss ${this.userInfo.name} 候选人: ${name} wx按钮: `, wxBtn);
         if (wxBtn) {
             await wxBtn.click();
-            await sleep(500);
+            await this.putSure();
         }
 
         let [phoneBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换手机"]/parent::*/span[contains(@class, "operate-btn")]`);
-        logger.info(`boss ${this.userInfo.name} 电话按钮: `, phoneBtn);
+        logger.info(`boss ${this.userInfo.name} 候选人: ${name} 电话按钮: `, phoneBtn);
         if (phoneBtn) {
             await phoneBtn.click();
-            await sleep(500);
+            await this.putSure();
+        }
+    }
+
+    putSure = async() => {
+        let bubble = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
+        if (bubble) {
+            let [sureBtn] = await bubble.$x(`//span[contains(@class, "boss-btn-primary") and text() = "确定"]`);
+            await sureBtn.click();
         }
     }
 
