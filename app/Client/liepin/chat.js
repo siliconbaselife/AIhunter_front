@@ -528,12 +528,12 @@ class Chat extends Base {
 
             if (nextStepContent.length === 0 && nextStep != "noTalk")
                 await this.sendEmoji();
-
             if (nextStep === "need_contact") {
+                console.log("need_contact");
                 await sleep(1000);
                 try {
                     logger.info(`liepin ${this.userInfo.name} ${name} 获取联系方式`);
-                    await this.sendContact(name);
+                    await this.sendContact();
                 } catch (e) {
                     logger.error(`liepin ${this.userInfo.name} ${name} 申请手机号异常: `, e);
                 }
@@ -548,41 +548,45 @@ class Chat extends Base {
     }
 
     sendContact = async () => {
-        let [resumeBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-resume")]`);
+        let [resumeBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-resume")]//span[contains(@class, "__im_pro__action-svg-item-title") and text()="求简历"]`);
         logger.info(`liepin ${this.userInfo.name} 简历按钮: `, resumeBtn);
         if (resumeBtn) {
-            await resumeBtn.click();
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
-            let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
-            if (confirmBtn) {
-                await confirmBtn.click();
-                await sleep(500);
+            await this.page.evaluate(el => el.click(), resumeBtn);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            if (dialogEl) {
+                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
+                if (confirmBtn) {
+                    await confirmBtn.click();
+                    await sleep(500);
+                }
             }
         }
 
         let [wxBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-wechat")]`);
         logger.info(`liepin ${this.userInfo.name} wx按钮: `, wxBtn);
         if (wxBtn) {
-            await wxBtn.click();
-            await sleep(500);
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
-            let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
-            if (confirmBtn) {
-                await confirmBtn.click();
-                await sleep(500);
+            await this.page.evaluate(el => el.click(), wxBtn);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            if (dialogEl) {
+                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
+                if (confirmBtn) {
+                    await confirmBtn.click();
+                    await sleep(500);
+                }
             }
         }
 
         let [phoneBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-phone")]`);
         logger.info(`liepin ${this.userInfo.name} 电话按钮: `, phoneBtn);
         if (phoneBtn) {
-            await phoneBtn.click();
-            await sleep(500);
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
-            let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 5);
-            if (confirmBtn) {
-                await confirmBtn.click();
-                await sleep(500);
+            await this.page.evaluate(el => el.click(), phoneBtn);
+            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            if (dialogEl) {
+                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
+                if (confirmBtn) {
+                    await confirmBtn.click();
+                    await sleep(500);
+                }
             }
         }
     }
@@ -616,10 +620,6 @@ class Chat extends Base {
             await this.page.keyboard.down('Enter');
             await sleep(500);
         }
-    }
-
-    sendContact = async (name) => {
-
     }
 
     chatToGpt = async (id, name, messages) => {
