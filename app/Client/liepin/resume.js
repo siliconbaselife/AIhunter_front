@@ -220,7 +220,7 @@ class Resume extends Search {
      * @returns {Promise<boolean>} 打招呼是否已成功
      */
     async touchPeople(tab, task) {
-        let { status, error = "" } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_chat", task.job_name);
+        let { status, error = "" } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_chat", task.filter.job_name);
         logger.info(`liepin ${this.userInfo.name} 打招呼是否成功: ${status}, ${error ? error : ''}`);
         return status === "success";
     }

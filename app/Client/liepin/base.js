@@ -1,4 +1,4 @@
-/** @typedef {{jobID: string, taskType: string, helloSum: number, filter: {search_text: string, hello_sum: number, education: string[], location: string[], industry: string[], ex_company: string[], sex: string, min_work_year: string, max_work_year: string, min_age: string | number, max_age: string | number}, touch_msg: string}} Task 单个任务 */
+/** @typedef {{jobID: string, taskType: string, helloSum: number, filter: {search_text: string, hello_sum: number, education: string[], location: string[], industry: string[], ex_company: string[], sex: string, min_work_year: string, max_work_year: string, min_age: string | number, max_age: string | number, job_name: string}, touch_msg: string}} Task 单个任务 */
 
 const Common = require('../common');
 const logger = require('../../Logger');

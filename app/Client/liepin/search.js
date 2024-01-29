@@ -343,7 +343,9 @@ class Search extends Base {
      * @returns {Promise<{httpUrl: string}>}
      */
     fetchPeopleUrl = async (peopleId, peopleItem, maxTime = 2000) => {
-        sleep(2000).then(() => { peopleItem.click() });
+        sleep(2000).then(() => { peopleItem.click() }).catch(err => {
+            logger.error(`liepin ${this.userInfo.name} 点击people item报错 ${peopleId}  err ${err}`)
+        });
         let httpUrl;
         try {
             httpUrl = await this.page.evaluate(async () => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
