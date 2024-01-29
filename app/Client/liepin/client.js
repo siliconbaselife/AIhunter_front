@@ -47,8 +47,6 @@ class Client {
         await this.loginPage(account_id);
         logger.info("liepin 登陆完成");
         await sleep(2 * 1000);
-        
-
         let resume = new Resume(this.options);
         await resume.run() 
 

@@ -66,7 +66,23 @@ class Chat extends Base {
                     }
 
                 } catch (e) {
-                    logger.error(`liepin ${this.userInfo.name} 获取消息error: `, e);
+                    logger.error(`liepin ${this.userInfo.name} 获取peoplemessage消息error: `, e);
+                }
+            } else if (url.indexOf("im.h.contact.contact-list") !== -1 && (['GET', 'POST'].includes(method))) {
+                try {
+                    const res = await response.json();
+                    if (res.flag == 1 && res.data) {
+                        const { list = [] } = res.data;
+                        if (list && list.length) {
+                            list.forEach(item => {
+                                const { oppositeImId, oppositeUserId } = item;
+                                this.chatIdToPeopleIdCahche[oppositeImId] = oppositeUserId;
+                            })
+                        }
+                    }
+
+                } catch (e) {
+                    logger.error(`liepin ${this.userInfo.name} 获取chatlist消息error: `, e);
                 }
             }
         }
@@ -79,7 +95,7 @@ class Chat extends Base {
      * @param {*} messages 
      */
     dealPeopleMessage = async (messages = []) => {
-        const inclueOppsitePeopleMessageItem = messages.find(item => item.oppositeUserId && item.userId == this.userInfo.id);
+        const inclueOppsitePeopleMessageItem = messages.find(item => item.oppositeUserId);
         if (!inclueOppsitePeopleMessageItem) {
             logger.error(`liepin ${this.userInfo.name} 获取含有对方的消息记录失败 messages: ${JSON.stringify(messages || 'none')}`);
             return;
@@ -97,7 +113,31 @@ class Chat extends Base {
     }
 
     noop = async () => {
+        await this.dealUnreadNoop();
+
+        while (true) {
+            try {
+                await this.doRecall();
+                this.retryDealUnreadMsg = false;
+                await this.dealUnreadNoop();
+            } catch (e) {
+                logger.error(`liepin ${this.userInfo.name} 处理召回异常: `, e);
+                await sleep(5 * 1000);
+            }
+        }
+    }
+
+    dealUnreadNoop = async () => {
         let unreadNum = await this.hasUnread();
+        // 判断当前聊天的人是否未读
+        try {
+            const peopleItem = await this.getHighLightItem();
+            let unreadIsCurrentChat = peopleItem ? await this.unreadIsCurrentChat(peopleItem) : false;
+            if (unreadIsCurrentChat) await this.dealOnePeople(peopleItem);
+        } catch (error) {
+            logger.error(`liepin ${this.userInfo.name} 判断当前聊天的人是否未读 失败`, error)
+        }
+        // 判断当前聊天的人是否未读 end
         while (unreadNum > 0 && !this.retryDealUnreadMsg) {
             try {
                 await this.doUnread();
@@ -108,36 +148,28 @@ class Chat extends Base {
             await sleep(5 * 1000);
             unreadNum = await this.hasUnread();
         }
-
-        try {
-            await this.doRecall();
-        } catch (e) {
-            logger.error(`liepin ${this.userInfo.name} 处理召回异常: `, e);
-            await sleep(5 * 1000);
-        }
     }
 
     doRecall = async () => {
         await this.putAllMessageBtn();
-        while (!(await this.dealRecallEnd())) {
-            let item = await this.fetchRecallItem();
-            await this.scrollChatToPosition(item);
-            await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), item);
-            let { id, name } = await this.fetchItemNameAndId(item);
+        let item = await this.fetchRecallItem();
+        await this.scrollChatToPosition(item);
+        await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), item);
+        let { id, name } = await this.fetchItemNameAndId(item);
 
-            let recallInfo = await this.needRecall(id, name);
+        let recallInfo = await this.needRecall(id, name);
 
-            // recallInfo = { recall_msg: "你好,有兴趣再聊下吗,我们这边很期待您的加入~" }; // 测试代码，记得删
+        // recallInfo = { recall_msg: "你好,有兴趣再聊下吗,我们这边很期待您的加入~" }; // 测试代码，记得删
 
+        this.recallIndex += 1;
+        if (!recallInfo) return;
+        await item.click();
+        await sleep(500);
 
-            this.recallIndex += 1;
-            if (!recallInfo) continue;
-            await item.click();
-            await sleep(500);
+        await this.sendMessage(recallInfo.recall_msg);
+        await this.recallResult(id);
 
-            await this.sendMessage(recallInfo.recall_msg);
-            await this.recallResult(id);
-        }
+        await this.dealRecallEnd();
     }
 
     /**
@@ -154,13 +186,13 @@ class Chat extends Base {
     }
 
     /**
-     * 判断二次召回是否要结束了
-     * @returns {Promise<boolean>} 是否要结束
+     * 循环二次召回
      */
     dealRecallEnd = async () => {
         let items = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item")]`);
-        if (this.recallIndex >= items.length) { return true; }
-        return false;
+        if (this.recallIndex >= items.length) {
+            this.recallIndex = 0;
+        }
     }
 
     needRecall = async (id, name) => {
@@ -330,6 +362,31 @@ class Chat extends Base {
         return true;
     }
 
+    /**
+     * 获取当前高亮的item
+     * @returns {Promise<import("puppeteer").ElementHandle>}
+     */
+    async getHighLightItem() {
+        let item = null;
+        try {
+            [item] = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item") and contains(@class, "active")]`).catch(() => null);
+        } catch { }
+        return item;
+    }
+
+    async unreadIsCurrentChat(item) {
+        const { name, id } = await this.fetchItemNameAndId(item);
+        let messages = await this.fetchPeopleMsgsByCache(id);
+        if (!messages) {
+            logger.info(`liepin ${this.userInfo.name} 当前处理 ${name} 异常, http获取不到消息`);
+            messages = await this.fetchMsgsByHtml(name);
+        }
+        if (messages[messages.length - 1].speaker === "user") {
+            return true
+        }
+        return false;
+    }
+
     fetchMsgsByHtml = async (name) => {
         let messages = [];
         let msgItems = await this.page.$x(`//div[contains(@class, "__im_pro__msg-list-content")]/div[contains(@class, "__im_pro__message")]`);
@@ -448,7 +505,7 @@ class Chat extends Base {
         if (message.msgType == "img") {
             return true;
         }
-        if (txt.indexOf("[简历卡片]") !== -1 || txt.indexOf("[职位卡片]") !== -1 || txt.indexOf("[卡片消息]") !== -1)
+        if (txt.indexOf("[简历卡片]") !== -1 || txt.indexOf("[职位卡片]") !== -1 || txt.indexOf("[卡片消息]") !== -1 || txt.indexOf("温馨提示：") !== -1)
             return true;
 
         return false;
@@ -605,7 +662,7 @@ class Chat extends Base {
     }
 
     clickOkAll = async () => {
-        let agreeBtns = await this.page.$x(`//div[contains(@id, "im-chatwin")]//div[contains(@class, "__im_basic__universal-card-btn-main") and text()="同意" and not(contains(@class,'disable'))]`);
+        let agreeBtns = await this.page.$x(`//div[contains(@id, "im-chatwin")]//div[contains(@class, "__im_basic__universal-card-btn-main") and ((text()="同意") or (text()="查看") )and not(contains(@class,'disable'))]`);
         for (let agreeBtn of agreeBtns) {
             await agreeBtn.click();
             await sleep(500);
@@ -712,7 +769,7 @@ class Chat extends Base {
             return;
         }
         let wx = await this.page.evaluate(node => node.innerText, wxSpanEl);
-        wx = wx.replace(`${name}的微信：`, "");
+        wx = wx.replace(`${name}的微信：`, "").replace(`${name}发送的微信：`, "");
         logger.info(`liepin ${this.userInfo.name} 获取到 ${name} 的微信: ${wx}`);
 
         const form = new FormData();
@@ -745,7 +802,7 @@ class Chat extends Base {
             return;
         }
         let phone = (await this.page.evaluate(node => node.innerText, phoneSpanEl)) || "";
-        phone = phone.replace(`${name}的手机号：`, "");
+        phone = phone.replace(`${name}的手机号：`, "").replace(`${name}发送的手机号：`, "");
         logger.info(`liepin ${this.userInfo.name} 获取到 ${name} 的手机号: ${phone}`);
 
         const form = new FormData();
