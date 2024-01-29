@@ -116,16 +116,16 @@ class Common {
           rj("没有找到扩展程序");
         }
       }, 2000);
-        this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
-          .then(extensionTarget => extensionTarget.worker())
-          .then(extension => {
-            this.extension = extension;
-            ExtensionHelper.initializeWithExtension(extension);
-            rs(extension);
-          })
-          .catch(err => {
-            rj && rj(err)
-          })
+      this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
+        .then(extensionTarget => extensionTarget.worker())
+        .then(extension => {
+          this.extension = extension;
+          ExtensionHelper.initializeWithExtension(extension);
+          rs(extension);
+        })
+        .catch(err => {
+          rj && rj(err)
+        })
 
     })
   }
@@ -383,6 +383,52 @@ class Common {
     catch (e) {
       logger.error("设定浏览器下载路径异常: ", e)
     }
+  }
+
+  /**
+   * 阻止原生跳转事件，点击btn，并带回跳转连接
+   * @param {puppeteer.Page} page 
+   * @param {puppeteer.ElementHandle | string} btn
+   * @param {?number} maxTime 最大等待时间
+   * @returns {Promise<string>}
+   */
+  stopOpenAndGetUrl = async (page, btn, maxTime = 2000) => {
+    let httpUrl;
+
+    if (typeof btn !== "string") {
+      sleep(2000).then(() => { btn.click() }).catch(err => {
+        logger.error(`stopOpenAndGetUrl 点击people item报错 err ${err}`)
+      });
+    }
+
+
+    try {
+      httpUrl = await page.evaluate((selector) => { // 劫持原生js跳转方法, 阻止页面默认的跳转行为, 并带回要跳转的url
+        return new Promise((rs) => {
+          window.__origin_open = window.open;
+          window.open = (url) => {
+            window.open = window.__origin_open;
+            rs(url)
+          }
+          if (selector) {
+            const btn = document.querySelector(selector);
+            btn.click && btn.click();
+          }
+        })
+      }, typeof btn === "string" ? btn : undefined).catch(err => {
+        logger.error(`stopOpenAndGetUrl 发生错误: ${err}`);
+      })
+    } catch (error) {
+      logger.error(`liepin ${this.userInfo.name} fetchPeopleUrl ${peopleId} err ${error}`);
+    }
+
+    let waitTime = 0;
+    while (!httpUrl && waitTime < maxTime) {
+      await sleep(500);
+      waitTime += 500;
+    }
+
+    return httpUrl
   }
 }
 

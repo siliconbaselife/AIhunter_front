@@ -1,6 +1,6 @@
 
 module.exports =
-`
+    `
     class LiePinProfile extends Base {
         static instance = new LiePinProfile();
         static getInstance() {
@@ -12,15 +12,20 @@ module.exports =
 
         LIEPIN_PROFILE_SEARCH = "liepin_profile_search";
 
+        LIEPIN_DOWNLOAD_RESUME = "liepinDownloadResume";
+
         /**
          * 初始化
          */
         initialize() {
             console.log("LiePinProfile inited");
-            // 监听打招呼事件，帮忙收集简历
+            // 监听收集简历事件，帮忙收集简历
             ContentMessageHelper.getInstance().listenFromOthers(this.LIEPIN_PROFILE_SEARCH, this.handleLiePinProfileSearch.bind(this));
             // 监听打招呼事件，帮忙打招呼
             ContentMessageHelper.getInstance().listenFromOthers(this.LIEPIN_PROFILE_CHAT, this.handleLiePinProfileChat.bind(this));
+            // 监听下载简历事件，帮忙下载简历
+            ContentMessageHelper.getInstance().listenFromOthers(this.LIEPIN_DOWNLOAD_RESUME, this.handleLiePinDownloadResume.bind(this));
+
         }
 
         /**
@@ -643,6 +648,34 @@ module.exports =
             console.log("str", str, typeof str);
             console.log("str result", Number(str.replace(/[^\\d]/g, " ")));
             return Number(str.replace(${"/[^\\d]/g"}, " "));
+        }
+
+
+        /**
+         * 猎聘下载简历
+         */
+        async handleLiePinDownloadResume() {
+            try {
+                const resumeContainer = await waitElement(".c-resume-body-cont");
+                if (!resumeContainer) return { status: "fail", error: "没有找到简历项" };
+                const operationBtns = (await waitElements(".resume-detail-operation-wrap .resume-operation-btn", resumeContainer, 1)) || [];
+                let btn;
+                for (let buttonEl of operationBtns) {
+                    if (buttonEl.innerText === "免费获取联系方式" || buttonEl.innerText === "保存") btn = buttonEl;
+                }
+                if (!btn) return { status: "fail", error: "没有找到下载简历按钮" };
+                btn.click();
+                
+                const dialogEl = await waitElement(".ant-modal-confirm", 5);
+                if (!dialogEl) return {status: "fail", error: "没有出现对话框"};
+                const confirmBtn = await waitElement(".ant-modal-confirm-btns button",5, dialogEl, );
+                if (!confirmBtn) return {status: "fail", error: "没有确认按钮"};
+                confirmBtn.click();
+                await sleep(2 * 1000);
+                return { status: "success", error: "" };
+            } catch (error) {
+                return { status: "fail", error: "liepin下载简历出错:" + (error && error.message || error) };
+            }
         }
     }
 `

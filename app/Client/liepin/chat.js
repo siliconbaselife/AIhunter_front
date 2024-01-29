@@ -8,8 +8,11 @@ const path = require('path');
 const { rmDir } = require('../../utils/FileSystem');
 const fs = require('fs');
 
+const TabHelper = require("../../Extension/Tab");
+
 class Chat extends Base {
     keywordDelay = 40;
+    resumeDownloadedIds = {};
     messageCache = {};
     chatIdToPeopleIdCahche = {};
     recallIndex = 0;
@@ -30,7 +33,7 @@ class Chat extends Base {
 
         await this.setMsgReceive();
         await this.setChatPage();
-        // await this.setDownloadPath();
+        await this.setDownloadPath.call(this);
     }
 
     /**
@@ -153,7 +156,6 @@ class Chat extends Base {
     doRecall = async () => {
         await this.putAllMessageBtn();
         let item = await this.fetchRecallItem();
-        await this.scrollChatToPosition(item);
         await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), item);
         let { id, name } = await this.fetchItemNameAndId(item);
 
@@ -177,7 +179,7 @@ class Chat extends Base {
      * @param {import("puppeteer").ElementHandle} item 
      */
     scrollChatToPosition = async (item) => {
-        await this.page.evaluate((item) => item.scrollIntoView(), item);
+        await this.page.evaluate((el) => el.scrollIntoView(), item);
     }
 
     fetchRecallItem = async () => {
@@ -190,7 +192,7 @@ class Chat extends Base {
      */
     dealRecallEnd = async () => {
         let items = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item")]`);
-        if (this.recallIndex >= items.length) {
+        if (this.recallIndex + 1 >= items.length) {
             this.recallIndex = 0;
         }
     }
@@ -528,8 +530,8 @@ class Chat extends Base {
 
             if (nextStepContent.length === 0 && nextStep != "noTalk")
                 await this.sendEmoji();
+
             if (nextStep === "need_contact") {
-                console.log("need_contact");
                 await sleep(1000);
                 try {
                     logger.info(`liepin ${this.userInfo.name} ${name} 获取联系方式`);
@@ -552,41 +554,56 @@ class Chat extends Base {
         logger.info(`liepin ${this.userInfo.name} 简历按钮: `, resumeBtn);
         if (resumeBtn) {
             await this.page.evaluate(el => el.click(), resumeBtn);
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            const dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
             if (dialogEl) {
-                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
-                if (confirmBtn) {
-                    await confirmBtn.click();
-                    await sleep(500);
-                }
+                await sleep(300);
+                const success = await this.page.evaluate(() => {
+                    const confirmBtn = document.querySelector(".__im_basic__askfor-confirm-modal button.ant-btn-primary");
+                    if (confirmBtn) {
+                        confirmBtn.click();
+                        return true;
+                    }
+                    return false;
+                })
+                if (success) await sleep(500);
             }
         }
 
-        let [wxBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-wechat")]`);
+        let [wxBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-wechat")]//span[contains(@class, "__im_pro__action-svg-item-title") and text()="索要微信"]`);
         logger.info(`liepin ${this.userInfo.name} wx按钮: `, wxBtn);
         if (wxBtn) {
             await this.page.evaluate(el => el.click(), wxBtn);
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            const dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
             if (dialogEl) {
-                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
-                if (confirmBtn) {
-                    await confirmBtn.click();
-                    await sleep(500);
-                }
+                await sleep(300);
+                const success = await this.page.evaluate(() => {
+                    const confirmBtn = document.querySelector(".__im_basic__askfor-confirm-modal button.ant-btn-primary");
+                    if (confirmBtn) {
+                        confirmBtn.click();
+                        return true;
+                    }
+                    return false;
+                })
+                if (success) await sleep(500);
             }
         }
 
-        let [phoneBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-phone")]`);
+        let [phoneBtn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-phone")]//span[contains(@class, "__im_pro__action-svg-item-title") and text()="索要手机"]`);
         logger.info(`liepin ${this.userInfo.name} 电话按钮: `, phoneBtn);
         if (phoneBtn) {
             await this.page.evaluate(el => el.click(), phoneBtn);
-            let dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 2);
+            const dialogEl = await this.waitElement(`//div[contains(@class, "__im_basic__askfor-confirm-modal")]`, this.page, 5);
             if (dialogEl) {
-                let confirmBtn = await this.waitElement(`//button[contains(@class, "ant-btn-primary")]`, dialogEl, 2);
-                if (confirmBtn) {
-                    await confirmBtn.click();
-                    await sleep(500);
-                }
+                await sleep(300);
+                const success = await this.page.evaluate(() => {
+                    const confirmBtn = document.querySelector(".__im_basic__askfor-confirm-modal button.ant-btn-primary");
+                    if (confirmBtn) {
+                        confirmBtn.click();
+                        return true;
+                    }
+                    return false;
+                })
+                if (success) await sleep(500);
             }
         }
     }
@@ -656,7 +673,7 @@ class Chat extends Base {
 
     dealSystemView = async (id, name) => {
         await this.clickOkAll();
-        // await this.dealSystemResume(id, name);
+        await this.dealSystemResume(id, name);
         await this.dealWX(id, name);
         await this.dealPhone(id, name);
     }
@@ -669,98 +686,87 @@ class Chat extends Base {
         }
     }
 
-    // dealSystemResume = async (id, name) => {
-    //     let items = await this.page.$x(`//div[contains(@class, "message-item")]`);
-    //     for (let i = items.length - 1; i >= 0; i--) {
-    //         let item = items[i];
-    //         let [robotSpan] = await item.$x(`//div[contains(@class, "item-myself")]`);
-    //         if (robotSpan)
-    //             break;
+    dealSystemResume = async (id, name) => {
+        const [btn] = await this.page.$x(`//div[contains(@class, "chatwin-action")]//span[contains(@class, "action-resume")]//span[contains(@class, "__im_pro__action-svg-item-title") and text()="看简历"]/parent::span`)
+        if (btn && !this.resumeDownloadedIds[id]) { // resumeDownloadedIds是用来记录一下，不用重复下载简历
+            await this.dealResume(id, name);
+            this.resumeDownloadedIds[id] = true;
+        }
+    }
 
-    //         let [cardBtn] = await item.$x(`//span[contains(@class, "card-btn")]`);
-    //         if (!cardBtn)
-    //             continue;
+    dealResume = async (id, name) => {
+        try {
+            await this.makeDownloadDir();
+            await this.downloadResume();
+            await this.uploadResume(id, name);
+            await this.clearDownloadDir();
+        } catch (error) {
+            logger.error(`liepin ${this.userInfo.name} id: ${id} name: ${name} 处理简历出错:`, error);
+        }
+    }
 
-    //         let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
+    downloadResume = async () => {
+        const httpUrl = await this.stopOpenAndGetUrl(this.page, `.chatwin-action span.action-resume`, 2000);
+        const tab = await TabHelper.createATab({ selected: false, active: false, url: httpUrl });
+        await sleep(1000);
+        const { status, error } = await TabHelper.sendMessageToTab(tab.id, "liepinDownloadResume");
+        TabHelper.closeTab(tab.id);
+        if (status !== "success") {
+            logger.error(`liepin ${this.userInfo.name} 下载简历出错:`, error);
+            throw new Error("下载简历出错")
+        }
 
-    //         if (btnTxt == "点击预览附件简历")
-    //             await this.dealResume(item, id, name);
-    //     }
-    // }
+        await sleep(2 * 1000);
+    }
 
-    // dealResume = async (item, id, name) => {
-    //     await this.makeDownloadDir();
-    //     await this.downloadResume(item);
-    //     await this.uploadResume(id, name);
-    //     await this.clearDownloadDir();
-    // }
+    uploadResume = async (id, name) => {
+        let filedir = path.join(process.cwd(), this.userInfo.accountID.toString());
+        console.log("filedir: ", filedir);
+        let files = fs.readdirSync(filedir);
+        let filename = files[0];
+        const crs = fs.createReadStream(filedir + "/" + filename);
 
-    // downloadResume = async (item) => {
-    //     await this.page.evaluate((item) => item.scrollIntoView(), item);
-    //     let [showBtn] = await item.$x(`//span[text() = "点击预览附件简历"]`);
-    //     await showBtn.click();
-    //     await sleep(3 * 1000);
+        const form = new FormData();
+        form.append('cv', crs);
+        form.append('jobID', '');
+        form.append('accountID', this.userInfo.accountID);
+        form.append('candidateID', id);
+        form.append('candidateName', name);
+        form.append('filename', filename);
 
-    //     let resumeFrame = await this.waitElement(`//div[contains(@class, "resume-common-dialog")]`, this.page);
+        console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
 
-    //     // const pageFrame = await this.page.$('#imIframe');
-    //     // let resumeFrame = await pageFrame.contentFrame();
-    //     let btns = await resumeFrame.$x(`//div[contains(@class, "attachment-resume-btns")]/span`);
-    //     await btns[btns.length - 1].click();
-    //     await sleep(1 * 1000);
-    //     let [closeBtn] = await resumeFrame.$x(`//div[contains(@class, "liepin-popup__close")]`);
-    //     await closeBtn.click();
-    //     await sleep(1 * 1000);
-    // }
+        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function (err, res) {
+            if (err) {
+                logger.error(`简历上传失败error: `, err)
+            }
+        });
+        await sleep(2 * 1000);
+    }
 
-    // uploadResume = async (id, name) => {
-    //     let filedir = path.join(process.cwd(), this.userInfo.accountID.toString());
-    //     console.log("filedir: ", filedir);
-    //     let files = fs.readdirSync(filedir);
-    //     let filename = files[0];
-    //     const crs = fs.createReadStream(filedir + "/" + filename);
+    makeDownloadDir = async () => {
+        let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
+        logger.info(`liepin ${this.userInfo.name} 下载路径: `, dirPath);
+        try {
+            await rmDir(dirPath);
+            fs.mkdir(dirPath, (err) => {
+                if (err) {
+                    logger.error(`liepin ${this.userInfo.name} 新建目录出错:`, err);
+                }
+            })
+        } catch (e) {
+            logger.error(`liepin ${this.userInfo.name} 新建目录出错:`, e);
+        }
+    }
 
-    //     const form = new FormData();
-    //     form.append('cv', crs);
-    //     form.append('jobID', '');
-    //     form.append('accountID', this.userInfo.accountID);
-    //     form.append('candidateID', id);
-    //     form.append('candidateName', name);
-    //     form.append('filename', filename);
-
-    //     console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
-
-    //     await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function (err, res) {
-    //         if (err) {
-    //             logger.error(`简历上传失败error: `, err)
-    //         }
-    //     });
-    //     await sleep(2 * 1000);
-    // }
-
-    // makeDownloadDir = async () => {
-    //     let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
-    //     logger.info(`liepin ${this.userInfo.name} 下载路径: `, dirPath);
-    //     try {
-    //         await rmDir(dirPath);
-    //         fs.mkdir(dirPath, (err) => {
-    //             if (err) {
-    //                 logger.error(`liepin ${this.userInfo.name} 新建目录出错:`, err);
-    //             }
-    //         })
-    //     } catch (e) {
-    //         logger.error(`liepin ${this.userInfo.name} 新建目录出错:`, e);
-    //     }
-    // }
-
-    // clearDownloadDir = async () => {
-    //     let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
-    //     try {
-    //         await rmDir(dirPath);
-    //     } catch (e) {
-    //         logger.error(`liepin ${this.userInfo.name} 清理目录出错:`, e);
-    //     }
-    // }
+    clearDownloadDir = async () => {
+        let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
+        try {
+            await rmDir(dirPath);
+        } catch (e) {
+            logger.error(`liepin ${this.userInfo.name} 清理目录出错:`, e);
+        }
+    }
 
     dealWX = async (id, name) => {
         const wxSpanEl = await this.waitElement(`//div[contains(@class, "__im_basic__universal-card-content")]//span[contains(text(), "的微信")]`, this.page, 2);
