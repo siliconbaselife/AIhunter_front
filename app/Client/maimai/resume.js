@@ -190,7 +190,6 @@ class Resume extends Base {
         await sleep(300);
 
         let searchTxt = task.filter.search_text;
-        console.log(searchTxt);
         await this.page.keyboard.type(searchTxt, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
         await this.page.keyboard.press('Enter');
 

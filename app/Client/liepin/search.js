@@ -25,7 +25,6 @@ class Search extends Base {
             },
             method: 'POST'
         });
-        console.log("data", data);
         logger.info(`liepin ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
 
         return data["task"];
@@ -92,7 +91,6 @@ class Search extends Base {
             await sleep(2000);
 
             const optionList = await this.waitElements(`${cityDialogXpath}//div[contains(@class, "filter-box")]//div[contains(@class, "suggest-list")]//li`, this.page, 10)
-            // console.log("optionList", optionList);
             if (optionList.length <= 0) {
                 logger.info(`liepin ${this.userInfo.name} location: ${loc} 没有推荐list`);
                 continue;
@@ -209,7 +207,6 @@ class Search extends Base {
             await sleep(2000);
 
             const optionList = await this.waitElements(`${industryDialogXpath}//div[contains(@class, "antd-fd-industry-header-search-box")]//div[contains(@class, "antd-fd-industry-modal-search-result")]//li`, this.page, 4)
-            console.log("optionList", optionList);
             if (optionList.length <= 0) {
                 logger.info(`liepin ${this.userInfo.name} industry: ${indus} 没有推荐list`);
                 continue;

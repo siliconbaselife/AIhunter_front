@@ -529,7 +529,6 @@ class Chat extends Base {
             if (nextStepContent.length === 0 && nextStep != "noTalk")
                 await this.sendEmoji();
             if (nextStep === "need_contact") {
-                console.log("need_contact");
                 await sleep(1000);
                 try {
                     logger.info(`liepin ${this.userInfo.name} ${name} 获取联系方式`);
