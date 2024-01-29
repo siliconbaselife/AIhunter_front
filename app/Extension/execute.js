@@ -105,7 +105,7 @@ class ExecuteHelper {
                 selected: false,
             })
 
-            await sleep(2000);
+            await sleep(1500);
             try {
                 const { status, error, peopleInfo } = await TabHelper.sendMessageToTab(tab.id, "liepin_profile_search");
                 if (error) Logger.error(`liepin_profile_search 任务有报错, ${url}, error: ${error && error.message || error}`);

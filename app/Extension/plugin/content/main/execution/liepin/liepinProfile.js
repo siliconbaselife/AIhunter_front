@@ -107,7 +107,7 @@ module.exports =
                 console.log("liepin_profile_search start")
 
                 let errorMsg = "";
-                await sleep(1 * 1000);
+                await waitElement(".c-resume-body-cont");
                 let basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
                 let jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
                 let workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
@@ -138,14 +138,14 @@ module.exports =
 
 
         async getBasicInfo() {
-            let baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
+            let baseInfoEl = await waitElement("#resume-detail-basic-info", 1);
 
             if (baseInfoEl) {
                 let nameEl = await waitElement(".name-box .name", 1, baseInfoEl);
                 let name = nameEl && nameEl.innerText;
                 let statusEl = await waitElement(".user-status-tag", 1, baseInfoEl);
                 let status = statusEl && statusEl.innerText;
-                let baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
+                let baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl, 1);
                 let [baseRowEl1, baseRowEl2] = baseRowEls;
                 let [sex, age, district, degree, workyear, salary] = baseRowEl1.innerHTML.split("<i></i>");
                 let [current_job_name, current_company_name] = baseRowEl2.innerHTML.split("<i></i>");
@@ -178,7 +178,7 @@ module.exports =
                 let jobExpectancyDistrictEl = await waitElement(".dqname", 1, oneRow);
                 let jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
                 let jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 1, oneRow);
-                let jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                let jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl, 1);
                 let jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
 
                 result.push({
@@ -242,7 +242,7 @@ module.exports =
             let workExperiencesEl = await waitElement("#resume-detail-work-info", 1);
             let result = [];
             if (workExperiencesEl) {
-                let workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl)) || [];
+                let workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl, 1)) || [];
 
 
                 for (let workExperienceEl of workExperienceEls) {
@@ -251,15 +251,15 @@ module.exports =
                     let workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, workExperienceEl);
                     let workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
 
-                    let workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
+                    let workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl, 1);
                     let workInCompanyTags = [...(workInCompanyTagEls || [])].map(item => item.innerText);
                     let workInCompanyJobNameEl = await waitElement(".rd-info-tpl-item-cont .job-name");
                     let workInCompanyJobName = workInCompanyJobNameEl && workInCompanyJobNameEl.innerText;
 
-                    let workInCompanyJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", workExperienceEl)) || [];
+                    let workInCompanyJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", workExperienceEl, 1)) || [];
                     let workInCompanyJobContents = [];
                     for (let WICJCRE of workInCompanyJobContentRowEls) {
-                        let colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        let colEls = (await waitElements(".rd-info-col", WICJCRE, 1)) || [];
                         for (let colEl of colEls) {
                             let keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
                             let keyName = keyNameEl && keyNameEl.innerText;
@@ -295,17 +295,17 @@ module.exports =
                     await sleep(500);
                 }
 
-                let projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl)) || [];
+                let projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl, 1)) || [];
                 for (let projectExperienceEl of projectExperienceEls) {
                     let ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, projectExperienceEl);
                     let ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
                     let ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, projectExperienceEl);
                     let ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
 
-                    let ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl)) || [];
+                    let ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl, 1)) || [];
                     let ProjectExpJobContents = [];
                     for (let WICJCRE of ProjectExpJobContentRowEls) {
-                        let colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        let colEls = (await waitElements(".rd-info-col", WICJCRE, 1)) || [];
                         for (let colEl of colEls) {
                             let keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
                             let keyName = keyNameEl && keyNameEl.innerText;
@@ -346,7 +346,7 @@ module.exports =
                         let schoolTimeEl = await waitElement(".school-time", 1, schoolBasicInfoEl);
                         let schoolTime = schoolTimeEl && schoolTimeEl.innerText;
 
-                        let schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
+                        let schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl, 1);
                         let schoolTags = [...(schoolTagEls || [])].map(item => item.innerText);
                         result.push({
                             schoolName,
@@ -388,7 +388,7 @@ module.exports =
             let skillsEl = await waitElement("#resume-detail-skill-info", 1);
             let result = [];
             if (skillsEl) {
-                let skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl)) || [];
+                let skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl, 1)) || [];
 
 
                 if (skillTagEls && skillTagEls.length) {

@@ -129,15 +129,15 @@ class Chat extends Base {
 
     dealUnreadNoop = async () => {
         let unreadNum = await this.hasUnread();
-        // 判断当前聊天的人是否未读
-        try {
-            const peopleItem = await this.getHighLightItem();
-            let unreadIsCurrentChat = peopleItem ? await this.unreadIsCurrentChat(peopleItem) : false;
-            if (unreadIsCurrentChat) await this.dealOnePeople(peopleItem);
-        } catch (error) {
-            logger.error(`liepin ${this.userInfo.name} 判断当前聊天的人是否未读 失败`, error)
-        }
-        // 判断当前聊天的人是否未读 end
+        // // 判断当前聊天的人是否未读
+        // try {
+        //     const peopleItem = await this.getHighLightItem();
+        //     let unreadIsCurrentChat = peopleItem ? await this.unreadIsCurrentChat(peopleItem) : false;
+        //     if (unreadIsCurrentChat) await this.dealOnePeople(peopleItem);
+        // } catch (error) {
+        //     logger.error(`liepin ${this.userInfo.name} 判断当前聊天的人是否未读 失败`, error)
+        // }
+        // // 判断当前聊天的人是否未读 end
         while (unreadNum > 0 && !this.retryDealUnreadMsg) {
             try {
                 await this.doUnread();
@@ -505,7 +505,7 @@ class Chat extends Base {
         if (message.msgType == "img") {
             return true;
         }
-        if (txt.indexOf("[简历卡片]") !== -1 || txt.indexOf("[职位卡片]") !== -1 || txt.indexOf("[卡片消息]") !== -1 || txt.indexOf("温馨提示：") !== -1)
+        if (txt.indexOf("[简历卡片]") !== -1 || txt.indexOf("[职位卡片]") !== -1 || txt.indexOf("[卡片消息]") !== -1 || txt.indexOf("温馨提示：") !== -1 || txt.indexOf("*******") !== -1)
             return true;
 
         return false;

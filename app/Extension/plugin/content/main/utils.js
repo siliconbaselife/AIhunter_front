@@ -6,7 +6,7 @@ module.exports = `
 const waitElement = async (elementName, maxNum = 10, rootElement = document) => {
     let element = await rootElement.querySelector(elementName);
     let waitNum = 0;
-    while (!element) {
+    while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
         await sleep(1000);
 
@@ -28,7 +28,7 @@ const waitElement = async (elementName, maxNum = 10, rootElement = document) => 
 const waitElements = async (elementName, rootElement = document, maxNum = 10) => {
     let element = rootElement.querySelectorAll(elementName);
     let waitNum = 0;
-    while (!element) {
+    while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
         await sleep(1000);
 
