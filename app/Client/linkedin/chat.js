@@ -198,6 +198,26 @@ class Chat extends Base {
         });
     }
 
+    uploadEmail = async (peopleInfo, email) => {
+        const form = new FormData();  
+
+        const reqParam = {accountID: this.userInfo.accountID, candidateID: peopleInfo.id, candidateName: peopleInfo.name}
+
+        Object.keys(reqParam).map((key) => {
+          form.append(key, reqParam[key]);
+        });
+
+        form.append("email", email);
+        form.append("jobID", "");
+
+        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result/v2`, function(err, res) {
+            if (err) {
+                logger.error(`linkedin email上传失败error: `, err)
+            }
+            logger.info(`上传email成功`);
+        });
+    }
+
     needTalkCheck = async(messages) => {
         if (messages.length == 0)
             return false;

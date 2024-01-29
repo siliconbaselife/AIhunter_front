@@ -148,8 +148,6 @@ class Resume extends Search {
 
             }
         }
-
-
     }
 
     /**
