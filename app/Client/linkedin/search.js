@@ -51,6 +51,7 @@ class Search extends Base {
 
     waitPeopleNum = async() => {
         await this.waitElement(`//div[contains(@class, "search-results-container")]`, this.page);
+        await sleep(1000);
     }
 
     setLocation = async(task) => {

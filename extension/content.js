@@ -266,7 +266,6 @@ ContentMessageHelper.getInstance();
  * @returns {Promise<HTMLElement>}
  */
 const waitElement = async (elementName, maxNum = 10, rootElement = document) => {
-    await sleep(200);
     let element = await rootElement.querySelector(elementName);
     let waitNum = 0;
     while (!element) {
@@ -289,7 +288,6 @@ const waitElement = async (elementName, maxNum = 10, rootElement = document) => 
  * @returns {Promise<NodeList>}
  */
 const waitElements = async (elementName, rootElement = document, maxNum = 10) => {
-    await sleep(200);
     let element = rootElement.querySelectorAll(elementName);
     let waitNum = 0;
     while (!element) {
@@ -1301,40 +1299,40 @@ class LinkedinExecutor {
                 /** @todo 完成后返回true */
 
                 // 立即沟通按钮
-                const chatBtn = await waitElement(".resume-detail-operation-wrap .chat-btn");
+                let chatBtn = await waitElement(".resume-detail-operation-wrap .chat-btn");
                 chatBtn.click();
 
                 await sleep(1000);
 
-                const dialogEl = await waitElement(".hpublic-message-select-box-auto", 2, document).catch(err => {
+                let dialogEl = await waitElement(".hpublic-message-select-box-auto", 1, document).catch(err => {
                     console.log("点击立即沟通按钮后没有弹出弹窗，认为是打招呼成功了", err);
                     return true;
                 })
                 if (dialogEl === true) return { status: "success", error: null };
 
                 // 打招呼语第一个选项按钮
-                const firstChatTemaplteBtn = await waitElement(".hpublic-message-select-box-auto .li-item:nth-of-type(1)");
+                let firstChatTemaplteBtn = await waitElement(".hpublic-message-select-box-auto .li-item:nth-of-type(1)");
 
                 firstChatTemaplteBtn.click();
 
                 // 打开岗位选择
-                const jobSelectInput = await waitElement(".hpublic-job-select input#jobId");
-                const mouseDownEvent = new Event("mousedown", {
+                let jobSelectInput = await waitElement(".hpublic-job-select input#jobId");
+                let mouseDownEvent = new Event("mousedown", {
                     view: window,
                     bubbles: true,
                     cancelable: true,
-                    button: 2
+                    button: 1
                 });
                 jobSelectInput.dispatchEvent(mouseDownEvent);
 
                 await sleep(1000);
 
                 // 选择岗位
-                const jobOptions = await waitElements(".hpublic-job-and-msg-modal-cont-new .ant-form-item-control .ant-select-item-option");
+                let jobOptions = await waitElements(".hpublic-job-and-msg-modal-cont-new .ant-form-item-control .ant-select-item-option");
                 let targetOptionEl;
                 if (jobOptions && jobOptions.length) {
                     for (let optionEl of jobOptions) {
-                        const textEl = optionEl.querySelector("strong");
+                        let textEl = optionEl.querySelector("strong");
                         if (textEl && textEl.innerText && textEl.innerText.indexOf(job_name) !== -1) { // 匹配岗位名
                             targetOptionEl = optionEl;
                             break;
@@ -1348,7 +1346,7 @@ class LinkedinExecutor {
                 await sleep(1000);
 
                 // 点击立即开聊按钮
-                const submitBtn = await waitElement(".hpublic-job-and-msg-modal-cont-new .btn-bar .btn-ok");
+                let submitBtn = await waitElement(".hpublic-job-and-msg-modal-cont-new .btn-bar .btn-ok");
                 submitBtn.click();
 
                 await sleep(1000);
@@ -1372,18 +1370,18 @@ class LinkedinExecutor {
                 console.log("liepin_profile_search start")
 
                 let errorMsg = "";
-                await sleep(2 * 1000);
-                const basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
-                const jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const projectExperiences = await this.getProjectExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const eduExperiences = await this.getEduExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const languages = await this.getlanguages().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const skills = await this.getSkills().catch(err => { errorMsg += (err && err.message || ""); return [] });
-                const selfEvaInfo = await this.getSelfEvaInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
-                const additionalInfo = await this.getAdditionalInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
+                await sleep(1 * 1000);
+                let basicInfo = await this.getBasicInfo().catch(err => { errorMsg += (err && err.message || ""); return null });
+                let jobExpectancies = await this.getJobExpectancy().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let workExperiences = await this.getWorkExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let projectExperiences = await this.getProjectExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let eduExperiences = await this.getEduExperiences().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let languages = await this.getlanguages().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let skills = await this.getSkills().catch(err => { errorMsg += (err && err.message || ""); return [] });
+                let selfEvaInfo = await this.getSelfEvaInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
+                let additionalInfo = await this.getAdditionalInfo().catch(err => { errorMsg += (err && err.message || ""); return "" });
 
-                const peopleInfo = this.gatherAllInfo({
+                let peopleInfo = this.gatherAllInfo({
                     basicInfo,
                     jobExpectancies,
                     workExperiences,
@@ -1403,17 +1401,17 @@ class LinkedinExecutor {
 
 
         async getBasicInfo() {
-            const baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
+            let baseInfoEl = await waitElement("#resume-detail-basic-info", 3);
 
             if (baseInfoEl) {
-                const nameEl = await waitElement(".name-box .name", 2, baseInfoEl);
-                const name = nameEl && nameEl.innerText;
-                const statusEl = await waitElement(".user-status-tag", 2, baseInfoEl);
-                const status = statusEl && statusEl.innerText;
-                const baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
-                const [baseRowEl1, baseRowEl2] = baseRowEls;
-                const [sex, age, district, degree, workyear, salary] = baseRowEl1.innerHTML.split("<i></i>");
-                const [current_job_name, current_company_name] = baseRowEl2.innerHTML.split("<i></i>");
+                let nameEl = await waitElement(".name-box .name", 1, baseInfoEl);
+                let name = nameEl && nameEl.innerText;
+                let statusEl = await waitElement(".user-status-tag", 1, baseInfoEl);
+                let status = statusEl && statusEl.innerText;
+                let baseRowEls = await waitElements(".basic-cont .sep-info", baseInfoEl);
+                let [baseRowEl1, baseRowEl2] = baseRowEls;
+                let [sex, age, district, degree, workyear, salary] = baseRowEl1.innerHTML.split("<i></i>");
+                let [current_job_name, current_company_name] = baseRowEl2.innerHTML.split("<i></i>");
                 return {
                     name,
                     status,
@@ -1432,85 +1430,104 @@ class LinkedinExecutor {
         }
 
         async getJobExpectancy() {
-            const jobExpectancyEl = await waitElement("#resume-detail-job-exp-info", 2);
-            const result = [];
+            let jobExpectancyEl = await waitElement("#resume-detail-job-exp-info", 1);
+            let result = [];
             if (jobExpectancyEl) {
-                const viewAllBtn = await waitElement(".want-job .job-card-right", 2, jobExpectancyEl);
-                if (!viewAllBtn) { // 没有查看全部按钮
-                    const oneRow = await waitElement(".left-wrap", 2, jobExpectancyEl);
-                    const jobExpectancyNameEl = await waitElement(".title", 2, oneRow);
-                    const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                    const jobExpectancySalaryEl = await waitElement(".salary", 2, oneRow);
-                    const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                    const jobExpectancyDistrictEl = await waitElement(".dqname", 2, oneRow);
-                    const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                    const jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 2, oneRow);
-                    const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
-                    const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+                let oneRow = await waitElement(".left-wrap", 1, jobExpectancyEl);
+                let jobExpectancyNameEl = await waitElement(".title", 1, oneRow);
+                let jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                let jobExpectancySalaryEl = await waitElement(".salary", 1, oneRow);
+                let jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                let jobExpectancyDistrictEl = await waitElement(".dqname", 1, oneRow);
+                let jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                let jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 1, oneRow);
+                let jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                let jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
 
-                    result.push({
-                        jobExpectancyName,
-                        jobExpectancySalary,
-                        jobExpectancyDistrict,
-                        jobExpectancyLabels
-                    })
-                } else { // 有查看全部按钮
-                    viewAllBtn.click();
-                    await sleep(500);
-                    const dialogEl = await waitElement(".want-job-list-modal", 5);
-                    const wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
-                    for (let wantJobEl of wantJobEls) {
-                        const jobExpectancyNameEl = await waitElement(".job-name", 2, wantJobEl);
-                        const jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
-                        const jobExpectancySalaryEl = await waitElement(".salary", 2, wantJobEl);
-                        const jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
-                        const jobExpectancyDistrictEl = await waitElement(".address", 2, wantJobEl);
-                        const jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
-                        const jobExpectancyLabelContainerEl = await waitElement(".industry-name", 2, wantJobEl);
-                        const jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
-                        const jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
-                        result.push({
-                            jobExpectancyName,
-                            jobExpectancySalary,
-                            jobExpectancyDistrict,
-                            jobExpectancyLabels
-                        })
-                    }
-                    const closeBtnEl = await waitElement(".ant-modal-close", 2, dialogEl);
-                    if (closeBtnEl) closeBtnEl.click();
-                }
+                result.push({
+                    jobExpectancyName,
+                    jobExpectancySalary,
+                    jobExpectancyDistrict,
+                    jobExpectancyLabels
+                })
+
+                // 暂不需要所有的求职期望数据
+                // let viewAllBtn = await waitElement(".want-job .job-card-right", 1, jobExpectancyEl);
+                // if (!viewAllBtn) { // 没有查看全部按钮
+                //     let oneRow = await waitElement(".left-wrap", 1, jobExpectancyEl);
+                //     let jobExpectancyNameEl = await waitElement(".title", 1, oneRow);
+                //     let jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                //     let jobExpectancySalaryEl = await waitElement(".salary", 1, oneRow);
+                //     let jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                //     let jobExpectancyDistrictEl = await waitElement(".dqname", 1, oneRow);
+                //     let jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                //     let jobExpectancyLabelContainerEl = await waitElement(".lebels-wrap", 1, oneRow);
+                //     let jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                //     let jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+
+                //     result.push({
+                //         jobExpectancyName,
+                //         jobExpectancySalary,
+                //         jobExpectancyDistrict,
+                //         jobExpectancyLabels
+                //     })
+                // } else { // 有查看全部按钮
+                //     viewAllBtn.click();
+                //     await sleep(500);
+                //     let dialogEl = await waitElement(".want-job-list-modal", 5);
+                //     let wantJobEls = (await waitElements(".want-job-list .job-card-left", dialogEl)) || [];
+                //     for (let wantJobEl of wantJobEls) {
+                //         let jobExpectancyNameEl = await waitElement(".job-name", 1, wantJobEl);
+                //         let jobExpectancyName = jobExpectancyNameEl && jobExpectancyNameEl.innerText;
+                //         let jobExpectancySalaryEl = await waitElement(".salary", 1, wantJobEl);
+                //         let jobExpectancySalary = jobExpectancySalaryEl && jobExpectancySalaryEl.innerText;
+                //         let jobExpectancyDistrictEl = await waitElement(".address", 1, wantJobEl);
+                //         let jobExpectancyDistrict = jobExpectancyDistrictEl && jobExpectancyDistrictEl.innerText;
+                //         let jobExpectancyLabelContainerEl = await waitElement(".industry-name", 1, wantJobEl);
+                //         let jobExpectancyLabelEls = await waitElements("span", jobExpectancyLabelContainerEl);
+                //         let jobExpectancyLabels = [...(jobExpectancyLabelEls || [])].map(item => item && item.innerText);
+                //         result.push({
+                //             jobExpectancyName,
+                //             jobExpectancySalary,
+                //             jobExpectancyDistrict,
+                //             jobExpectancyLabels
+                //         })
+                //     }
+                //     let closeBtnEl = await waitElement(".ant-modal-close", 1, dialogEl);
+                //     if (closeBtnEl) closeBtnEl.click();
+                // }
             }
 
             return result;
         }
 
         async getWorkExperiences() {
-            const workExperiencesEl = await waitElement("#resume-detail-work-info", 2);
-            const result = [];
+            let workExperiencesEl = await waitElement("#resume-detail-work-info", 1);
+            let result = [];
             if (workExperiencesEl) {
-                const workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl)) || [];
+                let workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl)) || [];
 
 
                 for (let workExperienceEl of workExperienceEls) {
-                    const workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, workExperienceEl);
-                    const workInCompany = workInCompanyEl && workInCompanyEl.innerText;
-                    const workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, workExperienceEl);
-                    const workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
+                    let workInCompanyEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, workExperienceEl);
+                    let workInCompany = workInCompanyEl && workInCompanyEl.innerText;
+                    let workInCompanyTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, workExperienceEl);
+                    let workInCompanyTime = workInCompanyTimeEl && workInCompanyTimeEl.innerText;
 
-                    const workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
-                    const workInCompanyTags = [...(workInCompanyTagEls || [])].map(item => item.innerText);
-                    const workInCompanyJobNameEl = await waitElement(".rd-info-tpl-item-cont .job-name");
-                    const workInCompanyJobName = workInCompanyJobNameEl && workInCompanyJobNameEl.innerText;
+                    let workInCompanyTagEls = await waitElements(".rd-info-tpl-item-cont .tags-box .tag", workExperienceEl);
+                    let workInCompanyTags = [...(workInCompanyTagEls || [])].map(item => item.innerText);
+                    let workInCompanyJobNameEl = await waitElement(".rd-info-tpl-item-cont .job-name");
+                    let workInCompanyJobName = workInCompanyJobNameEl && workInCompanyJobNameEl.innerText;
 
-                    const workInCompanyJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", workExperienceEl)) || [];
-                    const workInCompanyJobContents = [];
+                    let workInCompanyJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", workExperienceEl)) || [];
+                    let workInCompanyJobContents = [];
                     for (let WICJCRE of workInCompanyJobContentRowEls) {
-                        const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        let colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
                         for (let colEl of colEls) {
-                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
-                            const keyName = keyNameEl && keyNameEl.innerText;
-                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
-                            const valueName = valueNameEl && valueNameEl.innerText;
+                            let keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
+                            let keyName = keyNameEl && keyNameEl.innerText;
+                            let valueNameEl = await waitElement(".rd-info-col-cont", 1, colEl);
+                            let valueName = valueNameEl && valueNameEl.innerText;
                             workInCompanyJobContents.push({
                                 key: keyName,
                                 value: valueName
@@ -1532,31 +1549,31 @@ class LinkedinExecutor {
         }
 
         async getProjectExperiences() {
-            const projectExperiencesEl = await waitElement("#resume-detail-project-info", 2);
-            const result = [];
+            let projectExperiencesEl = await waitElement("#resume-detail-project-info", 1);
+            let result = [];
             if (projectExperiencesEl) {
-                const showMoreBtn = await waitElement(".rd-info-other-box", 2, projectExperiencesEl);
+                let showMoreBtn = await waitElement(".rd-info-other-box", 1, projectExperiencesEl);
                 if (showMoreBtn) {
                     showMoreBtn.click();
                     await sleep(500);
                 }
 
-                const projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl)) || [];
+                let projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl)) || [];
                 for (let projectExperienceEl of projectExperienceEls) {
-                    const ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 2, projectExperienceEl);
-                    const ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
-                    const ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 2, projectExperienceEl);
-                    const ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
+                    let ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, projectExperienceEl);
+                    let ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
+                    let ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, projectExperienceEl);
+                    let ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
 
-                    const ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl)) || [];
-                    const ProjectExpJobContents = [];
+                    let ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl)) || [];
+                    let ProjectExpJobContents = [];
                     for (let WICJCRE of ProjectExpJobContentRowEls) {
-                        const colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
+                        let colEls = (await waitElements(".rd-info-col", WICJCRE)) || [];
                         for (let colEl of colEls) {
-                            const keyNameEl = await waitElement(".rd-info-col-title", 2, colEl);
-                            const keyName = keyNameEl && keyNameEl.innerText;
-                            const valueNameEl = await waitElement(".rd-info-col-cont", 2, colEl);
-                            const valueName = valueNameEl && valueNameEl.innerText;
+                            let keyNameEl = await waitElement(".rd-info-col-title", 1, colEl);
+                            let keyName = keyNameEl && keyNameEl.innerText;
+                            let valueNameEl = await waitElement(".rd-info-col-cont", 1, colEl);
+                            let valueName = valueNameEl && valueNameEl.innerText;
                             ProjectExpJobContents.push({
                                 key: keyName,
                                 value: valueName
@@ -1576,24 +1593,24 @@ class LinkedinExecutor {
         }
 
         async getEduExperiences() {
-            const educationsEl = await waitElement("#resume-detail-edu-info", 2);
-            const result = [];
+            let educationsEl = await waitElement("#resume-detail-edu-info", 1);
+            let result = [];
             if (educationsEl) {
-                const educationEls = await waitElements(".rd-edu-info-item", educationsEl, 2);
+                let educationEls = await waitElements(".rd-edu-info-item", educationsEl, 1);
                 if (educationEls && educationEls.length) {
                     for (let educationEl of educationEls) {
-                        const schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 2, educationEl);
-                        const schoolNameEl = await waitElement(".school-name", 2, schoolBasicInfoEl);
-                        const schoolName = schoolNameEl && schoolNameEl.innerText;
-                        const schoolSpecialEl = await waitElement(".school-special", 2, schoolBasicInfoEl);
-                        const schoolSpecial = schoolSpecialEl && schoolSpecialEl.innerText;
-                        const schoolDegreeEl = await waitElement(".school-degree", 2, schoolBasicInfoEl);
-                        const schoolDegree = schoolDegreeEl && schoolDegreeEl.innerText;
-                        const schoolTimeEl = await waitElement(".school-time", 2, schoolBasicInfoEl);
-                        const schoolTime = schoolTimeEl && schoolTimeEl.innerText;
+                        let schoolBasicInfoEl = await waitElement(".rd-edu-info-item .edu-school-cont", 1, educationEl);
+                        let schoolNameEl = await waitElement(".school-name", 1, schoolBasicInfoEl);
+                        let schoolName = schoolNameEl && schoolNameEl.innerText;
+                        let schoolSpecialEl = await waitElement(".school-special", 1, schoolBasicInfoEl);
+                        let schoolSpecial = schoolSpecialEl && schoolSpecialEl.innerText;
+                        let schoolDegreeEl = await waitElement(".school-degree", 1, schoolBasicInfoEl);
+                        let schoolDegree = schoolDegreeEl && schoolDegreeEl.innerText;
+                        let schoolTimeEl = await waitElement(".school-time", 1, schoolBasicInfoEl);
+                        let schoolTime = schoolTimeEl && schoolTimeEl.innerText;
 
-                        const schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
-                        const schoolTags = [...(schoolTagEls || [])].map(item => item.innerText);
+                        let schoolTagEls = await waitElements(".edu-school-tags", schoolBasicInfoEl);
+                        let schoolTags = [...(schoolTagEls || [])].map(item => item.innerText);
                         result.push({
                             schoolName,
                             schoolSpecial,
@@ -1609,16 +1626,16 @@ class LinkedinExecutor {
         }
 
         async getlanguages() {
-            const languagesEl = await waitElement("#resume-detail-lang-info", 2);
-            const result = [];
+            let languagesEl = await waitElement("#resume-detail-lang-info", 1);
+            let result = [];
             if (languagesEl) {
-                const languageItemEls = await waitElements(".rd-lang-item", languagesEl);
+                let languageItemEls = await waitElements(".rd-lang-item", languagesEl);
                 if (languageItemEls && languageItemEls.length) {
                     for (let languageItemEl of languageItemEls) {
-                        const languageNameEl = await waitElement(".lang-name", 2, languageItemEl);
-                        const languageName = languageNameEl && languageNameEl.innerText;
-                        const languageLevelEls = (await waitElements(".lang-level", languageItemEl, 2)) || [];
-                        const languageLevels = [...languageLevelEls].map(item => item.innerText);
+                        let languageNameEl = await waitElement(".lang-name", 1, languageItemEl);
+                        let languageName = languageNameEl && languageNameEl.innerText;
+                        let languageLevelEls = (await waitElements(".lang-level", languageItemEl, 1)) || [];
+                        let languageLevels = [...languageLevelEls].map(item => item.innerText);
 
                         result.push({
                             languageName,
@@ -1631,10 +1648,10 @@ class LinkedinExecutor {
         }
 
         async getSkills() {
-            const skillsEl = await waitElement("#resume-detail-skill-info", 2);
-            const result = [];
+            let skillsEl = await waitElement("#resume-detail-skill-info", 1);
+            let result = [];
             if (skillsEl) {
-                const skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl)) || [];
+                let skillTagEls = (await waitElements(".skill-tag-box .skill-tag", skillsEl)) || [];
 
 
                 if (skillTagEls && skillTagEls.length) {
@@ -1646,10 +1663,10 @@ class LinkedinExecutor {
         }
 
         async getSelfEvaInfo() {
-            const selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 2);
+            let selfEvaInfoEl = await waitElement("#resume-detail-self-eva-info", 1);
             let result = "";
             if (selfEvaInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 2, selfEvaInfoEl);
+                let detailEl = await waitElement(".resume-detail-template-cont", 1, selfEvaInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }
@@ -1659,10 +1676,10 @@ class LinkedinExecutor {
         }
 
         async getAdditionalInfo() {
-            const additionalInfoEl = await waitElement("#resume-detail-addition-info", 2);
+            let additionalInfoEl = await waitElement("#resume-detail-addition-info", 1);
             let result = "";
             if (additionalInfoEl) {
-                const detailEl = await waitElement(".resume-detail-template-cont", 2, additionalInfoEl);
+                let detailEl = await waitElement(".resume-detail-template-cont", 1, additionalInfoEl);
                 if (detailEl) {
                     result = detailEl && detailEl.innerText;
                 }
@@ -1675,8 +1692,8 @@ class LinkedinExecutor {
          * @param {{basicInfo: ReturnType<LiePinProfile["getBasicInfo"]>,jobExpectancies: ReturnType<LiePinProfile["getJobExpectancy"]>,workExperiences:ReturnType<LiePinProfile["getWorkExperiences"]>,projectExperiences: ReturnType<LiePinProfile["getProjectExperiences"]>,eduExperiences: ReturnType<LiePinProfile["getEduExperiences"]>,languages: ReturnType<LiePinProfile["getlanguages"]>,skills: ReturnType<LiePinProfile["getSkills"]>,selfEvaInfo: ReturnType<LiePinProfile["getSelfEvaInfo"]>,additionalInfo: ReturnType<LiePinProfile["getAdditionalInfo"]>}} info 
          */
         gatherAllInfo(info) {
-            const { basicInfo, jobExpectancies, workExperiences, projectExperiences, eduExperiences, languages, skills, selfEvaInfo, additionalInfo } = info;
-            const finalResult = {
+            let { basicInfo, jobExpectancies, workExperiences, projectExperiences, eduExperiences, languages, skills, selfEvaInfo, additionalInfo } = info;
+            let finalResult = {
                 showName: null,
                 skillLables: null,
                 eduExpFormList: null,
@@ -1690,7 +1707,7 @@ class LinkedinExecutor {
                 resAddition: null,
             };
             if (basicInfo) {
-                const { name, status, sex, age, district, degree, workyear, salary, current_job_name, current_company_name } = basicInfo;
+                let { name, status, sex, age, district, degree, workyear, salary, current_job_name, current_company_name } = basicInfo;
                 finalResult.showName = name;
                 finalResult.basicInfoForm = {
                     birthYearAge: age && this.parseNumber(age),
@@ -1707,7 +1724,7 @@ class LinkedinExecutor {
             }
             if (jobExpectancies) {
                 finalResult.resExpectInfoDtos = jobExpectancies.map(item => {
-                    const { jobExpectancyName, jobExpectancySalary, jobExpectancyDistrict, jobExpectancyLabels } = item;
+                    let { jobExpectancyName, jobExpectancySalary, jobExpectancyDistrict, jobExpectancyLabels } = item;
                     return {
                         labels: jobExpectancyLabels,
                         wantJobtitleName: jobExpectancyName,
@@ -1722,20 +1739,20 @@ class LinkedinExecutor {
             }
             if (workExperiences) {
                 finalResult.workExps = workExperiences.map(item => {
-                    const {
+                    let {
                         workInCompany,
                         workInCompanyTime,
                         workInCompanyTags,
                         workInCompanyJobName,
                         workInCompanyJobContents
                     } = item;
-                    const { startYear, startMonth, endYear, endMonth, yearNum, monthNum } = this.parseTime(workInCompanyTime);
-                    const salaryItem = workInCompanyJobContents.find(item => item.key.indexOf("薪") !== -1);
-                    const dutyItem = workInCompanyJobContents.find(item => item.key.indexOf("职责") !== -1);
-                    const dqItem = workInCompanyJobContents.find(item => item.key.indexOf("工作地点") !== -1);
-                    const jobTitleItem = workInCompanyJobContents.find(item => item.key.indexOf("职位类别") !== -1);
-                    const reportToItem = workInCompanyJobContents.find(item => item.key.indexOf("汇报对象") !== -1);
-                    const rwDeptItem = workInCompanyJobContents.find(item => item.key.indexOf("所在部门") !== -1);
+                    let { startYear, startMonth, endYear, endMonth, yearNum, monthNum } = this.parseTime(workInCompanyTime);
+                    let salaryItem = workInCompanyJobContents.find(item => item.key.indexOf("薪") !== -1);
+                    let dutyItem = workInCompanyJobContents.find(item => item.key.indexOf("职责") !== -1);
+                    let dqItem = workInCompanyJobContents.find(item => item.key.indexOf("工作地点") !== -1);
+                    let jobTitleItem = workInCompanyJobContents.find(item => item.key.indexOf("职位类别") !== -1);
+                    let reportToItem = workInCompanyJobContents.find(item => item.key.indexOf("汇报对象") !== -1);
+                    let rwDeptItem = workInCompanyJobContents.find(item => item.key.indexOf("所在部门") !== -1);
                     return {
                         startYear,
                         startMonth,
@@ -1759,15 +1776,15 @@ class LinkedinExecutor {
             if (projectExperiences) {
                 finalResult.projectExpFormList =
                     projectExperiences.map(item => {
-                        const { ProjectExpName,
+                        let { ProjectExpName,
                             ProjectExpTime,
                             ProjectExpJobContents } = item;
-                        const rpdTitleItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职务") !== -1);
-                        const rpdDescItem = ProjectExpJobContents.find(item => item.key.indexOf("项目描述") !== -1);
-                        const rpdDutyItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职责") !== -1);
-                        const rpdCompnameItem = ProjectExpJobContents.find(item => item.key.indexOf("所在公司") !== -1);
-                        const rpdAchievementItem = ProjectExpJobContents.find(item => item.key.indexOf("项目业绩") !== -1);
-                        const { startYear, startMonth, endYear, endMonth } = this.parseTime2(ProjectExpTime);
+                        let rpdTitleItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职务") !== -1);
+                        let rpdDescItem = ProjectExpJobContents.find(item => item.key.indexOf("项目描述") !== -1);
+                        let rpdDutyItem = ProjectExpJobContents.find(item => item.key.indexOf("项目职责") !== -1);
+                        let rpdCompnameItem = ProjectExpJobContents.find(item => item.key.indexOf("所在公司") !== -1);
+                        let rpdAchievementItem = ProjectExpJobContents.find(item => item.key.indexOf("项目业绩") !== -1);
+                        let { startYear, startMonth, endYear, endMonth } = this.parseTime2(ProjectExpTime);
                         return {
                             startYear,
                             endYear,
@@ -1786,12 +1803,12 @@ class LinkedinExecutor {
             if (eduExperiences) {
                 finalResult.eduExpFormList =
                     eduExperiences.map(item => {
-                        const { schoolName,
+                        let { schoolName,
                             schoolSpecial,
                             schoolDegree,
                             schoolTime,
                             schoolTags } = item;
-                        const { startYear, startMonth, endYear, endMonth } = this.parseTime2(schoolTime)
+                        let { startYear, startMonth, endYear, endMonth } = this.parseTime2(schoolTime)
                         return {
                             startYear,
                             startMonth,
@@ -1807,7 +1824,7 @@ class LinkedinExecutor {
             if (languages) {
                 finalResult.languageFormList =
                     languages.map(item => {
-                        const { languageName,
+                        let { languageName,
                             languageLevels } = item
                         return {
                             languageTypeName: languageName,
