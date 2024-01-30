@@ -164,7 +164,10 @@ class Chat extends Base {
         // recallInfo = { recall_msg: "你好,有兴趣再聊下吗,我们这边很期待您的加入~" }; // 测试代码，记得删
 
         this.recallIndex += 1;
-        if (!recallInfo) return;
+        if (!recallInfo) {
+            await this.dealRecallEnd();
+            return;
+        }
         await item.click();
         await sleep(500);
 
