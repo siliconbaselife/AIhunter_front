@@ -882,7 +882,7 @@ class Chat extends Base {
      * 点击全部按钮，却换到全部消息tab
      */
     putAllMessageBtn = async () => {
-        let allBtn = await this.waitElement(`//div[contains(@class, "ant-space-item")]//span[text() = "全部"]/parent::button[not(contains(@class, "active"))]`, this.page, 5);
+        let allBtn = await this.waitElement(`//div[contains(@class, "ant-space-item")]//span[text() = "全部"]/parent::button[not(contains(@class, "active"))]`, this.page, 1);
         if (allBtn) {
             await allBtn.click();
             await sleep(2 * 1000);
