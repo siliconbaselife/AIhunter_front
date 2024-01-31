@@ -668,7 +668,7 @@ module.exports =
                 
                 const dialogEl = await waitElement(".ant-modal-confirm", 5);
                 if (!dialogEl) return {status: "fail", error: "没有出现对话框"};
-                const confirmBtn = await waitElement(".ant-modal-confirm-btns button",5, dialogEl, );
+                const confirmBtn = await waitElement(".ant-modal-confirm-btns button",5, document, );
                 if (!confirmBtn) return {status: "fail", error: "没有确认按钮"};
                 confirmBtn.click();
                 await sleep(2 * 1000);

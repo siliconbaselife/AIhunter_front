@@ -284,27 +284,30 @@ class Chat extends Base {
 
         if (items.length != unreadNum && !this.retryDealUnreadMsg) { // 猎聘未读列表貌似有bug, 有时有些未读消息不会展示在未读列表
             this.retryDealUnreadMsg = true; // 尝试一次，后面如果判断 未读数 和 在未读消息列表 数量还是不一样的话，就不卡在这里了
+            try {
+                await this.putAllMessageBtn();
+                let items = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item")]`);
+                for (let item of items) {
+                    const [numberDiv] = await item.$$(`div.__im_basic__avatar:nth-of-type(1)`);
+                    if (numberDiv) {
+                        const number = await this.page.evaluate(node => Number(node.innerText), numberDiv);
 
-            await this.putAllMessageBtn();
-            let items = await this.page.$x(`//div[not(contains(@class,'hide')) ]//div[contains(@class, "__im_pro__list-item")]`);
-            for (let item of items) {
-                const [numberDiv] = await item.$$(`div.__im_basic__avatar:nth-of-type(1)`);
-                if (numberDiv) {
-                    const number = await this.page.evaluate(node => Number(node.innerText), numberDiv);
+                        // 跟上面一样的处理
+                        if (number > 0) {
+                            await this.scrollChatToPosition(item);
 
-                    // 跟上面一样的处理
-                    if (number > 0) {
-                        await this.scrollChatToPosition(item);
+                            try {
+                                await this.dealOnePeople(item);
+                            } catch (e) {
+                                logger.error(`liepin ${this.userInfo.name} 处理未读消息2出现异常: `, e);
+                            }
 
-                        try {
-                            await this.dealOnePeople(item);
-                        } catch (e) {
-                            logger.error(`liepin ${this.userInfo.name} 处理未读消息出现异常: `, e);
+                            index += 1;
                         }
-
-                        index += 1;
                     }
                 }
+            } catch (error) {
+                logger.error(`liepin ${this.userInfo.name} 处理未读消息差异出现异常: `, error);
             }
         }
     }
@@ -334,6 +337,8 @@ class Chat extends Base {
             messages = await this.fetchMsgsByHtml(name);
         }
 
+        const lastMessage = messages && messages[messages.length - 1];
+        if (lastMessage.msg && lastMessage.msg.indexOf("你已向对方索要") !== -1) return; // 这种消息直接跳过
         await this.chatOnePeopleNoop(id, name, messages);
     }
 
