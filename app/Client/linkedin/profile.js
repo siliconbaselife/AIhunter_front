@@ -56,7 +56,7 @@ class Profile extends Base {
             selected: false,
         })
         this.tab = tab;
-        await sleep(1 * 1000)
+        await sleep(1500)
     }
 
     dealEnd = async () => {
