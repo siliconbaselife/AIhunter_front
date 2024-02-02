@@ -1,6 +1,6 @@
 
 module.exports =
-    `
+`
     class LiePinProfile extends Base {
         static instance = new LiePinProfile();
         static getInstance() {
@@ -663,13 +663,14 @@ module.exports =
                 for (let buttonEl of operationBtns) {
                     if (buttonEl.innerText === "免费获取联系方式" || buttonEl.innerText === "保存") btn = buttonEl;
                 }
-                if (!btn) return { status: "fail", error: "没有找到下载简历按钮" };
+                if (!btn) return { status: "fail", error: "没有找到下载简历按钮"};
                 btn.click();
+
+                await sleep(500);
                 
-                const dialogEl = await waitElement(".ant-modal-confirm", 5);
-                if (!dialogEl) return {status: "fail", error: "没有出现对话框"};
+                const dialogEl = await waitElement(".ant-modal-confirm", 5, document, () => {btn && btn.click()});
                 const confirmBtn = await waitElement(".ant-modal-confirm-btns button",5, document, );
-                if (!confirmBtn) return {status: "fail", error: "没有确认按钮"};
+                if (!confirmBtn) return {status: "fail", error: "没有确认按钮" + "弹窗元素:" + (dialogEl ? "true" : "false")};
                 confirmBtn.click();
                 await sleep(2 * 1000);
                 return { status: "success", error: "" };
