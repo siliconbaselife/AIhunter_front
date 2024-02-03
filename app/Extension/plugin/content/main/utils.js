@@ -1,13 +1,16 @@
-module.exports = `
+module.exports = 
+`
 /**
  * 持续获取element
+ * @param {?(()=>void)} notFoundExecute
  * @returns {Promise<HTMLElement>}
  */
-const waitElement = async (elementName, maxNum = 10, rootElement = document) => {
+const waitElement = async (elementName, maxNum = 10, rootElement = document, notFoundExecute) => {
     let element = await rootElement.querySelector(elementName);
     let waitNum = 0;
     while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
+        typeof notFoundExecute === "function" && notFoundExecute();
         await sleep(1000);
 
         waitNum += 1;
@@ -23,13 +26,15 @@ const waitElement = async (elementName, maxNum = 10, rootElement = document) => 
  * 持续获取elements
  * @param {string} elementName
  * @param {HTMLElement} rootElement
+ * @param {?(()=>void)} notFoundExecute
  * @returns {Promise<NodeList>}
  */
-const waitElements = async (elementName, rootElement = document, maxNum = 10) => {
+const waitElements = async (elementName, rootElement = document, maxNum = 10, notFoundExecute) => {
     let element = rootElement.querySelectorAll(elementName);
     let waitNum = 0;
     while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
+        typeof notFoundExecute === "function" && notFoundExecute();
         await sleep(1000);
 
         waitNum += 1;
