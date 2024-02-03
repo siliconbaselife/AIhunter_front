@@ -169,8 +169,11 @@ class Resume extends Base {
         let aboutElement = await fetchElementByText("h2.pvs-header__title > span.visually-hidden", "About");
         if (aboutElement) {
             let aboutMainDiv = aboutElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
-            let summaryDiv = aboutMainDiv.querySelector(".ph5").querySelector(".visually-hidden");
-            baseInfo["summary"] = summaryDiv.innerText;
+            let h5 = aboutMainDiv.querySelector(".ph5");
+            if (h5) {
+                let summaryDiv = h5.querySelector(".visually-hidden");
+                baseInfo["summary"] = summaryDiv.innerText;
+            }
         }
 
         return baseInfo;

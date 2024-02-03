@@ -523,8 +523,8 @@ class Chat extends Base {
                 continue;
 
             logger.info(`boss ${this.userInfo.name} 需要获取 ${name} 的简历`);
-
             let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
+            logger.info(`boss ${this.userInfo.name} btnTxt: ${btnTxt}`);
 
             if (btnTxt == "点击预览附件简历")
                 await this.dealResume(item, id, name);

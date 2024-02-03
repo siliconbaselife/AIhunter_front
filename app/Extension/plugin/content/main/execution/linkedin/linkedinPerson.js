@@ -109,8 +109,10 @@ class LinkedinPerson extends Base {
             let language = {};
 
             let languageNameSpan = languageLi.querySelector(".mr1 > .visually-hidden");
-            if (languageNameSpan)
+            if (languageNameSpan) {
                 language["language"] = languageNameSpan.innerText;
+                language["language"] = language["language"].trim();
+            }
 
             let languagedesSpan = languageLi.querySelector(".t-black--light > .visually-hidden");
             if (languagedesSpan)
@@ -191,8 +193,11 @@ class LinkedinPerson extends Base {
         let aboutElement = await fetchElementByText("h2.pvs-header__title > span.visually-hidden", "About");
         if (aboutElement) {
             let aboutMainDiv = aboutElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
-            let summaryDiv = aboutMainDiv.querySelector(".ph5").querySelector(".visually-hidden");
-            baseInfo["summary"] = summaryDiv.innerText;
+            let h5 = aboutMainDiv.querySelector(".ph5");
+            if (h5) {
+                let summaryDiv = h5.querySelector(".visually-hidden");
+                baseInfo["summary"] = summaryDiv.innerText;
+            }
         }
 
         return baseInfo;
