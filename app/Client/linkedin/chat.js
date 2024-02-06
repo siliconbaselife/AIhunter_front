@@ -50,6 +50,7 @@ class Chat extends Base {
                 logger.info(`linkedin ${this.userInfo.name} 获取到未读消息`);
                 await unreadMsgItem.click();
                 await sleep(500);
+
                 await this.chatOnePeople();
             } else {
                 let hasMore = await this.nextPage();
@@ -127,6 +128,7 @@ class Chat extends Base {
         } catch (e) {
             logger.error(`linkedin ${this.userInfo.name} ${id} 聊天发生异常:`, e);
             await sleep(5 * 1000);
+            return true;
         }
 
         return false;

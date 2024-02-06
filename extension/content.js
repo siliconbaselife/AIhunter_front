@@ -263,13 +263,15 @@ ContentMessageHelper.getInstance();
         
 /**
  * 持续获取element
+ * @param {?(()=>void)} notFoundExecute
  * @returns {Promise<HTMLElement>}
  */
-const waitElement = async (elementName, maxNum = 10, rootElement = document) => {
+const waitElement = async (elementName, maxNum = 10, rootElement = document, notFoundExecute) => {
     let element = await rootElement.querySelector(elementName);
     let waitNum = 0;
     while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
+        typeof notFoundExecute === "function" && notFoundExecute();
         await sleep(1000);
 
         waitNum += 1;
@@ -285,13 +287,15 @@ const waitElement = async (elementName, maxNum = 10, rootElement = document) => 
  * 持续获取elements
  * @param {string} elementName
  * @param {HTMLElement} rootElement
+ * @param {?(()=>void)} notFoundExecute
  * @returns {Promise<NodeList>}
  */
-const waitElements = async (elementName, rootElement = document, maxNum = 10) => {
+const waitElements = async (elementName, rootElement = document, maxNum = 10, notFoundExecute) => {
     let element = rootElement.querySelectorAll(elementName);
     let waitNum = 0;
     while (!element && maxNum != 1) {
         console.log(waitNum + "网太慢了，element还没有刷新出来" + elementName);
+        typeof notFoundExecute === "function" && notFoundExecute();
         await sleep(1000);
 
         waitNum += 1;
@@ -1934,13 +1938,14 @@ class LinkedinExecutor {
                 for (let buttonEl of operationBtns) {
                     if (buttonEl.innerText === "免费获取联系方式" || buttonEl.innerText === "保存") btn = buttonEl;
                 }
-                if (!btn) return { status: "fail", error: "没有找到下载简历按钮" };
+                if (!btn) return { status: "fail", error: "没有找到下载简历按钮"};
                 btn.click();
+
+                await sleep(500);
                 
-                const dialogEl = await waitElement(".ant-modal-confirm", 5);
-                if (!dialogEl) return {status: "fail", error: "没有出现对话框"};
+                const dialogEl = await waitElement(".ant-modal-confirm", 5, document, () => {btn && btn.click()});
                 const confirmBtn = await waitElement(".ant-modal-confirm-btns button",5, document, );
-                if (!confirmBtn) return {status: "fail", error: "没有确认按钮"};
+                if (!confirmBtn) return {status: "fail", error: "没有确认按钮" + "弹窗元素:" + (dialogEl ? "true" : "false")};
                 confirmBtn.click();
                 await sleep(2 * 1000);
                 return { status: "success", error: "" };
