@@ -215,12 +215,32 @@ class Chat extends Base {
     chatToPeople = async (peopleInfo, messages) => {
         let gptMessages = await this.transferMessages(messages);
         logger.info(`脉脉 ${this.userInfo.name} gptMessages: ${JSON.stringify(gptMessages)}`);
-        if (gptMessages.length == 0 || gptMessages[gptMessages.length - 1].speaker == "robot") {
+
+        let isTalk = await this.isUserTalk(gptMessages);
+        if (!isTalk) {
             logger.info(`脉脉 ${this.userInfo.name} 这个人 ${peopleInfo.name} ${peopleInfo.id} 没有未读消息`);
             return;
         }
 
         await this.chatWithRobot(gptMessages, peopleInfo);
+    }
+
+    isUserTalk = async (messages) => {
+        let index = messages.length - 1;
+        while(index >= 0) {
+            if (messages[index].speaker == "user")
+                return true;
+
+            if (messages[index].speaker == "system") {
+                index -= 1;
+                continue;
+            }
+
+            if (messages[index].speaker == "robot")
+                return false;
+        }
+
+        return false;
     }
 
     chatWithRobot = async (messages, peopleInfo) => {

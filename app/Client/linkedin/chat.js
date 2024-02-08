@@ -221,13 +221,21 @@ class Chat extends Base {
     }
 
     needTalkCheck = async(messages) => {
-        if (messages.length == 0)
-            return false;
+        let index = messages.length - 1;
+        while(index >= 0) {
+            if (messages[index].speaker == "user")
+                return true;
 
-        if (messages[messages.length - 1].speaker == "robot")
-            return false;
+            if (messages[index].speaker == "system") {
+                index -= 1;
+                continue;
+            }
 
-        return true;
+            if (messages[index].speaker == "robot")
+                return false;
+        }
+
+        return false;
     }
 
     fetchMsgs = async() => {
