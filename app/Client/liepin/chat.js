@@ -202,7 +202,7 @@ class Chat extends Base {
 
     needRecall = async (id, name) => {
         try {
-            const { status, data } = await Request({
+            const tmp = await Request({
                 url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
                 data: {
                     accountID: this.userInfo.accountID,
@@ -212,6 +212,8 @@ class Chat extends Base {
                 headers: { "Connection": "keep-alive" },
                 method: 'POST'
             });
+            logger.info(`liepin ${this.userInfo.name} Request tmp: ${JSON.stringify(tmp)}`)
+            let { status, data } = tmp;
             logger.info(`liepin ${this.userInfo.name} name: ${name} recall status: ${status} data: ${JSON.stringify(data)}`);
 
             if (status == 0) {
