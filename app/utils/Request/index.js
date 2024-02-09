@@ -81,15 +81,19 @@ const Request = async (options) => {
               error
             })
           }
-          if(body && !body.hasOwnProperty('status') && body.hasOwnProperty('ret')){
+          if(body && !body.hasOwnProperty('status') && body.hasOwnProperty('ret')) {
             body.status = body.ret
+          }
+
+          if (!body) {
+            Logger.error("RequestBase error body is null");
+            reject({status: -100, data: `请求body为空，${error.message}`});
           }
       
           resolve(body);
         } catch(e) {
           Logger.error("RequestBase error: ", e);
-          reject({status: -100,
-            data: `请求异常，${error.message}`});
+          reject({status: -100, data: `请求异常，${error.message}`});
         }
       })
     } catch (e) {
