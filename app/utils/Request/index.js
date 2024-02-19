@@ -87,13 +87,13 @@ const Request = async (options) => {
 
           if (!body) {
             Logger.error("RequestBase error body is null");
-            reject({status: -100, data: `请求body为空，${error.message}`});
+            reject({status: -100, data: `请求body为空`});
           }
       
           resolve(body);
         } catch(e) {
           Logger.error("RequestBase error: ", e);
-          reject({status: -100, data: `请求异常，${error.message}`});
+          reject({status: -100, data: `请求异常，${e}`});
         }
       })
     } catch (e) {
