@@ -1182,7 +1182,7 @@ class Resume extends Base {
         let experience = {
             "companyName": null,
             "timeInfo": null,
-            "work": [
+            "works": [
                 {
 
                 }

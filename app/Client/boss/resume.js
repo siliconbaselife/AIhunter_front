@@ -82,6 +82,7 @@ class Resume extends Base {
 
             if (task.helloSum <= 0) {
                 logger.info(`boss ${this.userInfo.name} 打招呼次数用完了`);
+                break;
             }
 
             if (index >= geekItems.length) {
