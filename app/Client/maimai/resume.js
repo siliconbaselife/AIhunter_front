@@ -264,10 +264,10 @@ class Resume extends Base {
 
         await this.waitElement(`//div[contains(@class, "wrapper___3L7wg")]`, this.page);
 
-        let [leftBtn] = await this.page.$x(`//span[contains(@class, "mui-select-selection-search")]/input[contains(@id, "rc_select_2")]`);
+        let [leftBtn] = await this.page.$x(`//span[contains(@class, "mui-select-selection-search")]/input[contains(@id, "rc_select_3")]`);
         await this.setWorkTimeDrop(leftBtn, beginTime);
         
-        let [rightBtn] = await this.page.$x(`//span[contains(@class, "mui-select-selection-search")]/input[contains(@id, "rc_select_3")]`);
+        let [rightBtn] = await this.page.$x(`//span[contains(@class, "mui-select-selection-search")]/input[contains(@id, "rc_select_4")]`);
         await this.setWorkTimeDrop(rightBtn, endTime);
 
         let [sureBtn] = await this.page.$x(`//div[contains(@class, "mui-btn") and text() = "确定"]`);

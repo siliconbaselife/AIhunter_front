@@ -1196,20 +1196,20 @@ class Resume extends Base {
         let timeInfoSpan = companyExperienceElement.querySelectorAll('div[data-view-name="profile-component-entity"] > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > span.t-black--light > .visually-hidden')[0];
         if (timeInfoSpan) {
             experience["timeInfo"] = timeInfoSpan.innerText
-            experience["work"][0]["workTimeInfo"] = timeInfoSpan.innerText
+            experience["works"][0]["workTimeInfo"] = timeInfoSpan.innerText
         }
 
         let locationSpan = companyExperienceElement.querySelectorAll('div[data-view-name="profile-component-entity"] > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > span.t-black--light > .visually-hidden')[1];
         if (locationSpan)
-            experience["work"][0]["worklocation"] = locationSpan.innerText
+            experience["works"][0]["worklocation"] = locationSpan.innerText
 
         let workPositionSpan = companyExperienceElement.querySelector('.mr1 > .visually-hidden')
         if (workPositionSpan)
-            experience["work"][0]["workPosition"] = workPositionSpan.innerText
+            experience["works"][0]["workPosition"] = workPositionSpan.innerText
 
         let workDescriptionSpan = companyExperienceElement.querySelector("li.pvs-list__item--with-top-padding > div > div > div > div > .visually-hidden")
         if (workDescriptionSpan)
-            experience["work"][0]["workDescription"] = workDescriptionSpan.innerText
+            experience["works"][0]["workDescription"] = workDescriptionSpan.innerText
 
         return experience;
     }
