@@ -107,7 +107,7 @@ class Common {
    */
   async saveExtensionTarget() {
     return new Promise((rs, rj) => {
-      let timer = setTimeout(() => { // 等2秒，如果还没有找到扩展程序，则抛出异常
+      let timer = setTimeout(() => { // 等12秒，如果还没有找到扩展程序，则抛出异常
         if (timer) {
           clearTimeout(timer);
           timer = null;
@@ -115,7 +115,7 @@ class Common {
         if (!this.extension) {
           rj("没有找到扩展程序");
         }
-      }, 2000);
+      }, 12 * 1000);
       this.browser.waitForTarget(target => target.type() === puppeteer.TargetType.SERVICE_WORKER)
         .then(extensionTarget => extensionTarget.worker())
         .then(extension => {
