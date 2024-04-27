@@ -66,6 +66,14 @@ class Client {
 
         logger.info(`boss ${this.userInfo.name} 要退出了`);
     }
+
+    getJobs = async () => {
+        global.running = true;
+        logger.info(`boss开始执行 account: ${account_id}`);
+
+        await this.loginPage(account_id);
+        await sleep(2 * 1000);
+    }
 }
 
 module.exports = Client;

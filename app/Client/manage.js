@@ -45,6 +45,17 @@ class Manage {
         }
     }
 
+    fetchJobInfo = async (platformType, account_id) => {
+        try {
+            let client = await this.fetchClient(platformType);
+            let jobInfos = await client.getJobs();
+            rs(jobInfos);
+        } catch (e) {
+            logger.error(`获取账号岗位信息异常 platformType: ${platformType} account_name: ${account_id} error: `, e);
+            rj(e);
+        }
+    }
+
     execute = async (platformType, account_name, account_id) => {
         try {
             console.log(`执行 ${platformType} ${account_name} ${account_id}`);

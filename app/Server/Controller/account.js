@@ -71,4 +71,12 @@ jobRouter.get("/status", async (ctx, next) => {
     ctx.body = Result.ok(resultObj);
 })
 
+jobRouter.get("/fetch", async (ctx, next) => {
+    const { account_id } = ctx.request.body || {};
+    if (!account_id) {
+        ctx.body = Result.fail("没有账号id: account_id");
+        return;
+    }
+})
+
 module.exports = jobRouter;
