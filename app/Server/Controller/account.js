@@ -72,11 +72,32 @@ jobRouter.get("/status", async (ctx, next) => {
 })
 
 jobRouter.get("/fetch", async (ctx, next) => {
-    const { account_id } = ctx.request.body || {};
+    const { platformType, account_name, account_id } = ctx.request.body || {};
     if (!account_id) {
         ctx.body = Result.fail("没有账号id: account_id");
         return;
     }
+    if (!account_name) {
+        ctx.body = Result.fail("没有账号name: account_name");
+        return;
+    }
+    if (!platformType) {
+        ctx.body = Result.fail("没有账号platformType: platformType");
+        return;
+    }
+
+    const resultObj = [];
+
+    const worker = ProcessControl.getChildProcess({ prop: "account_id", value: account_id });
+    if (worker) {
+        ctx.body = Result.fail("进程正在运行，请先关闭工作账号");
+        return;
+    }
+
+    worker = ProcessControl.createChildProcess(ctx.userInfo, { account_id, account_name, platformType });
+    ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_JOB_SCAN)
+
+    ctx.body = Result.ok(resultObj);
 })
 
 module.exports = jobRouter;

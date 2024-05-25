@@ -332,6 +332,12 @@ class Resume extends Base {
     }
 
     refresh = async() => {
+        let closeBtn = await this.waitElement(`//button[contains(@type, "button") and contains(@class, "mui-modal-close")]`, this.page, 2);
+        if (closeBtn) {
+            await closeBtn.click();
+            await sleep(200);
+        }
+
         let homeBtn = await this.waitElement('//div[text() = "首页"]', this.page);
         await homeBtn.click();
         await sleep(200);
