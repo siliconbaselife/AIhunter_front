@@ -71,6 +71,7 @@ jobRouter.get("/status", async (ctx, next) => {
     ctx.body = Result.ok(resultObj);
 })
 
+/** 岗位扫描 */
 jobRouter.post("/getJobInfo", async (ctx, next) => {
     const { platformType, account_name, account_id } = ctx.request.body || {};
     if (!platformType) ctx.body = Result.fail("没有平台类型: platformType");
