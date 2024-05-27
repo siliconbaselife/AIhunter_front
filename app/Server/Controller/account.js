@@ -61,7 +61,7 @@ jobRouter.get("/status", async (ctx, next) => {
         /** @type {(import "cluster").Worker} */
         let worker = ProcessControl.getChildProcess({ prop: "account_id", value: account_id })
         if (worker) { // 如果目前存在account_id对应的进程
-            resultObj[account_id] = { 
+            resultObj[account_id] = {
                 id: worker.id, // worker_id, 这个参数前端暂时用不上,留在后续有需要再使用
                 pid: worker.process.pid, // 进程id, 这个参数前端暂时用不上,留在后续有需要再使用
                 is_not_dead: !worker.isDead(),
@@ -69,6 +69,22 @@ jobRouter.get("/status", async (ctx, next) => {
         }
     })
     ctx.body = Result.ok(resultObj);
+})
+
+jobRouter.post("/getJobInfo", async (ctx, next) => {
+    const { platformType, account_name, account_id } = ctx.request.body || {};
+    if (!platformType) ctx.body = Result.fail("没有平台类型: platformType");
+    else if (!account_id) ctx.body = Result.fail("没有账号id: account_id");
+    else {
+        try {
+            const worker = ProcessControl.createTemporaryChildProcess(ctx.userInfo, { platformType, account_name });
+            const jobInfo = await ProcessControl.sendMessage(worker, PROCESS_CONSTANTS.ACCOUNT_GET_JOB_INFO_EVENT_TYPE, { platformType, account_name, account_id });
+            ProcessControl.killChildProcess(worker);
+            ctx.body = Result.ok(jobInfo);
+        } catch (error) {
+            ctx.body = Result.fail(error);
+        }
+    }
 })
 
 jobRouter.get("/fetch", async (ctx, next) => {

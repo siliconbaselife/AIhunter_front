@@ -1,4 +1,5 @@
 const logger = require('../Logger');
+const { sleep } = require('../utils');
 
 class Manage {
     static instance;
@@ -45,10 +46,17 @@ class Manage {
         }
     }
 
-    fetchJobInfo = async (platformType, account_id) => {
+    fetchJobInfo = async (platformType, account_name, account_id, rs, rj) => {
         try {
             let client = await this.fetchClient(platformType);
-            let jobInfos = await client.getJobs();
+            // 测试暂时注释掉
+            // let jobInfos = await client.getJobs();
+
+            // 测试代码
+            await sleep(15000);
+            const jobInfos = ["岗位1", "岗位2"];
+
+
             rs(jobInfos);
         } catch (e) {
             logger.error(`获取账号岗位信息异常 platformType: ${platformType} account_name: ${account_id} error: `, e);

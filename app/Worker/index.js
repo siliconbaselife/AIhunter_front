@@ -27,6 +27,16 @@ class WorkerHandler {
             console.log("accountInfo: ", this.accountInfo);
             manage.execute(platformType, account_name, account_id);
         });
+
+        ProcessControl.listenMessage(PROCESS_CONSTANTS.ACCOUNT_GET_JOB_INFO_EVENT_TYPE, (data) => {
+            console.log("扫描岗位账号: ", data);
+            const { platformType, account_name, account_id } = this.accountInfo;
+            console.log("accountInfo: ", this.accountInfo);
+            return new Promise((rs, rj) => {
+                manage.fetchJobInfo(platformType, account_name, account_id, rs, rj);
+            })
+        });
+        
     }
 }
 
