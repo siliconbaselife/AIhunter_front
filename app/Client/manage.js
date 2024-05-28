@@ -49,12 +49,11 @@ class Manage {
     fetchJobInfo = async (platformType, account_name, account_id, rs, rj) => {
         try {
             let client = await this.fetchClient(platformType);
-            // 测试暂时注释掉
-            // let jobInfos = await client.getJobs();
+            let jobInfos = await client.getJobs(account_id);
 
-            // 测试代码
-            await sleep(15000);
-            const jobInfos = ["岗位1", "岗位2"];
+            // // 测试代码
+            // await sleep(15000);
+            // const jobInfos = ["岗位1", "岗位2"];
 
 
             rs(jobInfos);

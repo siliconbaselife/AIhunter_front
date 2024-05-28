@@ -1,4 +1,5 @@
 const Resume = require('./resume');
+const Jobs = require('./jobs');
 const Login = require('./login');
 const { sleep } = require('../../utils');
 const Chat = require('./chat');
@@ -67,12 +68,19 @@ class Client {
         logger.info(`boss ${this.userInfo.name} 要退出了`);
     }
 
-    getJobs = async () => {
+    /**
+     * 扫描岗位
+     * @param {?string} account_id 
+     */
+    getJobs = async (account_id) => {
         global.running = true;
         logger.info(`boss开始执行 account: ${account_id}`);
 
         await this.loginPage(account_id);
         await sleep(2 * 1000);
+
+        const jobs = new Jobs();
+        return jobs.getJobs();
     }
 }
 
