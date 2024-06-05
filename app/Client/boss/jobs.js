@@ -32,7 +32,7 @@ class Job extends Base {
 
         await this.waitElement(`//div[contains(@class, "job-filter-container")]`, this.frame);
 
-        let [openBtn] = await this.frame.$x(`//span[text() = "开放中"]`);
+        let [openBtn] = await this.frame.$x(`//div[contains(@class, "tab-box")]/span[2]`);
         await openBtn.click();
         await sleep(500);
 
@@ -48,7 +48,7 @@ class Job extends Base {
 
         let jobLists = await this.frame.$x(`//ul[contains(@class, "job-list-content")]/li`);
         for (let jobLi of jobLists) {
-            let jobText = await jobLi.$x(`//div[contains(@class, "job-title")]/a`);
+            let [jobText] = await jobLi.$x(`//div[contains(@class, "job-title")]/a`);
             let jobName = await this.frame.evaluate(node => node.innerText, jobText);
             jobInfos.push(jobName)
         }

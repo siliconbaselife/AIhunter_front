@@ -33,7 +33,7 @@ class WorkerHandler {
             const { platformType, account_name, account_id } = this.accountInfo;
             console.log("accountInfo: ", this.accountInfo);
             return new Promise((rs, rj) => {
-                manage.fetchJobInfo(platformType, account_name, account_id, rs, rj);
+                manage.fetchJobInfo(platformType, account_name, data.account_id, rs, rj);
             })
         });
         

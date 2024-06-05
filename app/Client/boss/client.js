@@ -79,8 +79,9 @@ class Client {
         await this.loginPage(account_id);
         await sleep(2 * 1000);
 
-        const jobs = new Jobs();
-        return jobs.getJobs();
+        const jobs = new Jobs(this.options);
+        let jobList = await jobs.getJobs();
+        return jobList;
     }
 }
 
