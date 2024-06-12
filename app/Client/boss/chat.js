@@ -15,7 +15,7 @@ class Chat extends Base {
     itemHeight = 78;
 
     run = async() => {
-        logger.info(`脉脉 ${this.userInfo.name} 聊天逻辑开始`);
+        logger.info(`boss ${this.userInfo.name} 聊天逻辑开始`);
         await this.setBefore();
         await this.noop();
         await this.setEnd();
@@ -173,7 +173,8 @@ class Chat extends Base {
     }
 
     hasUnread = async() => {
-        let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "unread-nums")]`);
+        // let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "unread-nums")]`);
+        let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "badge-count")]/span`);
         if (!unreadSpan)
             return 0;
 
