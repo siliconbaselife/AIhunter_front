@@ -179,6 +179,9 @@ class Chat extends Base {
             return 0;
 
         let unreadNum = await this.page.evaluate(node => node.innerText, unreadSpan);
+        if (unreadNum = "...")
+            logger.info(`boss ${this.userInfo.name} 未读消息太多`);
+            return 100
 
         return unreadNum;
     }
@@ -386,7 +389,7 @@ class Chat extends Base {
             let d = await this.chatToGpt(id, name, messages);
             nextStep = d.nextStep;
             nextStepContent = d.nextStepContent;
-            logger.info(`脉脉 ${this.userInfo.name} ${name} nextStep: ${nextStep} nextStepContent: ${nextStepContent}`);
+            logger.info(`boss ${this.userInfo.name} ${name} nextStep: ${nextStep} nextStepContent: ${nextStepContent}`);
 
             if (nextStep.length == 0)
                 return;
@@ -510,8 +513,8 @@ class Chat extends Base {
     dealSystemView = async (id, name) => {
         await this.clickOkAll();
         await this.dealSystemResume(id, name);
-        await this.dealWX(id, name);
-        await this.dealPhone(id, name);
+        // await this.dealWX(id, name);
+        // await this.dealPhone(id, name);
     }
 
     clickOkAll = async () => {
@@ -534,9 +537,9 @@ class Chat extends Base {
             if (!cardBtn)
                 continue;
 
-            logger.info(`boss ${this.userInfo.name} 需要获取 ${name} 的简历`);
+            logger.info(`boss ${this.userInfo.name} 需要获取 ${name} 的简历, 发现一个系统文本框`);
             let btnTxt = await this.page.evaluate(node => node.innerText, cardBtn);
-            logger.info(`boss ${this.userInfo.name} btnTxt: ${btnTxt}`);
+            logger.info(`boss ${this.userInfo.name} ${name} btnTxt: ${btnTxt}`);
 
             if (btnTxt == "点击预览附件简历")
                 await this.dealResume(item, id, name);
@@ -560,7 +563,8 @@ class Chat extends Base {
 
         // const pageFrame = await this.page.$('#imIframe');
         // let resumeFrame = await pageFrame.contentFrame();
-        let btns = await resumeFrame.$x(`//div[contains(@class, "attachment-resume-btns")]/span`);
+        let btns = await resumeFrame.$x(`//div[contains(@class, "attachment-resume-btns")]/div`);
+        logger.info(`downloadResume btns: ${btns.length}`)
         await btns[btns.length - 1].click();
         await sleep(1 * 1000);
         let [closeBtn] = await resumeFrame.$x(`//div[contains(@class, "boss-popup__close")]`);
@@ -655,11 +659,11 @@ class Chat extends Base {
     }
 
     dealPhone = async (id, name) => {
-        let [phoneBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看电话"]`);
-        if (!phoneBtn) {
-            return;
-        }
-        await phoneBtn.click();
+        // let [phoneBtn] = await this.page.$x(`//span[contains(@class, "operate-btn") and text() = "查看电话"]`);
+        // if (!phoneBtn) {
+        //     return;
+        // }
+        // await phoneBtn.click();
         let exchangeDiv = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
         let [textExchangeDiv] = await exchangeDiv.$x(`//span[contains(@class, "text exchanged")]/span`);
         let phone = await this.page.evaluate(node => node.innerText, textExchangeDiv);
