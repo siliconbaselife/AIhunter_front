@@ -399,11 +399,11 @@ class Chat extends Base {
             if (nextStepContent.length === 0 && nextStep != "noTalk")
                 await this.sendEmoji();
 
-            if (nextStep === "need_contact") {
+            if (nextStep === "need_contact" || nextStep === "need_contact_without_wx") {
                 await sleep(1000);
                 try {
                     logger.info(`boss ${this.userInfo.name} ${name} 获取联系方式`);
-                    await this.sendContact(name);
+                    await this.sendContact(name, nextStep);
                 } catch (e) {
                     logger.error(`boss ${this.userInfo.name} ${name} 申请手机号异常: `, e);
                 }
@@ -417,7 +417,7 @@ class Chat extends Base {
         return false;
     }
 
-    sendContact = async (name) => {
+    sendContact = async (name, nextStep) => {
         let [resumeBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "求简历"]/parent::*/span[contains(@class, "operate-btn")]`);
         logger.info(`boss ${this.userInfo.name} 候选人: ${name} 简历按钮: `, resumeBtn);
         if (resumeBtn) {
@@ -427,7 +427,7 @@ class Chat extends Base {
 
         let [wxBtn] = await this.page.$x(`//span[contains(@class, "tip") and text() = "交换微信"]/parent::*/span[contains(@class, "operate-btn")]`);
         logger.info(`boss ${this.userInfo.name} 候选人: ${name} wx按钮: `, wxBtn);
-        if (wxBtn) {
+        if (wxBtn && nextStep != "need_contact_without_wx") {
             await wxBtn.click();
             await this.putSure();
         }
