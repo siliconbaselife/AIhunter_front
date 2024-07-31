@@ -326,19 +326,15 @@ class Resume extends Base {
         }
 
         let [experienceSpan] = await this.frame.$x(`//div[contains(@class, "experience")]`);
-        if (experienceSpan) {
-            await this.frame.evaluate((item)=> {item && item.scrollIntoView()}, experienceSpan);
-            for (let work_time of task.filter.work_time) {
-                let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
-                await workTimeBtn.click();
-                await sleep(300);
-            }
-            await sleep(1000);
-    
-            logger.info(`boss ${this.userInfo.name} setExperience end`);
-        } else {
-            logger.info(`boss ${this.userInfo.name} setExperience experienceSpan is ${experienceSpan}`)
+        await this.frame.evaluate((item)=>item.scrollIntoView(), experienceSpan);
+        for (let work_time of task.filter.work_time) {
+            let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
+            await workTimeBtn.click();
+            await sleep(300);
         }
+        await sleep(1000);
+
+        logger.info(`boss ${this.userInfo.name} setExperience end`);
     }
 
     setFilterSureBtn = async() => {
@@ -352,6 +348,7 @@ class Resume extends Base {
         await filterBtn.click();
         await sleep(1000);
         await this.waitElement(`//div[contains(@class, "filter-panel")]`, this.frame);
+        await sleep(1000);
 
         logger.info(`boss ${this.userInfo.name} setFilterSpan end`);
     }
