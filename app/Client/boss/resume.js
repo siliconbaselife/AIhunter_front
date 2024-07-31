@@ -326,15 +326,19 @@ class Resume extends Base {
         }
 
         let [experienceSpan] = await this.frame.$x(`//div[contains(@class, "experience")]`);
-        await this.frame.evaluate((item)=>item.scrollIntoView(), experienceSpan);
-        for (let work_time of task.filter.work_time) {
-            let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
-            await workTimeBtn.click();
-            await sleep(300);
+        if (experienceSpan) {
+            await this.frame.evaluate((item)=> {item && item.scrollIntoView()}, experienceSpan);
+            for (let work_time of task.filter.work_time) {
+                let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
+                await workTimeBtn.click();
+                await sleep(300);
+            }
+            await sleep(1000);
+    
+            logger.info(`boss ${this.userInfo.name} setExperience end`);
+        } else {
+            logger.info(`boss ${this.userInfo.name} setExperience experienceSpan is ${experienceSpan}`)
         }
-        await sleep(1000);
-
-        logger.info(`boss ${this.userInfo.name} setExperience end`);
     }
 
     setFilterSureBtn = async() => {
