@@ -1,3 +1,5 @@
+/** @typedef {"recommended" | "selected" | "new"} TabType  */
+
 const Base = require('./base');
 const { sleep } = require('../../utils');
 const Request = require('../../utils/Request');
@@ -8,6 +10,7 @@ class Resume extends Base {
     keywordDelay = 40;
     peopleCache;
     getList;
+    /** @type {import("puppeteer").Frame} */
     frame;
     creditsFinished = false;
 
@@ -15,20 +18,20 @@ class Resume extends Base {
         super(options)
     }
 
-    queryTasks = async() => {
-        const {status, data, msg} = await Request({
+    queryTasks = async () => {
+        const { status, data, msg } = await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/fetch/v2`,
             data: {
                 accountID: this.userInfo.accountID,
             },
             method: 'POST'
-          });
+        });
         logger.info(`boss ${this.userInfo.name} 领取到任务: ${JSON.stringify(data)}`);
 
         return data["task"];
     }
 
-    run = async() => { 
+    run = async () => {
         logger.info(`boss ${this.userInfo.name} 打招呼，开始执行打招呼任务`);
         let tasks = await this.queryTasks();
         logger.info(`boss ${this.userInfo.name} 获取到 ${tasks.length} 个打招呼任务, 任务如下: ${JSON.stringify(tasks)}`);
@@ -51,27 +54,30 @@ class Resume extends Base {
             logger.info(`boss ${this.userInfo.name} 任务如下: ${JSON.stringify(task)}`);
 
             try {
-                await this.dealTask(task);
+                try {
+                    await this.dealTaskBefore();
+                    await this.refresh();
+                    await this.changeTab("recommended");
+                    await this.dealTask(task);
+                } catch (e) {
+                    logger.error(`boss ${this.userInfo.name} 打招呼异常: `, e);
+                }
+                await this.closeSearch();
             } catch (e) {
                 logger.error(`boss ${this.userInfo.name} 任务 ${parseInt(index) + 1} 出现异常失败: `, e);
             }
+
         }
     }
 
-    dealTask = async(task) => {
-        await this.dealTaskBefore();
-        try {
-            await this.setFilter(task);
-            await this.noopTask(task);
-        } catch (e) {
-            logger.error(`boss ${this.userInfo.name} 打招呼异常: `, e);
-        }
-        await this.closeSearch();
+    dealTask = async (task) => {
+        await this.setFilter(task);
+        await this.noopTask(task);
     }
 
-    noopTask = async(task) => {
+    noopTask = async (task) => {
         let index = 0;
-        while(global.running) {
+        while (global.running) {
             if (this.creditsFinished)
                 break;
 
@@ -91,12 +97,18 @@ class Resume extends Base {
                 await sleep(3000);
                 geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
 
-                if (index >= geekItems.length)
-                    break;
+                if (index >= geekItems.length) { // 已经拉到最底了，没有更多数据
+                    const changed = await this.changeTab("new");
+                    // 切换tab后，再次执行这个任务
+                    return changed ? this.dealTask(task) : undefined;
+                }
             }
 
-            if (index > 150)
-                break;
+            if (index > 150) { // 本tab超过150个了
+                const changed = await this.changeTab("new");
+                // 切换tab后，再次执行这个任务
+                return changed ? this.dealTask(task) : undefined;
+            }
 
             let geekItem = geekItems[index];
             index += 1;
@@ -109,7 +121,7 @@ class Resume extends Base {
 
             await this.frame.evaluate((item) => item.scrollIntoView({ block: "center" }), geekItem);
 
-            let {geekId, name} = await this.fetchItemIdAndName(geekItem);
+            let { geekId, name } = await this.fetchItemIdAndName(geekItem);
             logger.info(`boss ${this.userInfo.name} 当前处理候选人 id: ${geekId} name: ${name}`);
 
             let peopleInfo = this.peopleCache[geekId];
@@ -125,13 +137,13 @@ class Resume extends Base {
 
             await this.touchPeople(geekItem);
             f = await this.isCreditsOver();
-            
+
             if (!f)
                 await this.reportTouch(task, peopleInfo.geekCard.geekId);
         }
     }
 
-    isCreditsOver = async() => {
+    isCreditsOver = async () => {
         let [dialog] = await this.page.$x(`//div[contains(@class, "boss-dialog__body")]`);
         if (!dialog)
             return false;
@@ -143,12 +155,12 @@ class Resume extends Base {
         return true;
     }
 
-    isCandidate = async(geekItem) => {
+    isCandidate = async (geekItem) => {
         let [candidateCard] = await geekItem.$x(`//div[contains(@class, "candidate-card-wrap")]`);
         return !!candidateCard;
     }
 
-    setOnlineInfo = async(peopleInfo, geekItem) => {
+    setOnlineInfo = async (peopleInfo, geekItem) => {
         let [onlineImg] = await geekItem.$x(`//img[contains(@class, "online-marker")]`);
         if (onlineImg) {
             peopleInfo.isOnline = true;
@@ -157,18 +169,18 @@ class Resume extends Base {
         }
     }
 
-    reportTouch = async(task, id) => {
+    reportTouch = async (task, id) => {
         await Request({
             url: `${BIZ_DOMAIN}/recruit/account/task/report/v2`,
             data: {
-              accountID: this.userInfo.accountID,
-              jobID: task.jobID,
-              taskStatus: [{
-                taskType: 'batchTouch',
-                details: {
-                  candidateList: [id]
-                }
-              }]
+                accountID: this.userInfo.accountID,
+                jobID: task.jobID,
+                taskStatus: [{
+                    taskType: 'batchTouch',
+                    details: {
+                        candidateList: [id]
+                    }
+                }]
             },
             method: 'POST'
         });
@@ -176,13 +188,13 @@ class Resume extends Base {
         task.helloSum -= 1;
     }
 
-    touchPeople = async(item) => {
+    touchPeople = async (item) => {
         let [sayHiBtn] = await item.$x(`//button[contains(@class, "btn-greet")]`);
         await sayHiBtn.click();
         await sleep(300);
     }
 
-    filterPeople = async(peopleInfo, task) => {
+    filterPeople = async (peopleInfo, task) => {
         try {
             const { status, data } = await Request({
                 url: `${BIZ_DOMAIN}/recruit/candidate/filter/v2`,
@@ -191,12 +203,12 @@ class Resume extends Base {
                     jobID: task.jobID,
                     candidateInfo: peopleInfo
                 },
-                headers: {"Connection": "keep-alive"},
+                headers: { "Connection": "keep-alive" },
                 method: 'POST'
             });
-  
-            logger.info(`boss ${this.userInfo.name} 筛选结果 ${status} ${data.touch} ` );
-  
+
+            logger.info(`boss ${this.userInfo.name} 筛选结果 ${status} ${data.touch} `);
+
             if (status == 0 && data.touch) {
                 return false;
             }
@@ -207,59 +219,58 @@ class Resume extends Base {
         return true;
     }
 
-    scrollToPosition = async(index) => {
+    scrollToPosition = async (index) => {
         let listHeight = 180 * index;
 
         await this.frame.evaluate((height) => {
             window.scrollTo(0, height);
-          }, listHeight);
+        }, listHeight);
         await sleep(300);
     }
 
-    fetchItemIdAndName = async(geekItem) => {
+    fetchItemIdAndName = async (geekItem) => {
         let [cardInner] = await geekItem.$x(`//div[contains(@class, "card-inner")]`);
         let geekId = await this.frame.evaluate(node => node.dataset.geek, cardInner);
 
         let [nameSpan] = await geekItem.$x(`//span[contains(@class, "name")]`);
         let name = await this.frame.evaluate(node => node.innerText, nameSpan);
-        return {geekId, name};
+        return { geekId, name };
     }
 
-    dealTaskBefore = async() => {
+    dealTaskBefore = async () => {
         this.getList = async (response) => {
             try {
-              const url = response.url();
-              const request = response.request();
-              const method = request.method();
-  
-              if (url.startsWith('https://www.zhipin.com/wapi/zpjob/rec/geek/list') &&
-                response.status() === 200 && (['GET', 'POST'].includes(method))) {
-                  let res;
-                  try {
-                      res = await response.json();
-                  } catch (e) {
-                      logger.error(`boss ${this.userInfo.name} 监听获取列表数据异常：`, e);
-                  }
-  
-                  if (res && res.code === 0 && res.zpData) {
-                      await this.dealPeopleList(res.zpData.geekList);
-                  }
-              }
-           } catch (e) {
-              logger.error(`boss ${this.userInfo.name} get candidate list error: ${e}`);
-           }
+                const url = response.url();
+                const request = response.request();
+                const method = request.method();
+
+                if (url.startsWith('https://www.zhipin.com/wapi/zpjob/rec/geek/list') &&
+                    response.status() === 200 && (['GET', 'POST'].includes(method))) {
+                    let res;
+                    try {
+                        res = await response.json();
+                    } catch (e) {
+                        logger.error(`boss ${this.userInfo.name} 监听获取列表数据异常：`, e);
+                    }
+
+                    if (res && res.code === 0 && res.zpData) {
+                        await this.dealPeopleList(res.zpData.geekList);
+                    }
+                }
+            } catch (e) {
+                logger.error(`boss ${this.userInfo.name} get candidate list error: ${e}`);
+            }
         }
         this.page.on('response', this.getList);
     }
 
-    dealPeopleList = async(geekList) => {
+    dealPeopleList = async (geekList) => {
         for (let geek of geekList) {
             this.peopleCache[geek.geekCard.encryptGeekId] = geek;
         }
     }
 
-    setFilter = async(task) => {
-        await this.refresh();
+    setFilter = async (task) => {
         await this.setSearchTxt(task);
         await this.setFilterSpan(task);
         await this.setExperience(task);
@@ -270,12 +281,12 @@ class Resume extends Base {
         await this.setFilterSureBtn();
     }
 
-    setIntention = async(task) => {
+    setIntention = async (task) => {
         if (!task.filter.status || task.filter.status.length == 0)
-            return 
+            return
 
         let [intentionSpan] = await this.frame.$x(`//div[contains(@class, "intention")]`);
-        await this.frame.evaluate((item)=>item.scrollIntoView(), intentionSpan);
+        await this.frame.evaluate((item) => item.scrollIntoView(), intentionSpan);
         for (let intention of task.filter.status) {
             let [intentionBtn] = await intentionSpan.$x(`//span[text() = "${intention}"] | //div[text() = "${intention}"]`);
             await intentionBtn.click();
@@ -287,12 +298,12 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} setIntention end`);
     }
 
-    setSalary = async(task) => {
+    setSalary = async (task) => {
         if (!task.filter.pay || task.filter.pay.length == 0)
-            return 
+            return
 
         let [salarySpan] = await this.frame.$x(`//div[contains(@class, "salary")]`);
-        await this.frame.evaluate((item)=>item.scrollIntoView(), salarySpan);
+        await this.frame.evaluate((item) => item.scrollIntoView(), salarySpan);
         let [salaryBtn] = await salarySpan.$x(`//span[text() = "${task.filter.pay}"] | //div[text() = "${task.filter.pay}"]`);
         await salaryBtn.click();
         await sleep(300);
@@ -302,12 +313,12 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} setSalary end`);
     }
 
-    setEducation = async(task) => {
+    setEducation = async (task) => {
         if (!task.filter.education || task.filter.education.length == 0)
-            return 
+            return
 
         let [educationSpan] = await this.frame.$x(`//div[contains(@class, "degree")]`);
-        await this.frame.evaluate((item)=>item.scrollIntoView(), educationSpan);
+        await this.frame.evaluate((item) => item.scrollIntoView(), educationSpan);
         for (let education of task.filter.education) {
             let [educationBtn] = await educationSpan.$x(`//span[text() = "${education}"] | //div[text() = "${education}"]`);
             await educationBtn.click();
@@ -319,14 +330,14 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} setEducation end`);
     }
 
-    setExperience = async(task) => {
-        if(!task.filter.work_time || task.filter.work_time.length == 0) {
+    setExperience = async (task) => {
+        if (!task.filter.work_time || task.filter.work_time.length == 0) {
             logger.info(`boss ${this.userInfo.name} no work_time`);
             return;
         }
 
         let [experienceSpan] = await this.frame.$x(`//div[contains(@class, "experience")]`);
-        await this.frame.evaluate((item)=>item.scrollIntoView(), experienceSpan);
+        await this.frame.evaluate((item) => item.scrollIntoView(), experienceSpan);
         for (let work_time of task.filter.work_time) {
             let [workTimeBtn] = await experienceSpan.$x(`//span[text() = "${work_time}"] | //div[text() = "${work_time}"]`);
             await workTimeBtn.click();
@@ -337,13 +348,13 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} setExperience end`);
     }
 
-    setFilterSureBtn = async() => {
+    setFilterSureBtn = async () => {
         const [submitBtn] = await this.frame.$x('//span[text() = "确定"] | //div[text() = "确定"]');
         await submitBtn.click();
         await sleep(1000);
     }
 
-    setFilterSpan = async() => {
+    setFilterSpan = async () => {
         let [filterBtn] = await this.frame.$x(`//div[contains(@class, "filter-label")]`);
         await filterBtn.click();
         await sleep(1000);
@@ -353,14 +364,14 @@ class Resume extends Base {
         logger.info(`boss ${this.userInfo.name} setFilterSpan end`);
     }
 
-    closeSearch = async() => {
+    closeSearch = async () => {
         let [jobManageBtn] = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
         if (jobManageBtn)
             await jobManageBtn.click();
         await sleep(500);
     }
 
-    refresh = async() => {
+    refresh = async () => {
         await this.closeSearch();
 
         let [recommendBtn] = await this.page.$x(`//a[contains(@ka, "menu-geek-recommend")]`);
@@ -371,7 +382,52 @@ class Resume extends Base {
         this.frame = await recommendFrame.contentFrame();
     }
 
-    setSearchTxt = async(task) => {
+    /** @type {Record<TabType, string>} Tab状态对应 */
+    tabStatus = {
+        "recommended": "0", // 推荐
+        "new": "1", // 新牛人
+        "selected": "3", // 精选牛人
+    }
+    /**
+     * 获取当前tab
+     * @returns {Promise<TabType | "">}
+     */
+    getCurrentTabType = async () => {
+        try {
+            const [currentTabButton] = await this.frame.$x(`//div[contains(@id, "headerWrap")]//ul[contains(@class, "tab-list")]//li[contains(@class, "curr")]`);
+            const currentTab = await this.frame.evaluate((item, tabStatus = []) => {
+                const status = item.dataset.status;
+                const tabName = Object.keys(tabStatus).find(val => status.indexOf(tabStatus[val]) !== -1);
+                return tabName || "";
+            },
+                currentTabButton, this.tabStatus);
+            logger.info(`boss ${this.userInfo.name} currentTab: ${currentTab}`);
+            return currentTab;
+        } catch (error) {
+            logger.error(`boss ${this.userInfo.name} 获取当前tab失败: ${error}`);
+            return ""
+        }
+    }
+    /**
+     * 切换tab
+     * @param {TabType} tab
+     * @returns {Promise<boolean>} 是否进行了切换操作 
+     */
+    changeTab = async (tab) => {
+        try {
+            const currentTab = await this.getCurrentTabType();
+            if (currentTab && currentTab === tab) return false;
+            const [switchTabButton] = await this.frame.$x(`//div[contains(@id, "headerWrap")]//ul[contains(@class, "tab-list")]//li[contains(@data-status,"${this.tabStatus[tab]}")]`);
+            await switchTabButton.click();
+            await sleep(500);
+            return true;
+        } catch (error) {
+            logger.error(`boss ${this.userInfo.name} 切换tab失败: ${tab}`, error);
+            return false;
+        }
+    }
+
+    setSearchTxt = async (task) => {
         let dropmenu = await this.waitElement(`//div[contains(@class, "ui-dropmenu-label")]`, this.frame);
         await dropmenu.click();
 

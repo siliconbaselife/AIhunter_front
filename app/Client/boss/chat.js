@@ -5,35 +5,41 @@ const logger = require('../../Logger');
 const { BIZ_DOMAIN } = require("../../Config/index");
 const FormData = require('form-data');
 const path = require('path');
-const {rmDir} = require('../../utils/FileSystem');
+const { rmDir } = require('../../utils/FileSystem');
 const fs = require('fs');
 
 class Chat extends Base {
     keywordDelay = 40;
     messageCache = {};
+    /** @type {Record<number, any>} 在线简历Cache */
+    personInfoCache = {};
+    /** @type {Record<number, string>} 人员jobId的Cache */
+    jobIdCache = {};
     recallIndex = 0;
     itemHeight = 78;
 
-    run = async() => {
+    run = async () => {
         logger.info(`boss ${this.userInfo.name} 聊天逻辑开始`);
         await this.setBefore();
         await this.noop();
         await this.setEnd();
     }
 
-    setEnd = async() => {
+    setEnd = async () => {
         await this.page.removeListener('response', this.getPeopleMessage);
     }
 
-    setBefore = async() => {
+    setBefore = async () => {
         this.messageCache = {};
+        this.personInfoCache = {};
 
         await this.setMsgReceive();
+        await this.setGeekInfoReceive();
         await this.setChatPage();
         await this.setDownloadPath();
     }
 
-    setChatPage = async() => {
+    setChatPage = async () => {
         // let [jobManageBtn] = await this.page.$x(`//a[contains(@ka, "menu-manager-job")]`);
         // await jobManageBtn.click();
         // await sleep(500);
@@ -45,33 +51,65 @@ class Chat extends Base {
         await this.waitElement(`//div[contains(@class, "chat-box")]`, this.page);
     }
 
-    setMsgReceive = async() => {
+    setMsgReceive = async () => {
         const getPeopleMessage = async (response) => {
             const url = response.url();
             if (url.startsWith('https://www.zhipin.com/wapi/zpchat/boss/historyMsg')) {
 
-              try {
-                const itemRes = await response.json();
-    
-                let messages = itemRes.zpData.messages;
-                await this.dealPeopleMessage(messages);
-              } catch (e) {
-                logger.error(`boss ${this.userInfo.name} 获取消息error: `, e);
-              }
+                try {
+                    const itemRes = await response.json();
+
+                    let messages = itemRes.zpData.messages;
+                    await this.dealPeopleMessage(messages);
+                } catch (e) {
+                    logger.error(`boss ${this.userInfo.name} 获取消息error: `, e);
+                }
             }
         }
 
         this.page.on('response', getPeopleMessage);
     }
 
-    dealPeopleMessage = async(messages) => {
+    /**
+     * on在线简历请求
+     */
+    setGeekInfoReceive = async () => {
+        const getPeopleInfo = async (response) => {
+            const url = response.url();
+            if (url.indexOf("zpjob/view/geek/info") !== -1) {
+                try {
+                    const itemRes = await response.json();
+
+                    let zpData = itemRes.zpData;
+                    await this.dealOnePeopleInfo(zpData);
+                } catch (e) {
+                    logger.error(`boss ${this.userInfo.name} 获取在线简历error: `, e);
+                }
+            }
+        }
+
+        this.page.on('response', getPeopleInfo);
+    }
+
+    dealPeopleMessage = async (messages) => {
         let uid = messages[0].from.uid;
         let name = messages[0].from.name;
         logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的消息`);
         this.messageCache[uid] = messages;
     }
 
-    noop = async() => {
+    /**
+     * 处理个人在线简历
+     * @param {{geekDetailInfo: {geekBaseInfo: {userId: number, name: string, [key: string]: any}, [key: string]: any}, [key: string]: any}} zpData 
+     */
+    dealOnePeopleInfo = async (zpData) => {
+        const baseInfo = zpData.geekDetailInfo.geekBaseInfo;
+        const { userId: uid, name } = baseInfo;
+        logger.info(`boss ${this.userInfo.name} 获取到 id:${uid} name:${name} 的在线简历`);
+        this.personInfoCache[uid] = zpData;
+    }
+
+    noop = async () => {
         let unreadNum = await this.hasUnread();
         while (unreadNum > 0) {
             try {
@@ -92,13 +130,13 @@ class Chat extends Base {
         }
     }
 
-    doRecall = async() => {
+    doRecall = async () => {
         await this.putAllMessageBtn();
         await this.dealRecallEnd();
         await this.scrollChatToPosition(this.recallIndex);
         let item = await this.fetchRecallItem();
-        await this.page.evaluate((item)=>item.scrollIntoView({ block: "center" }), item);
-        let {id, name} = await this.fetchItemNameAndId(item);
+        await this.page.evaluate((item) => item.scrollIntoView({ block: "center" }), item);
+        let { id, name, jobName } = await this.fetchItemNameAndId(item);
 
         let recallInfo = await this.needRecall(id, name);
         this.recallIndex += 1;
@@ -107,42 +145,44 @@ class Chat extends Base {
         await item.click();
         await sleep(500);
 
+        await this.checkAndGetJobId({ id, jobName }); // 检查jobId操作
+
         await this.sendMessage(recallInfo.recall_msg);
         await this.recallResult(id);
 
         await this.dealRecallEnd();
     }
 
-    scrollChatToPosition = async(index) => {
+    scrollChatToPosition = async (index) => {
         await this.page.evaluate((scrollLength) => {
             const wrap = $(".user-list")[0];
             wrap.scrollBy(0, scrollLength);
         }, this.itemHeight * index);
     }
 
-    fetchRecallItem = async() => {
+    fetchRecallItem = async () => {
         let items = await this.page.$x(`//div[contains(@role, "listitem")]`);
         return items[this.recallIndex];
     }
 
-    dealRecallEnd = async() => {
+    dealRecallEnd = async () => {
         let items = await this.page.$x(`//div[contains(@role, "listitem")]`);
         if (this.recallIndex >= items.length) {
             this.recallIndex = 0;
         }
     }
 
-    needRecall = async(id, name) => {
+    needRecall = async (id, name) => {
         try {
             const tmp = await Request({
-              url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
-              data: {
-                accountID: this.userInfo.accountID,
-                candidateIDs: [id],
-                candidateIDs_read: []
-              },
-              headers: {"Connection": "keep-alive"},
-              method: 'POST'
+                url: `${BIZ_DOMAIN}/recruit/candidate/recallList`,
+                data: {
+                    accountID: this.userInfo.accountID,
+                    candidateIDs: [id],
+                    candidateIDs_read: []
+                },
+                headers: { "Connection": "keep-alive" },
+                method: 'POST'
             });
 
             logger.info(`boss ${this.userInfo.name} Request tmp: ${JSON.stringify(tmp)}`)
@@ -159,20 +199,20 @@ class Chat extends Base {
         }
     }
 
-    recallResult = async(id) => {
+    recallResult = async (id) => {
         const { status, data } = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/recallResult`,
             data: {
-              accountID: this.userInfo.accountID,
-              candidateID: id
+                accountID: this.userInfo.accountID,
+                candidateID: id
             },
-            headers: {"Connection": "keep-alive"},
+            headers: { "Connection": "keep-alive" },
             method: 'POST'
         });
         logger.info(`boss ${this.userInfo.name} recallResult ${id} data: ${JSON.stringify(data)}`);
     }
 
-    hasUnread = async() => {
+    hasUnread = async () => {
         // let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "unread-nums")]`);
         let [unreadSpan] = await this.page.$x(`//span[contains(@class, "menu-chat-badge")]/span[contains(@class, "badge-count")]/span`);
         if (!unreadSpan)
@@ -181,12 +221,12 @@ class Chat extends Base {
         let unreadNum = await this.page.evaluate(node => node.innerText, unreadSpan);
         if (unreadNum = "...")
             logger.info(`boss ${this.userInfo.name} 未读消息太多`);
-            return 100
+        return 100
 
         return unreadNum;
     }
 
-    doUnread = async() => {
+    doUnread = async () => {
         let unreadNum = await this.hasUnread();
         if (unreadNum == 0)
             return;
@@ -208,6 +248,7 @@ class Chat extends Base {
 
             try {
                 await this.dealOnePeople(item);
+
             } catch (e) {
                 logger.error(`boss ${this.userInfo.name} 处理未读消息出现异常: `, e);
             }
@@ -217,11 +258,13 @@ class Chat extends Base {
     }
 
     dealOnePeople = async (item) => {
-        let {id, name} = await this.fetchItemNameAndId(item);
+        let { id, name, jobName } = await this.fetchItemNameAndId(item);
         logger.info(`boss ${this.userInfo.name} 当前处理 ${id} ${name} 的消息`);
-        await this.page.evaluate((item)=>item.scrollIntoView(), item);
+        await this.page.evaluate((item) => item.scrollIntoView(), item);
         await item.click();
         await sleep(2 * 1000);
+
+        await this.checkAndGetJobId({ id, jobName }); // 检查jobId操作
 
         let messages = await this.fetchPeopleMsgsByCache(id);
         logger.info(`boss ${this.userInfo.name} id: ${id} http请求处理后的消息: ${JSON.stringify(messages)}`);
@@ -233,17 +276,112 @@ class Chat extends Base {
         await this.chatOnePeopleNoop(id, name, messages);
     }
 
+    /**
+     * 检查jobId流程
+     * @param {{id: number | string, jobName: string}} param0 
+     */
+    checkAndGetJobId = async ({ id, jobName = "" }) => {
+        try {
+            // mock测试 可删除
+            // await this.clickOnlineProfileBtn();
+            // const _peopleInfo = this.personInfoCache[id];
+            // logger.info(`boss ${this.userInfo.name} mock拿到简历 ${_peopleInfo ? JSON.stringify(_peopleInfo) : 'none'}`);
+            // return;
+            
+            let jobId = await this.fetchJobId(id);
+            if (jobId) {
+                this.jobIdCache[id] = jobId;
+                return jobId;
+            }
+
+            jobId = await this.fetchJobIdByJobName(jobName);
+            if (!jobId) throw new Error(`根据jobName获取jobId失败`);
+            // 点击打开在线简历
+            await this.clickOnlineProfileBtn();
+            // 拿到在线简历
+            const peopleInfo = this.personInfoCache[id];
+            if (!peopleInfo) throw new Error(`没有找到对应的在线简历信息`);
+            await this.uploadOnlineProfile(jobId, peopleInfo);
+            this.jobIdCache[id] = jobId;
+            return jobId;
+        } catch (error) {
+            logger.error(`boss ${this.userInfo.name} 检查jobId流程异常 id: ${id} jobName: ${jobName}`, error);
+        }
+    }
+
+    fetchJobId = async (candidateId) => {
+        const data = await Request({
+            url: `${BIZ_DOMAIN}/recruit/job/has_job`,
+            data: {
+                accountID: this.userInfo.accountID,
+                candidateId,
+            },
+            headers: { "Connection": "keep-alive" },
+            method: 'POST'
+        });
+        if (data.ret != 0) return Promise.reject(data.msg);
+        const jobId = data.data;
+        return jobId;
+    }
+
+    fetchJobIdByJobName = async (jobName) => {
+        const data = await Request({
+            url: `${BIZ_DOMAIN}/recruit/job/job_id`,
+            data: {
+                accountID: this.userInfo.accountID,
+                jobName,
+            },
+            headers: { "Connection": "keep-alive" },
+            method: 'POST'
+        });
+        if (data.ret != 0) return Promise.reject(data.msg);
+        const jobId = data.data;
+        return jobId;
+    }
+
+    uploadOnlineProfile = async (jobID, peopleInfo) => {
+        const { status, data, msg } = await Request({
+            url: `${BIZ_DOMAIN}/recruit/candidate/filter/v2`,
+            data: {
+                accountID: this.userInfo.accountID,
+                jobID,
+                candidateInfo: peopleInfo
+            },
+            headers: { "Connection": "keep-alive" },
+            method: 'POST'
+        });
+
+        logger.info(`boss ${this.userInfo.name} 上线在线简历结果 ${status} ${data.touch} `);
+
+        if (status == 0) return;
+        else return Promise.reject(msg)
+    }
+
+    clickOnlineProfileBtn = async () => {
+        let [resumeBtn] = await this.page.$x(`//div[contains(@class, "chat-conversation")]//a[contains(@class, "resume-btn-online")]`);
+        resumeBtn.click();
+        await sleep(1000);
+        await this.waitElement(`//div[contains(@class, "new-resume-online-main-ui")]//div[contains(@class, "resume-box")]`, this.page);
+        const [closeBtn] = await this.page.$x(`//div[contains(@class, "boss-dialog")]//div[contains(@class, "boss-popup__close")]`);
+        if (closeBtn) {
+            closeBtn.click();
+            await sleep(500);
+        }
+    }
+
+
+
     chatOnePeopleNoop = async (id, name, messages) => {
         await this.dealSystemView(id, name);
-        while(messages && messages.length > 0) {
+        while (messages && messages.length > 0) {
             let needTalk = await this.needTalk(messages);
             if (!needTalk)
                 break;
-            
+
             let noTalk = await this.chatWithRobot(id, name, messages);
             if (noTalk)
                 break;
-            
+
             await sleep(10 * 1000);
             await this.dealSystemView(id, name);
             messages = await this.fetchMsgsByHtml(name);
@@ -252,7 +390,7 @@ class Chat extends Base {
 
     needTalk = async (messages) => {
         let index = messages.length - 1;
-        while(index >= 0) {
+        while (index >= 0) {
             if (messages[index].speaker == "user")
                 return true;
 
@@ -272,7 +410,7 @@ class Chat extends Base {
         let messages = [];
         let msgItems = await this.page.$x(`//div[contains(@class, "chat-message-list")]/div[contains(@class, "message-item")]`);
         for (let msgItem of msgItems) {
-            let {speaker, txt} = await this.fetchItemMsg(msgItem, name);
+            let { speaker, txt } = await this.fetchItemMsg(msgItem, name);
             if (!txt || txt.length == 0)
                 continue;
 
@@ -289,7 +427,7 @@ class Chat extends Base {
     fetchItemMsg = async (msgItem, name) => {
         let [txtSpan] = await msgItem.$x(`//div[contains(@class, "text")]/span`);
         if (!txtSpan)
-            return {speaker: "system", txt: ""};
+            return { speaker: "system", txt: "" };
 
         let txt = await this.page.evaluate(node => node.innerText, txtSpan);
 
@@ -299,12 +437,12 @@ class Chat extends Base {
             speaker = "user";
         let [robotSpan] = await msgItem.$x(`//div[contains(@class, "item-myself")]`);
         if (robotSpan)
-            speaker = "robot";        
+            speaker = "robot";
 
-        let systemTxt= await this.isSystemSpeakerTxt(txt, name);
+        let systemTxt = await this.isSystemSpeakerTxt(txt, name);
         if (systemTxt)
             speaker = "system";
-        return {speaker, txt};
+        return { speaker, txt };
     }
 
     fetchPeopleMsgsByCache = async (id) => {
@@ -333,7 +471,7 @@ class Chat extends Base {
         return messages;
     }
 
-    fetchTxt = async(message) => {
+    fetchTxt = async (message) => {
         const pushText = message.pushText;
         if (!pushText)
             return;
@@ -356,7 +494,7 @@ class Chat extends Base {
         return "user"
     }
 
-    isSystemSpeakerTxt = async(txt, userName) => {
+    isSystemSpeakerTxt = async (txt, userName) => {
         let specialTxts = ["我想要和您交换联系方式，您是否同意", "我想要和您交换微信，您是否同意", "对方想发送附件简历给您，您是否同意", userName + "的微信号", "您可至邮箱中查看和下载", "接受与您交换微信", "接受与您交换联系方式", "对方拒绝了您的交换微信请求"]
         for (let specialTxt of specialTxts) {
             if (txt.includes(specialTxt))
@@ -440,7 +578,7 @@ class Chat extends Base {
         }
     }
 
-    putSure = async() => {
+    putSure = async () => {
         let bubble = await this.waitElement(`//div[contains(@class, "exchange-tooltip") and not(contains(@style, "display: none;"))]`, this.page);
         if (bubble) {
             let [sureBtn] = await bubble.$x(`//span[contains(@class, "boss-btn-primary") and text() = "确定"]`);
@@ -466,47 +604,47 @@ class Chat extends Base {
 
         await input.focus();
         await sleep(500);
-  
-        for (let msgItem of msgList) {
-          if (msgItem.length === 0)
-            continue;
 
-          await this.page.keyboard.type(msgItem, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
-          await sleep(500);
-          await this.page.keyboard.down('Enter');
-          await sleep(500);
+        for (let msgItem of msgList) {
+            if (msgItem.length === 0)
+                continue;
+
+            await this.page.keyboard.type(msgItem, { delay: parseInt(this.keywordDelay + Math.random() * this.keywordDelay) });
+            await sleep(500);
+            await this.page.keyboard.down('Enter');
+            await sleep(500);
         }
     }
 
     chatToGpt = async (id, name, messages) => {
         if (messages.length == 0)
-          return new Promise((resolve, reject) => {
-            reject({ nextStep: "", nextStepContent: "" })
-          });
-  
+            return new Promise((resolve, reject) => {
+                reject({ nextStep: "", nextStepContent: "" })
+            });
+
         const data = await Request({
             url: `${BIZ_DOMAIN}/recruit/candidate/chat/v2`,
             data: {
-              accountID: this.userInfo.accountID,
-              candidateID: id,
-              candidateName: name,
-              historyMsg: messages,
-              jobID: "",
-              timeout: 3 * 60 * 1000
+                accountID: this.userInfo.accountID,
+                candidateID: id,
+                candidateName: name,
+                historyMsg: messages,
+                jobID: this.jobIdCache[id] || "",
+                timeout: 3 * 60 * 1000
             },
             method: 'POST'
-          });
+        });
 
         logger.info(`boss ${this.userInfo.name} chatToGpt data: ${JSON.stringify(data)}`);
-  
+
         return new Promise((resolve, reject) => {
-          if (data.ret != 0)
-            reject({
-              nextStep: "",
-              nextStepContent: ""
-            })
-  
-          resolve(data.data);
+            if (data.ret != 0)
+                reject({
+                    nextStep: "",
+                    nextStepContent: ""
+                })
+
+            resolve(data.data);
         });
     }
 
@@ -522,7 +660,7 @@ class Chat extends Base {
         for (let agreeBtn of agreeBtns) {
             await agreeBtn.click();
             await sleep(500);
-          }
+        }
     }
 
     dealSystemResume = async (id, name) => {
@@ -553,8 +691,8 @@ class Chat extends Base {
         await this.clearDownloadDir();
     }
 
-    downloadResume = async(item) => {
-        await this.page.evaluate((item)=>item.scrollIntoView(), item);
+    downloadResume = async (item) => {
+        await this.page.evaluate((item) => item.scrollIntoView(), item);
         let [showBtn] = await item.$x(`//span[text() = "点击预览附件简历"]`);
         await showBtn.click();
         await sleep(3 * 1000);
@@ -572,14 +710,14 @@ class Chat extends Base {
         await sleep(1 * 1000);
     }
 
-    uploadResume = async(id, name) => {
+    uploadResume = async (id, name) => {
         let filedir = path.join(process.cwd(), this.userInfo.accountID.toString());
         console.log("filedir: ", filedir);
         let files = fs.readdirSync(filedir);
         let filename = files[0];
         const crs = fs.createReadStream(filedir + "/" + filename);
 
-        const form = new FormData();  
+        const form = new FormData();
         form.append('cv', crs);
         form.append('jobID', '');
         form.append('accountID', this.userInfo.accountID);
@@ -588,8 +726,8 @@ class Chat extends Base {
         form.append('filename', filename);
 
         console.log(`accountID: ${this.userInfo.accountID} candidateID: ${id} candidateName: ${name} filename: ${filename}`);
-  
-        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err, res) {
+
+        await form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err, res) {
             if (err) {
                 logger.error(`简历上传失败error: `, err)
             }
@@ -597,26 +735,26 @@ class Chat extends Base {
         await sleep(2 * 1000);
     }
 
-    makeDownloadDir = async() => {
+    makeDownloadDir = async () => {
         let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
         logger.info(`boss ${this.userInfo.name} 下载路径: `, dirPath);
         try {
-          await rmDir(dirPath);
-          fs.mkdir(dirPath,(err)=>{
-            if(err){
-              logger.error(`boss ${this.userInfo.name} 新建目录出错:`, err);
-            }
-          })
-        } catch(e) {
-          logger.error(`boss ${this.userInfo.name} 新建目录出错:`, e);
+            await rmDir(dirPath);
+            fs.mkdir(dirPath, (err) => {
+                if (err) {
+                    logger.error(`boss ${this.userInfo.name} 新建目录出错:`, err);
+                }
+            })
+        } catch (e) {
+            logger.error(`boss ${this.userInfo.name} 新建目录出错:`, e);
         }
     }
 
-    clearDownloadDir = async() => {
+    clearDownloadDir = async () => {
         let dirPath = path.join(process.cwd(), this.userInfo.accountID.toString());
         try {
             await rmDir(dirPath);
-        } catch(e) {
+        } catch (e) {
             logger.error(`boss ${this.userInfo.name} 清理目录出错:`, e);
         }
     }
@@ -632,24 +770,24 @@ class Chat extends Base {
         let wx = await this.page.evaluate(node => node.innerText, textExchangeDiv);
         logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的微信: ${wx}`);
 
-        const form = new FormData();  
+        const form = new FormData();
 
         const reqParam = {
-          accountID: this.userInfo.accountID,
-          candidateID: id,
-          candidateName: name
+            accountID: this.userInfo.accountID,
+            candidateID: id,
+            candidateName: name
         }
 
         Object.keys(reqParam).map((key) => {
-          form.append(key, reqParam[key]);
+            form.append(key, reqParam[key]);
         })
 
         form.append("wechat", wx);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err) {
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err) {
             if (err) {
-              logger.error(`微信上传失败error: `, e)
+                logger.error(`微信上传失败error: `, e)
             }
         });
         await sleep(500);
@@ -669,24 +807,24 @@ class Chat extends Base {
         let phone = await this.page.evaluate(node => node.innerText, textExchangeDiv);
         logger.info(`boss ${this.userInfo.name} 获取到 ${name} 的电话: ${phone}`);
 
-        const form = new FormData();  
+        const form = new FormData();
 
         const reqParam = {
-          accountID: this.userInfo.accountID,
-          candidateID: id,
-          candidateName: name
+            accountID: this.userInfo.accountID,
+            candidateID: id,
+            candidateName: name
         }
 
         Object.keys(reqParam).map((key) => {
-          form.append(key, reqParam[key]);
+            form.append(key, reqParam[key]);
         })
 
         form.append("phone", phone);
         form.append("jobID", "");
 
-        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function(err) {
+        form.submit(`${BIZ_DOMAIN}/recruit/candidate/result`, function (err) {
             if (err) {
-              logger.error(`手机号上传失败error: `, e)
+                logger.error(`手机号上传失败error: `, e)
             }
         });
         await sleep(500);
@@ -695,7 +833,7 @@ class Chat extends Base {
         await closeBtn.click();
     }
 
-    fetchItemNameAndId = async(item) => {
+    fetchItemNameAndId = async (item) => {
         let [nameSpan] = await item.$x(`//span[contains(@class, "geek-name")]`);
         let name = await this.page.evaluate(node => node.innerText, nameSpan);
         // let [idSpan] = await item.$x(`//div[contains(@class, "geek-item")]`);
@@ -703,8 +841,17 @@ class Chat extends Base {
         // let isStr = await this.page.evaluate(node => node.key, item);
         let id = isStr.split("-")[0];
 
-        logger.info(`boss ${this.userInfo.name} 获取到 id: ${id} name: ${name}`);
-        return {id, name};
+        let jobName = "";
+        try {
+            let [jobNameSpan] = await item.$x(`//span[contains(@class, "source-job")]`);
+            jobName = await this.page.evaluate(node => node.innerText, jobNameSpan);
+        } catch (error) {
+            logger.error(`boss ${this.userInfo.name} 获取岗位名称失败`, error);
+        }
+
+
+        logger.info(`boss ${this.userInfo.name} 获取到 id: ${id} name: ${name} jobName: ${jobName}`);
+        return { id, name, jobName };
     }
 
     putUnreadBtn = async () => {
@@ -725,12 +872,12 @@ class Chat extends Base {
         }
     }
 
-    setUnreadPage = async() => {
+    setUnreadPage = async () => {
         await this.putUnreadBtn();
         await sleep(1000);
     }
 
-    setUnreadEnd = async() => {
+    setUnreadEnd = async () => {
         let [allBtn] = await this.page.$x(`//div[contains(@title, "全部")]`);
         await allBtn.click();
         await sleep(500);

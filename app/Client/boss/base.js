@@ -12,6 +12,7 @@ class Base extends Common {
         const {page, browser, userInfo} = this.options;
 
         this.browser = browser;
+        /** @type {import("puppeteer").Page} */
         this.page = page;
 
         if (userInfo)
