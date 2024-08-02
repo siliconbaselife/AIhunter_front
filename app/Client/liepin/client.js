@@ -48,6 +48,9 @@ class Client {
         logger.info("liepin 登陆完成");
         await sleep(2 * 1000);
 
+        // // 测试代码，记得删
+        // await sleep(9999 * 1000);
+
         let resume = new Resume(this.options);
         await resume.run() 
 
