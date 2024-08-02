@@ -17,10 +17,11 @@ class Login extends Base {
             ) {
                 const res = await response.json();
                 const data = res.data || {};
-                const { userId, userName } = data;
-                if (!(userId && userName)) return
-                logger.info(`liepin 获取到 id: ${userId} name: ${userName}`);
-                this.userInfo = { id: userId, name: userName };
+                const id = data.userId;
+                const name = data.userName || data.userNameShow;
+                if (!(id && name)) return
+                logger.info(`liepin 获取到 id: ${id} name: ${name}`);
+                this.userInfo = { id, name };
             }
         }
         this.page.on('response', getUser);
