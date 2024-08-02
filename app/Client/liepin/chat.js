@@ -71,7 +71,7 @@ class Chat extends Base {
                 } catch (e) {
                     logger.error(`liepin ${this.userInfo.name} 获取peoplemessage消息error: `, e);
                 }
-            } else if (url.indexOf("im.h.contact.contact-list") !== -1 && (['GET', 'POST'].includes(method))) {
+            } else if (url.indexOf("contact.get-contact-list") !== -1 && (['GET', 'POST'].includes(method))) {
                 try {
                     const res = await response.json();
                     if (res.flag == 1 && res.data) {
@@ -856,7 +856,7 @@ class Chat extends Base {
         let [nameSpan] = await item.$x(`//span[contains(@class, "__im_pro__contact-title-name")]`);
         let name = await this.page.evaluate(node => node.innerText, nameSpan);
         // let [idSpan] = await item.$x(`//div[contains(@class, "geek-item")]`);
-        const isStr = await this.page.evaluate((el) => el.dataset.info, item);
+        const isStr = await this.page.evaluate((el) => el.dataset.tlgExt, item);
         // let isStr = await this.page.evaluate(node => node.key, item);
         let chatId, id;
         try {

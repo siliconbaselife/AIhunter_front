@@ -240,8 +240,10 @@ class Search extends Base {
     async setSex(task) {
         const sex = task.filter.sex || "不限";
 
+        if (sex === "不限") return;
+
         // 点击性别框
-        await this.page.tap(`.sfilter-other-condition .search-item:nth-of-type(3) .search-item-cont`);
+        await this.page.click(`.sfilter-other-condition .search-item:nth-of-type(3) .search-item-cont`);
 
         // ant选择框
         const antSeleteXpath = `//div[contains(@class, "ant-select-dropdown")]`;
@@ -251,10 +253,10 @@ class Search extends Base {
         // 对应的选择item
         const sexSeleteItem = await this.waitElement(`${antSeleteXpath}${antSeleteItemXpath}//div[text() = "${sex}"]`, this.page, 4);
 
-        if (sexSeleteItem) {
+        try {
             await sexSeleteItem.click();
-        } else {
-            logger.info(`liepin 设置性别失败, ${this.userInfo.name} 没有找到确认按钮`);
+        } catch (error) {
+            logger.error(`liepin 设置性别失败, ${this.userInfo.name}`, error);
         }
 
         await sleep(1000);
