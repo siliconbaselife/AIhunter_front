@@ -18,7 +18,7 @@ const { BACK_ADMIN_DOMAIN, BACK_ADMIN_EN_DOMAIN } = require("../../Config/index"
  * @param {import("koa").Next} next 
  */
 module.exports = async (ctx, next) => {
-    ctx.set("Access-Control-Allow-Origin", [BACK_ADMIN_DOMAIN]); // 只允许指定域名
+    ctx.set("Access-Control-Allow-Origin", "*"); // 只允许指定域名
 
     ctx.set('Access-Control-Allow-Methods', 'OPTIONS, GET, PUT, POST, DELETE'); // 设置所允许的HTTP请求方法
 
