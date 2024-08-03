@@ -145,7 +145,7 @@ class Chat extends Base {
         await item.click();
         await sleep(500);
 
-        await this.checkAndGetJobId({ id, jobName }); // 检查jobId操作
+        // await this.checkAndGetJobId({ id, jobName }); // 检查jobId操作
 
         await this.sendMessage(recallInfo.recall_msg);
         await this.recallResult(id);
@@ -301,7 +301,7 @@ class Chat extends Base {
             // 拿到在线简历
             const peopleInfo = this.personInfoCache[id];
             if (!peopleInfo) throw new Error(`没有找到对应的在线简历信息`);
-            await this.uploadOnlineProfile(jobId, peopleInfo);
+            // await this.uploadOnlineProfile(jobId, peopleInfo);
             this.jobIdCache[id] = jobId;
             return jobId;
         } catch (error) {

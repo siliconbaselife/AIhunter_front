@@ -1522,7 +1522,7 @@ class LinkedinExecutor {
             let workExperiencesEl = await waitElement("#resume-detail-work-info", 1);
             let result = [];
             if (workExperiencesEl) {
-                let workExperienceEls = (await waitElements(".resume-detail-template-cont", workExperiencesEl, 1)) || [];
+                let workExperienceEls = (await waitElements(".resume-detail-template-cont .rd-work-item-cont", workExperiencesEl, 1)) || [];
 
 
                 for (let workExperienceEl of workExperienceEls) {
@@ -1569,17 +1569,17 @@ class LinkedinExecutor {
             let projectExperiencesEl = await waitElement("#resume-detail-project-info", 1);
             let result = [];
             if (projectExperiencesEl) {
-                let showMoreBtn = await waitElement(".rd-info-other-box", 1, projectExperiencesEl);
+                let showMoreBtn = await waitElement(".rd-info-other-box>.rd-info-other-link", 1, projectExperiencesEl);
                 if (showMoreBtn) {
                     showMoreBtn.click();
                     await sleep(500);
                 }
 
-                let projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-info-tpl-item", projectExperiencesEl, 1)) || [];
+                let projectExperienceEls = (await waitElements(".resume-detail-template-cont .rd-project-item-cont", projectExperiencesEl, 1)) || [];
                 for (let projectExperienceEl of projectExperienceEls) {
-                    let ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-work-comp>h5", 1, projectExperienceEl);
+                    let ProjectExpNameEl = await waitElement(".rd-info-tpl-item-head .rd-project-name>h5", 1, projectExperienceEl);
                     let ProjectExpName = ProjectExpNameEl && ProjectExpNameEl.innerText;
-                    let ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-work-time", 1, projectExperienceEl);
+                    let ProjectExpTimeEl = await waitElement(".rd-info-tpl-item-head .rd-project-time", 1, projectExperienceEl);
                     let ProjectExpTime = ProjectExpTimeEl && ProjectExpTimeEl.innerText;
 
                     let ProjectExpJobContentRowEls = (await waitElements(".rd-info-tpl-item-cont .rd-info-row", projectExperienceEl, 1)) || [];

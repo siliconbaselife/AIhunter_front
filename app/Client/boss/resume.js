@@ -92,7 +92,7 @@ class Resume extends Base {
             }
 
             if (index >= geekItems.length) {
-                logger.info(`boss ${this.userInfo.name} 搜索不到新的候选人`);
+                logger.info(`boss ${this.userInfo.name} 搜索不到新的候选人 index: ${index} item length: ${geekItems.length}`);
                 await this.scrollToPosition(index + 10);
                 await sleep(3000);
                 geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
@@ -104,7 +104,7 @@ class Resume extends Base {
                 }
             }
 
-            if (index > 150) { // 本tab超过150个了
+            if (index > 5) { // 本tab超过150个了
                 const changed = await this.changeTab("new");
                 // 切换tab后，再次执行这个任务
                 return changed ? this.dealTask(task) : undefined;
