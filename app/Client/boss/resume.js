@@ -58,6 +58,7 @@ class Resume extends Base {
                     await this.dealTaskBefore();
                     await this.refresh();
                     await this.changeTab("recommended");
+                    // await this.changeTab("new");
                     await this.dealTask(task);
                 } catch (e) {
                     logger.error(`boss ${this.userInfo.name} 打招呼异常: `, e);
@@ -108,7 +109,7 @@ class Resume extends Base {
                 }
             }
 
-            if (index > 30) { // 本tab超过150个了
+            if (index > 100) { // 本tab超过150个了
                 const changed = await this.changeTab("new");
                 // 切换tab后，再次执行这个任务
                 return changed ? this.dealTask(task) : undefined;
@@ -129,8 +130,10 @@ class Resume extends Base {
             logger.info(`boss ${this.userInfo.name} 当前处理候选人 id: ${geekId} name: ${name}`);
 
             let peopleInfo = this.peopleCache[geekId];
-            if (!peopleInfo)
+            if (!peopleInfo) {
+                logger.info(`boss ${this.userInfo.name} 当前处理候选人 id: ${geekId} name: ${name} no peopleInfo`);
                 continue;
+            }
 
             await this.setOnlineInfo(peopleInfo, geekItem);
 
@@ -265,7 +268,33 @@ class Resume extends Base {
                 logger.error(`boss ${this.userInfo.name} get candidate list error: ${e}`);
             }
         }
+
+        this.getListNew = async (response) => {
+            try {
+                const url = response.url();
+                const request = response.request();
+                const method = request.method();
+
+                if (url.startsWith('https://www.zhipin.com/wapi/zprelation/interaction/bossGetGeek') &&
+                    response.status() === 200 && (['GET', 'POST'].includes(method))) {
+                    let res;
+                    try {
+                        res = await response.json();
+                    } catch (e) {
+                        logger.error(`boss ${this.userInfo.name} 监听获取列表数据异常：`, e);
+                    }
+
+                    if (res && res.code === 0 && res.zpData) {
+                        await this.dealPeopleList(res.zpData.geekList);
+                    }
+                }
+            } catch (e) {
+                logger.error(`boss ${this.userInfo.name} get candidate list new error: ${e}`);
+            }
+        }
+
         this.page.on('response', this.getList);
+        this.page.on('response', this.getListNew);
     }
 
     dealPeopleList = async (geekList) => {
