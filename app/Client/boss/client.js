@@ -48,6 +48,8 @@ class Client {
         await this.loginPage(account_id);
         await sleep(2 * 1000);
 
+        // await sleep(9999 * 1000);
+
         let resume = new Resume(this.options);
         let chat = new Chat(this.options);
         

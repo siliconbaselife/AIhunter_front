@@ -551,6 +551,7 @@ class Chat extends Base {
                 return true;
         } catch (e) {
             logger.error(`boss ${this.userInfo.name} ${name} 聊天发生异常: `, e);
+            return true;
         }
         return false;
     }
