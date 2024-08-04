@@ -86,7 +86,7 @@ class Resume extends Base {
             await sleep(1000);
             let geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
             if (!geekItems.length) 
-                geekItems = await this.frame.$x(`//li/div[contains(@class, "candidate-card-wrap")]`)
+                geekItems = await this.frame.$x(`//li/div[contains(@class, "candidate-card-wrap")]/..`)
 
             if (task.helloSum <= 0) {
                 logger.info(`boss ${this.userInfo.name} 打招呼次数用完了`);
@@ -99,7 +99,7 @@ class Resume extends Base {
                 await sleep(3000);
                 geekItems = await this.frame.$x(`//li[contains(@class, "card-item")]`);
                 if (!geekItems.length) 
-                    geekItems = await this.frame.$x(`//li/div[contains(@class, "candidate-card-wrap")]`)
+                    geekItems = await this.frame.$x(`//li/div[contains(@class, "candidate-card-wrap")]/..`)
 
                 if (index >= geekItems.length) { // 已经拉到最底了，没有更多数据
                     const changed = await this.changeTab("new");
